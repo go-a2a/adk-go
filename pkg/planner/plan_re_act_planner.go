@@ -121,7 +121,7 @@ func (p *PlanReActPlanner) handleNonFunctionCallParts(part message.Message) (mes
 
 // buildNLPlannerInstruction creates the natural language planning instruction.
 func (p *PlanReActPlanner) buildNLPlannerInstruction() string {
-	return `To effectively solve the user's query, follow this systematic approach:
+	prompt := `To effectively solve the user's query, follow this systematic approach:
 
 1. PLANNING PHASE
    ${PlanningTag}
@@ -156,18 +156,15 @@ IMPORTANT GUIDELINES:
 - Revise your plan if initial execution fails
 - Ensure answers are specific and contextually appropriate
 - Use the designated tags to structure your response
-- Be thorough but concise in your explanations`.
-		Replace("${PlanningTag}", PlanningTag).
-		Replace("${PlanningEndTag}", PlanningEndTag).
-		Replace("${ReasoningTag}", ReasoningTag).
-		Replace("${ReasoningEndTag}", ReasoningEndTag).
-		Replace("${ActionTag}", ActionTag).
-		Replace("${ActionEndTag}", ActionEndTag).
-		Replace("${FinalAnswerTag}", FinalAnswerTag).
-		Replace("${FinalAnswerEndTag}", FinalAnswerEndTag)
-}
+- Be thorough but concise in your explanations`
+	prompt = strings.ReplaceAll(prompt, "${PlanningTag}", PlanningTag)
+	prompt = strings.ReplaceAll(prompt, "${PlanningEndTag}", PlanningEndTag)
+	prompt = strings.ReplaceAll(prompt, "${ReasoningTag}", ReasoningTag)
+	prompt = strings.ReplaceAll(prompt, "${ReasoningEndTag}", ReasoningEndTag)
+	prompt = strings.ReplaceAll(prompt, "${ActionTag}", ActionTag)
+	prompt = strings.ReplaceAll(prompt, "${ActionEndTag}", ActionEndTag)
+	prompt = strings.ReplaceAll(prompt, "${FinalAnswerTag}", FinalAnswerTag)
+	prompt = strings.ReplaceAll(prompt, "${FinalAnswerEndTag}", FinalAnswerEndTag)
 
-// Replace is a helper method for string replacement.
-func (s string) Replace(old, new string) string {
-	return strings.Replace(s, old, new, -1)
+	return prompt
 }
