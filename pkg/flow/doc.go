@@ -1,5 +1,5 @@
 // Copyright 2025 The go-a2a Authors
-// Licensed under the Apache License, Version 2.0
+// SPDX-License-Identifier: Apache-2.0
 
 // Package flow provides functionality for defining and executing flows
 // for language model interaction and agent communication.
