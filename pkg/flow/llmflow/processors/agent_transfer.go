@@ -32,11 +32,7 @@ func (p *AgentTransferRequestProcessor) SetAllowPeerTransfer(allowPeerTransfer b
 }
 
 // Process implements RequestProcessor.Process.
-func (p *AgentTransferRequestProcessor) Process(
-	ctx context.Context,
-	ic *flow.InvocationContext,
-	req *flow.LLMRequest,
-) (<-chan *event.Event, error) {
+func (p *AgentTransferRequestProcessor) Process(ctx context.Context, ic *flow.InvocationContext, req *flow.LLMRequest) (<-chan *event.Event, error) {
 	// Check for transfer request in the last event
 	if len(ic.Events) > 0 {
 		lastEvent := ic.Events[len(ic.Events)-1]
@@ -76,12 +72,7 @@ func (p *AgentTransferRequestProcessor) Process(
 }
 
 // ProcessLive implements RequestProcessor.ProcessLive.
-func (p *AgentTransferRequestProcessor) ProcessLive(
-	ctx context.Context,
-	ic *flow.InvocationContext,
-	req *flow.LLMRequest,
-	callback func(*event.Event),
-) error {
+func (p *AgentTransferRequestProcessor) ProcessLive(ctx context.Context, ic *flow.InvocationContext, req *flow.LLMRequest, callback func(*event.Event)) error {
 	// Use the same processing logic as the non-live version
 	_, err := p.Process(ctx, ic, req)
 	return err

@@ -10,24 +10,24 @@ import (
 
 // RequestProcessor provides a base implementation for LLM request processors.
 type RequestProcessor struct {
-	flow.BaseRequestProcessor
+	flow.RequestProcessor
 }
 
 // NewRequestProcessor creates a new RequestProcessor with the given name.
 func NewRequestProcessor(name string) *RequestProcessor {
 	return &RequestProcessor{
-		BaseRequestProcessor: *flow.NewBaseRequestProcessor(name),
+		RequestProcessor: flow.NewBaseProcessor(name),
 	}
 }
 
 // ResponseProcessor provides a base implementation for LLM response processors.
 type ResponseProcessor struct {
-	flow.BaseResponseProcessor
+	flow.ResponseProcessor
 }
 
 // NewResponseProcessor creates a new ResponseProcessor with the given name.
 func NewResponseProcessor(name string) *ResponseProcessor {
 	return &ResponseProcessor{
-		BaseResponseProcessor: *flow.NewBaseResponseProcessor(name),
+		ResponseProcessor: flow.NewBaseProcessor(name),
 	}
 }

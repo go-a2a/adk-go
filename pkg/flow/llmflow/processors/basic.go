@@ -23,11 +23,7 @@ func NewBasicRequestProcessor() *BasicRequestProcessor {
 }
 
 // Process implements RequestProcessor.Process.
-func (p *BasicRequestProcessor) Process(
-	ctx context.Context,
-	ic *flow.InvocationContext,
-	req *flow.LLMRequest,
-) (<-chan *event.Event, error) {
+func (p *BasicRequestProcessor) Process(ctx context.Context, ic *flow.InvocationContext, req *flow.LLMRequest) (<-chan *event.Event, error) {
 	// Set default model if not already set
 	if req.Model == "" {
 		// In a real implementation, this would get the model from the agent's configuration
@@ -83,12 +79,7 @@ func (p *BasicRequestProcessor) Process(
 }
 
 // ProcessLive implements RequestProcessor.ProcessLive.
-func (p *BasicRequestProcessor) ProcessLive(
-	ctx context.Context,
-	ic *flow.InvocationContext,
-	req *flow.LLMRequest,
-	callback func(*event.Event),
-) error {
+func (p *BasicRequestProcessor) ProcessLive(ctx context.Context, ic *flow.InvocationContext, req *flow.LLMRequest, callback func(*event.Event)) error {
 	// Use the same processing logic as the non-live version
 	_, err := p.Process(ctx, ic, req)
 	return err

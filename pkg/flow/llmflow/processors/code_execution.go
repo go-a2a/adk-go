@@ -30,11 +30,7 @@ func NewCodeExecutionRequestProcessor() *CodeExecutionRequestProcessor {
 }
 
 // Process implements RequestProcessor.Process.
-func (p *CodeExecutionRequestProcessor) Process(
-	ctx context.Context,
-	ic *flow.InvocationContext,
-	req *flow.LLMRequest,
-) (<-chan *event.Event, error) {
+func (p *CodeExecutionRequestProcessor) Process(ctx context.Context, ic *flow.InvocationContext, req *flow.LLMRequest) (<-chan *event.Event, error) {
 	// Check if code execution is enabled
 	if !p.EnableCodeExecution {
 		// If disabled, add a note to the system message
@@ -59,12 +55,7 @@ func (p *CodeExecutionRequestProcessor) Process(
 }
 
 // ProcessLive implements RequestProcessor.ProcessLive.
-func (p *CodeExecutionRequestProcessor) ProcessLive(
-	ctx context.Context,
-	ic *flow.InvocationContext,
-	req *flow.LLMRequest,
-	callback func(*event.Event),
-) error {
+func (p *CodeExecutionRequestProcessor) ProcessLive(ctx context.Context, ic *flow.InvocationContext, req *flow.LLMRequest, callback func(*event.Event)) error {
 	// Use the same processing logic as the non-live version
 	_, err := p.Process(ctx, ic, req)
 	return err
@@ -96,12 +87,8 @@ func NewCodeExecutionResponseProcessor() *CodeExecutionResponseProcessor {
 	}
 }
 
-// Process implements ResponseProcessor.Process.
-func (p *CodeExecutionResponseProcessor) Process(
-	ctx context.Context,
-	ic *flow.InvocationContext,
-	resp *flow.LLMResponse,
-) (<-chan *event.Event, error) {
+// Process implements [ResponseProcessor.Process].
+func (p *CodeExecutionResponseProcessor) Process(ctx context.Context, ic *flow.InvocationContext, resp *flow.LLMResponse) (<-chan *event.Event, error) {
 	// Return immediately if code execution is disabled or no executor is set
 	if !p.EnableCodeExecution || p.CodeExecutor == nil {
 		ch := make(chan *event.Event)
@@ -148,12 +135,7 @@ func (p *CodeExecutionResponseProcessor) Process(
 }
 
 // ProcessLive implements ResponseProcessor.ProcessLive.
-func (p *CodeExecutionResponseProcessor) ProcessLive(
-	ctx context.Context,
-	ic *flow.InvocationContext,
-	resp *flow.LLMResponse,
-	callback func(*event.Event),
-) error {
+func (p *CodeExecutionResponseProcessor) ProcessLive(ctx context.Context, ic *flow.InvocationContext, resp *flow.LLMResponse, callback func(*event.Event)) error {
 	// Use the same processing logic as the non-live version
 	_, err := p.Process(ctx, ic, resp)
 	return err

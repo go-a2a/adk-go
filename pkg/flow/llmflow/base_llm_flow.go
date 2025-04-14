@@ -331,11 +331,7 @@ func (f *BaseLLMFlow) runNew(ctx context.Context, ic *flow.InvocationContext) (<
 }
 
 // RunLive executes the flow with the given context and streams events to the callback.
-func (f *BaseLLMFlow) RunLive(
-	ctx context.Context,
-	ic *InvocationContext,
-	callback func(*event.Event),
-) error {
+func (f *BaseLLMFlow) RunLive(ctx context.Context, ic *InvocationContext, callback func(*event.Event)) error {
 	// Create a default request
 	req := &LLMRequest{
 		GenerationConfig: &GenerationConfig{
@@ -395,11 +391,7 @@ func (f *BaseLLMFlow) RunLive(
 }
 
 // ProcessLive implements the Flow interface for streaming event processing.
-func (f *BaseLLMFlow) ProcessLive(
-	ctx context.Context,
-	ic *flow.InvocationContext,
-	callback func(*event.Event),
-) error {
+func (f *BaseLLMFlow) ProcessLive(ctx context.Context, ic *flow.InvocationContext, callback func(*event.Event)) error {
 	// Create a context with a span for the flow execution
 	liveCtx, span := observability.StartSpan(ctx, "llmflow.ProcessLive")
 	defer span.End()
