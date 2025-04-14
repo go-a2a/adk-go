@@ -77,7 +77,7 @@ func TestLoadWebPageTool_Execute(t *testing.T) {
 	result, err := tool.Execute(context.Background(), args)
 	// Verify the results
 	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
+		t.Errorf("unexpected error: %v", err)
 	}
 	if !strings.Contains(result, "Hello, World!") {
 		t.Errorf("result does not contain %q", "Hello, World!")
@@ -102,7 +102,7 @@ func TestLoadWebPageTool_Execute_InvalidURL(t *testing.T) {
 	_, err = tool.Execute(context.Background(), args)
 	// Should return an error
 	if err == nil {
-		t.Errorf("Expected error, got nil")
+		t.Errorf("expected error, got nil")
 	}
 
 	if !strings.Contains(err.Error(), "only HTTP and HTTPS URLs are supported") {
@@ -126,7 +126,7 @@ func TestLoadWebPageTool_Execute_NonExistentURL(t *testing.T) {
 
 	// Should return an error
 	if err == nil {
-		t.Errorf("Expected error, got nil")
+		t.Errorf("expected error, got nil")
 	}
 }
 

@@ -312,7 +312,7 @@ func TestRunner_RunConversation(t *testing.T) {
 	}
 
 	if len(sessions) != 1 {
-		t.Errorf("Expected 1 session for user, got %d", len(sessions))
+		t.Errorf("expected 1 session for user, got %d", len(sessions))
 	}
 
 	// Check that events were created in the session
@@ -325,7 +325,7 @@ func TestRunner_RunConversation(t *testing.T) {
 
 		// Should have 2 events - the last user message and the assistant response
 		if len(events) != 2 {
-			t.Errorf("Expected 2 events, got %d", len(events))
+			t.Errorf("expected 2 events, got %d", len(events))
 		}
 	}
 }
@@ -365,7 +365,7 @@ func TestRunner_RunWithSession(t *testing.T) {
 
 	// Should have 2 events - the user message and the assistant response
 	if len(events) != 2 {
-		t.Errorf("Expected 2 events, got %d", len(events))
+		t.Errorf("expected 2 events, got %d", len(events))
 	}
 }
 
@@ -418,7 +418,7 @@ func TestRunner_RunWithSession_EmptyMessages(t *testing.T) {
 
 	emptyMessage := message.Message{}
 	if !cmp.Equal(response, emptyMessage) {
-		t.Errorf("Expected empty message, got %+v", response)
+		t.Errorf("expected empty message, got %+v", response)
 	}
 }
 

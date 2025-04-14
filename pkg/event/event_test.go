@@ -16,29 +16,29 @@ func TestNewEvent(t *testing.T) {
 	}
 
 	if event.Author != "agent" {
-		t.Errorf("Expected author to be 'agent', got '%s'", event.Author)
+		t.Errorf("expected author to be 'agent', got '%s'", event.Author)
 	}
 
 	if event.Content != "Hello, world!" {
-		t.Errorf("Expected content to be 'Hello, world!', got '%s'", event.Content)
+		t.Errorf("expected content to be 'Hello, world!', got '%s'", event.Content)
 	}
 
 	if event.InvocationID == "" {
-		t.Errorf("Expected InvocationID to be set")
+		t.Errorf("expected InvocationID to be set")
 	}
 
 	if event.Actions == nil {
-		t.Errorf("Expected Actions to be initialized")
+		t.Errorf("expected Actions to be initialized")
 	}
 
 	if len(event.FunctionCalls) != 0 {
-		t.Errorf("Expected FunctionCalls to be empty, got %d calls", len(event.FunctionCalls))
+		t.Errorf("expected FunctionCalls to be empty, got %d calls", len(event.FunctionCalls))
 	}
 
 	// Test with empty author
 	_, err = NewEvent("", "Content")
 	if err != ErrEmptyAuthor {
-		t.Errorf("Expected ErrEmptyAuthor, got %v", err)
+		t.Errorf("expected ErrEmptyAuthor, got %v", err)
 	}
 }
 
@@ -49,7 +49,7 @@ func TestNewUserEvent(t *testing.T) {
 	}
 
 	if event.Author != "user" {
-		t.Errorf("Expected author to be 'user', got '%s'", event.Author)
+		t.Errorf("expected author to be 'user', got '%s'", event.Author)
 	}
 }
 
@@ -60,7 +60,7 @@ func TestNewAgentEvent(t *testing.T) {
 	}
 
 	if event.Author != "assistant" {
-		t.Errorf("Expected author to be 'assistant', got '%s'", event.Author)
+		t.Errorf("expected author to be 'assistant', got '%s'", event.Author)
 	}
 }
 
@@ -69,7 +69,7 @@ func TestWithBranch(t *testing.T) {
 	event.WithBranch("main")
 
 	if event.Branch != "main" {
-		t.Errorf("Expected branch to be 'main', got '%s'", event.Branch)
+		t.Errorf("expected branch to be 'main', got '%s'", event.Branch)
 	}
 }
 
@@ -87,11 +87,11 @@ func TestAddFunctionCall(t *testing.T) {
 	}
 
 	if fc.Name != "test_function" {
-		t.Errorf("Expected function name to be 'test_function', got '%s'", fc.Name)
+		t.Errorf("expected function name to be 'test_function', got '%s'", fc.Name)
 	}
 
 	if fc.ID == "" {
-		t.Errorf("Expected function ID to be set")
+		t.Errorf("expected function ID to be set")
 	}
 
 	if !cmp.Equal(fc.Parameters, params) {
@@ -99,7 +99,7 @@ func TestAddFunctionCall(t *testing.T) {
 	}
 
 	if len(event.FunctionCalls) != 1 {
-		t.Errorf("Expected 1 function call, got %d", len(event.FunctionCalls))
+		t.Errorf("expected 1 function call, got %d", len(event.FunctionCalls))
 	}
 }
 
@@ -116,15 +116,15 @@ func TestAddLongRunningFunctionCall(t *testing.T) {
 	}
 
 	if !fc.IsLongRunning {
-		t.Errorf("Expected IsLongRunning to be true")
+		t.Errorf("expected IsLongRunning to be true")
 	}
 
 	if len(event.LongRunningToolIDs) != 1 {
-		t.Errorf("Expected 1 long running tool ID, got %d", len(event.LongRunningToolIDs))
+		t.Errorf("expected 1 long running tool ID, got %d", len(event.LongRunningToolIDs))
 	}
 
 	if event.LongRunningToolIDs[0] != fc.ID {
-		t.Errorf("Expected long running tool ID to match function ID")
+		t.Errorf("expected long running tool ID to match function ID")
 	}
 }
 
@@ -150,7 +150,7 @@ func TestSetFunctionResponse(t *testing.T) {
 	// Try to set response for non-existent function call
 	err = event.SetFunctionResponse("non-existent-id", response)
 	if err == nil {
-		t.Errorf("Expected error for non-existent function call")
+		t.Errorf("expected error for non-existent function call")
 	}
 }
 
@@ -197,7 +197,7 @@ func TestGetFunctionCalls(t *testing.T) {
 
 	calls := event.GetFunctionCalls()
 	if len(calls) != 2 {
-		t.Errorf("Expected 2 function calls, got %d", len(calls))
+		t.Errorf("expected 2 function calls, got %d", len(calls))
 	}
 
 	// Check that the returned slice is a copy (modifying it shouldn't affect the original)
@@ -221,15 +221,15 @@ func TestGetFunctionResponses(t *testing.T) {
 
 	responses := event.GetFunctionResponses()
 	if len(responses) != 2 {
-		t.Errorf("Expected 2 function responses, got %d", len(responses))
+		t.Errorf("expected 2 function responses, got %d", len(responses))
 	}
 
 	if responses["function1"]["r1"] != "v1" {
-		t.Errorf("Expected response for function1 to contain r1=v1")
+		t.Errorf("expected response for function1 to contain r1=v1")
 	}
 
 	if responses["function2"]["r2"] != "v2" {
-		t.Errorf("Expected response for function2 to contain r2=v2")
+		t.Errorf("expected response for function2 to contain r2=v2")
 	}
 
 	if _, exists := responses["function3"]; exists {
@@ -294,13 +294,13 @@ func TestNewID(t *testing.T) {
 	}
 
 	if len(id1) != DefaultIDLength {
-		t.Errorf("Expected ID length to be %d, got %d", DefaultIDLength, len(id1))
+		t.Errorf("expected ID length to be %d, got %d", DefaultIDLength, len(id1))
 	}
 
 	// Generate a second ID to ensure they're different
 	id2, _ := NewID()
 	if id1 == id2 {
-		t.Errorf("Expected different IDs, got the same: %s", id1)
+		t.Errorf("expected different IDs, got the same: %s", id1)
 	}
 }
 
@@ -309,53 +309,53 @@ func TestEventActions(t *testing.T) {
 	actions := NewEventActions()
 
 	if actions.SkipSummarization {
-		t.Errorf("Expected SkipSummarization to be false by default")
+		t.Errorf("expected SkipSummarization to be false by default")
 	}
 
 	if actions.StateDelta == nil {
-		t.Errorf("Expected StateDelta to be initialized")
+		t.Errorf("expected StateDelta to be initialized")
 	}
 
 	if actions.ArtifactDelta == nil {
-		t.Errorf("Expected ArtifactDelta to be initialized")
+		t.Errorf("expected ArtifactDelta to be initialized")
 	}
 
 	if actions.RequestedAuthConfigs == nil {
-		t.Errorf("Expected RequestedAuthConfigs to be initialized")
+		t.Errorf("expected RequestedAuthConfigs to be initialized")
 	}
 
 	// Test fluent interface for setting values
 	actions.WithSkipSummarization(true)
 	if !actions.SkipSummarization {
-		t.Errorf("Expected SkipSummarization to be true after setting")
+		t.Errorf("expected SkipSummarization to be true after setting")
 	}
 
 	actions.WithTransferToAgent("other_agent")
 	if actions.TransferToAgent != "other_agent" {
-		t.Errorf("Expected TransferToAgent to be 'other_agent', got '%s'", actions.TransferToAgent)
+		t.Errorf("expected TransferToAgent to be 'other_agent', got '%s'", actions.TransferToAgent)
 	}
 
 	actions.WithEscalate(true)
 	if !actions.Escalate {
-		t.Errorf("Expected Escalate to be true after setting")
+		t.Errorf("expected Escalate to be true after setting")
 	}
 
 	// Test adding to maps
 	actions.AddStateDelta("key1", "value1")
 	if actions.StateDelta["key1"] != "value1" {
-		t.Errorf("Expected StateDelta to contain key1=value1")
+		t.Errorf("expected StateDelta to contain key1=value1")
 	}
 
 	actions.AddArtifactDelta("artifact1", "v2")
 	if actions.ArtifactDelta["artifact1"] != "v2" {
-		t.Errorf("Expected ArtifactDelta to contain artifact1=v2")
+		t.Errorf("expected ArtifactDelta to contain artifact1=v2")
 	}
 
 	actions.AddRequestedAuthConfig("service1", map[string]string{"type": "oauth"})
 	authConfig, ok := actions.RequestedAuthConfigs["service1"].(map[string]string)
 	if !ok {
-		t.Errorf("Expected RequestedAuthConfigs to contain service1 with map value")
+		t.Errorf("expected RequestedAuthConfigs to contain service1 with map value")
 	} else if authConfig["type"] != "oauth" {
-		t.Errorf("Expected RequestedAuthConfigs for service1 to contain type=oauth")
+		t.Errorf("expected RequestedAuthConfigs for service1 to contain type=oauth")
 	}
 }

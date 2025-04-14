@@ -45,34 +45,34 @@ func TestInvocationContext(t *testing.T) {
 
 	// Check initial values
 	if ic.SessionID != "test-session" {
-		t.Errorf("Expected SessionID to be 'test-session', got '%s'", ic.SessionID)
+		t.Errorf("expected SessionID to be 'test-session', got '%s'", ic.SessionID)
 	}
 
 	if len(ic.Events) != 0 {
-		t.Errorf("Expected Events to be empty, got %d events", len(ic.Events))
+		t.Errorf("expected Events to be empty, got %d events", len(ic.Events))
 	}
 
 	if len(ic.Properties) != 0 {
-		t.Errorf("Expected Properties to be empty, got %d properties", len(ic.Properties))
+		t.Errorf("expected Properties to be empty, got %d properties", len(ic.Properties))
 	}
 
 	// Test fluent interface
 	ic.WithExecutionID("test-execution")
 	if ic.ExecutionID != "test-execution" {
-		t.Errorf("Expected ExecutionID to be 'test-execution', got '%s'", ic.ExecutionID)
+		t.Errorf("expected ExecutionID to be 'test-execution', got '%s'", ic.ExecutionID)
 	}
 
 	// Test adding events
 	evt, _ := event.NewUserEvent("Hello")
 	ic.AddEvent(evt)
 	if len(ic.Events) != 1 {
-		t.Errorf("Expected 1 event, got %d", len(ic.Events))
+		t.Errorf("expected 1 event, got %d", len(ic.Events))
 	}
 
 	// Test adding properties
 	ic.WithProperty("key", "value")
 	if val, ok := ic.Properties["key"]; !ok || val != "value" {
-		t.Errorf("Expected property 'key' to be 'value', got '%v'", val)
+		t.Errorf("expected property 'key' to be 'value', got '%v'", val)
 	}
 }
 
@@ -86,7 +86,7 @@ func TestFlowOptions(t *testing.T) {
 	// Add logger
 	options.WithLogger(logger)
 	if options.Logger != logger {
-		t.Errorf("Expected Logger to be set correctly")
+		t.Errorf("expected Logger to be set correctly")
 	}
 
 	// Add processors
@@ -97,7 +97,7 @@ func TestFlowOptions(t *testing.T) {
 	options.WithRequestProcessor(processor2)
 
 	if len(options.RequestProcessors) != 2 {
-		t.Errorf("Expected 2 request processors, got %d", len(options.RequestProcessors))
+		t.Errorf("expected 2 request processors, got %d", len(options.RequestProcessors))
 	}
 
 	// Add response processors
@@ -106,6 +106,6 @@ func TestFlowOptions(t *testing.T) {
 	options.WithResponseProcessor(respProcessor)
 
 	if len(options.ResponseProcessors) != 1 {
-		t.Errorf("Expected 1 response processor, got %d", len(options.ResponseProcessors))
+		t.Errorf("expected 1 response processor, got %d", len(options.ResponseProcessors))
 	}
 }

@@ -98,7 +98,7 @@ func TestMockModel(t *testing.T) {
 	mockModel.SetError(testErr)
 	_, err = mockModel.Generate(ctx, messages)
 	if err != testErr {
-		t.Errorf("Expected error %v, got %v", testErr, err)
+		t.Errorf("expected error %v, got %v", testErr, err)
 	}
 }
 

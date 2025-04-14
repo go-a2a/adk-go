@@ -39,7 +39,7 @@ func TestGoogleSearchTool_Execute(t *testing.T) {
 	// Since we don't have real implementation details, we'll just verify
 	// basic behavior without asserting specific results
 	if err != nil {
-		t.Errorf("Expected no error, got: %v", err)
+		t.Errorf("expected no error, got: %v", err)
 	}
 
 	// Verify we got some kind of result

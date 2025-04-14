@@ -183,16 +183,16 @@ func TestBaseLLMFlow(t *testing.T) {
 
 	// Verify the processors were called
 	if !reqProcessor.ProcessCalled {
-		t.Errorf("Expected request processor to be called")
+		t.Errorf("expected request processor to be called")
 	}
 
 	if !respProcessor.ProcessCalled {
-		t.Errorf("Expected response processor to be called")
+		t.Errorf("expected response processor to be called")
 	}
 
 	// Verify the client was called
 	if !client.GenerateCalled {
-		t.Errorf("Expected client Generate to be called")
+		t.Errorf("expected client Generate to be called")
 	}
 
 	// Test RunLive
@@ -207,15 +207,15 @@ func TestBaseLLMFlow(t *testing.T) {
 
 	// Verify the processors were called in live mode
 	if !reqProcessor.ProcessLiveCalled {
-		t.Errorf("Expected request processor ProcessLive to be called")
+		t.Errorf("expected request processor ProcessLive to be called")
 	}
 
 	if !respProcessor.ProcessLiveCalled {
-		t.Errorf("Expected response processor ProcessLive to be called")
+		t.Errorf("expected response processor ProcessLive to be called")
 	}
 
 	// Verify the client was called in streaming mode
 	if !client.GenerateStreamCalled {
-		t.Errorf("Expected client GenerateStream to be called")
+		t.Errorf("expected client GenerateStream to be called")
 	}
 }

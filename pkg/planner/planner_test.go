@@ -24,19 +24,19 @@ func TestContext(t *testing.T) {
 
 	// Test context values
 	if ctx.Query != "query" {
-		t.Errorf("Expected Query to be 'query', got %q", ctx.Query)
+		t.Errorf("expected Query to be 'query', got %q", ctx.Query)
 	}
 
 	if ctx.UserID != "user1" {
-		t.Errorf("Expected UserID to be 'user1', got %q", ctx.UserID)
+		t.Errorf("expected UserID to be 'user1', got %q", ctx.UserID)
 	}
 
 	if ctx.SessionID != "session1" {
-		t.Errorf("Expected SessionID to be 'session1', got %q", ctx.SessionID)
+		t.Errorf("expected SessionID to be 'session1', got %q", ctx.SessionID)
 	}
 
 	if len(ctx.Messages) != 2 {
-		t.Errorf("Expected 2 messages, got %d", len(ctx.Messages))
+		t.Errorf("expected 2 messages, got %d", len(ctx.Messages))
 	}
 
 	// Create a callback context
@@ -44,7 +44,7 @@ func TestContext(t *testing.T) {
 
 	// Test that callback context contains the original context
 	if callbackCtx.Query != ctx.Query {
-		t.Errorf("Expected Query to be %q, got %q", ctx.Query, callbackCtx.Query)
+		t.Errorf("expected Query to be %q, got %q", ctx.Query, callbackCtx.Query)
 	}
 
 	// Test that planner state is initialized
@@ -93,12 +93,12 @@ func TestBuiltInPlanner(t *testing.T) {
 	ctx := NewContext([]message.Message{}, "query", "user1", "session1")
 	instruction, err := planner.BuildPlanningInstruction(ctx, request)
 	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
+		t.Errorf("unexpected error: %v", err)
 	}
 
 	// BuiltInPlanner should return an empty string
 	if instruction != "" {
-		t.Errorf("Expected empty instruction, got %q", instruction)
+		t.Errorf("expected empty instruction, got %q", instruction)
 	}
 
 	// Test processing response
@@ -109,12 +109,12 @@ func TestBuiltInPlanner(t *testing.T) {
 
 	processed, err := planner.ProcessPlanningResponse(callbackCtx, responseParts)
 	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
+		t.Errorf("unexpected error: %v", err)
 	}
 
 	// BuiltInPlanner should return the response unchanged
 	if !cmp.Equal(responseParts, processed) {
-		t.Errorf("Expected response to be unchanged, got: %v", cmp.Diff(responseParts, processed))
+		t.Errorf("expected response to be unchanged, got: %v", cmp.Diff(responseParts, processed))
 	}
 }
 
@@ -132,12 +132,12 @@ func TestPlanReActPlanner(t *testing.T) {
 
 	instruction, err := planner.BuildPlanningInstruction(ctx, request)
 	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
+		t.Errorf("unexpected error: %v", err)
 	}
 
 	// Check that instruction contains planning tags
 	if !contains(instruction, PlanningTag) || !contains(instruction, ReasoningTag) {
-		t.Errorf("Expected instruction to contain planning tags")
+		t.Errorf("expected instruction to contain planning tags")
 	}
 
 	// Test processing response without final answer tag
@@ -147,12 +147,12 @@ func TestPlanReActPlanner(t *testing.T) {
 	responseParts := []message.Message{response}
 	processed, err := planner.ProcessPlanningResponse(callbackCtx, responseParts)
 	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
+		t.Errorf("unexpected error: %v", err)
 	}
 
 	// Check that final answer tags were added
 	if !contains(processed[0].Content, FinalAnswerTag) {
-		t.Errorf("Expected final answer tags to be added, got: %s", processed[0].Content)
+		t.Errorf("expected final answer tags to be added, got: %s", processed[0].Content)
 	}
 
 	// Test processing response with existing tags
@@ -161,24 +161,24 @@ func TestPlanReActPlanner(t *testing.T) {
 
 	processed, err = planner.ProcessPlanningResponse(callbackCtx, responseParts)
 	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
+		t.Errorf("unexpected error: %v", err)
 	}
 
 	// Check that existing tags were preserved
 	if !contains(processed[0].Content, ReasoningTag) {
-		t.Errorf("Expected reasoning tags to be preserved, got: %s", processed[0].Content)
+		t.Errorf("expected reasoning tags to be preserved, got: %s", processed[0].Content)
 	}
 
 	// Test with disabled structured output
 	planner = NewPlanReActPlanner(WithStructuredOutput(false))
 	processed, err = planner.ProcessPlanningResponse(callbackCtx, []message.Message{response})
 	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
+		t.Errorf("unexpected error: %v", err)
 	}
 
 	// Check that tags were not added when structured output is disabled
 	if contains(processed[0].Content, FinalAnswerTag) {
-		t.Errorf("Expected no tags to be added when structured output is disabled, got: %s", processed[0].Content)
+		t.Errorf("expected no tags to be added when structured output is disabled, got: %s", processed[0].Content)
 	}
 }
 
@@ -188,17 +188,17 @@ func TestRegistry(t *testing.T) {
 	// Test listing planners
 	planners := registry.List()
 	if len(planners) != 2 {
-		t.Errorf("Expected 2 planners, got %d", len(planners))
+		t.Errorf("expected 2 planners, got %d", len(planners))
 	}
 
 	// Test getting an existing planner
 	planner, err := registry.Get("built_in")
 	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
+		t.Errorf("unexpected error: %v", err)
 	}
 
 	if _, ok := planner.(*BuiltInPlanner); !ok {
-		t.Errorf("Expected *BuiltInPlanner, got %T", planner)
+		t.Errorf("expected *BuiltInPlanner, got %T", planner)
 	}
 
 	// Test getting a non-existent planner
@@ -214,11 +214,11 @@ func TestRegistry(t *testing.T) {
 	// Check that the new planner was registered
 	planner, err = registry.Get("custom")
 	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
+		t.Errorf("unexpected error: %v", err)
 	}
 
 	if _, ok := planner.(*PlanReActPlanner); !ok {
-		t.Errorf("Expected *PlanReActPlanner, got %T", planner)
+		t.Errorf("expected *PlanReActPlanner, got %T", planner)
 	}
 }
 

@@ -61,7 +61,7 @@ func TestNewBaseTool(t *testing.T) {
 		t.Errorf("bt.ParameterSchema( = %v, want %v", got, want)
 	}
 	if bt.IsAsyncExecutionSupported() {
-		t.Errorf("Expected bt.IsAsyncExecutionSupported( to be false")
+		t.Errorf("expected bt.IsAsyncExecutionSupported( to be false")
 	}
 }
 
@@ -77,13 +77,13 @@ func TestBaseTool_WithAsyncSupport(t *testing.T) {
 
 	// By default, should not support async
 	if bt.IsAsyncExecutionSupported() {
-		t.Errorf("Expected bt.IsAsyncExecutionSupported( to be false")
+		t.Errorf("expected bt.IsAsyncExecutionSupported( to be false")
 	}
 
 	// Add async support
 	bt = bt.WithAsyncSupport()
 	if !bt.IsAsyncExecutionSupported() {
-		t.Errorf("Expected bt.IsAsyncExecutionSupported( to be true")
+		t.Errorf("expected bt.IsAsyncExecutionSupported( to be true")
 	}
 }
 
@@ -128,10 +128,10 @@ func TestBaseTool_Execute(t *testing.T) {
 	// Execute the tool
 	result, err := bt.Execute(context.Background(), args)
 	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
+		t.Errorf("unexpected error: %v", err)
 	}
 	if !executed {
-		t.Errorf("Expected executed to be true")
+		t.Errorf("expected executed to be true")
 	}
 	if got, want := result, "Processed: test data"; !cmp.Equal(got, want) {
 		t.Errorf("result = %v, want %v", got, want)
@@ -170,7 +170,7 @@ func TestBaseTool_ExecuteError(t *testing.T) {
 	// Execute the tool
 	result, err := bt.Execute(context.Background(), args)
 	if err == nil {
-		t.Errorf("Expected error, got nil")
+		t.Errorf("expected error, got nil")
 	}
 	if len(result) != 0 {
 		t.Errorf("result is not empty, len = %d", len(result))
@@ -237,7 +237,7 @@ func TestNewAsyncTool(t *testing.T) {
 		t.Errorf("asyncTool.Description( = %v, want %v", got, want)
 	}
 	if !asyncTool.IsAsyncExecutionSupported() {
-		t.Errorf("Expected asyncTool.IsAsyncExecutionSupported( to be true")
+		t.Errorf("expected asyncTool.IsAsyncExecutionSupported( to be true")
 	}
 }
 
@@ -264,7 +264,7 @@ func TestAsyncTool_Execute(t *testing.T) {
 	// Execute the async tool
 	result, err := asyncTool.Execute(context.Background(), json.RawMessage(`{}`))
 	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
+		t.Errorf("unexpected error: %v", err)
 	}
 	if !strings.Contains(result, "Request ID:") {
 		t.Errorf("result does not contain %q", "Request ID:")
@@ -279,7 +279,7 @@ func TestAsyncTool_Execute(t *testing.T) {
 	var requestID string
 	_, err = fmt.Sscanf(result, "Request ID: %s", &requestID)
 	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
+		t.Errorf("unexpected error: %v", err)
 	}
 
 	// Initially, result should not be available immediately
@@ -287,11 +287,11 @@ func TestAsyncTool_Execute(t *testing.T) {
 	isDone := executionDone
 	executionMu.Unlock()
 	if isDone {
-		t.Errorf("Expected executionDone to be false")
+		t.Errorf("expected executionDone to be false")
 	}
 	_, exists := asyncTool.GetResult(requestID)
 	if exists {
-		t.Errorf("Expected exists to be false")
+		t.Errorf("expected exists to be false")
 	}
 
 	// Wait for the operation to complete
@@ -302,11 +302,11 @@ func TestAsyncTool_Execute(t *testing.T) {
 	isDone = executionDone
 	executionMu.Unlock()
 	if !isDone {
-		t.Errorf("Expected executionDone to be true")
+		t.Errorf("expected executionDone to be true")
 	}
 	toolResult, exists := asyncTool.GetResult(requestID)
 	if !exists {
-		t.Errorf("Expected exists to be true")
+		t.Errorf("expected exists to be true")
 	}
 	if got, want := toolResult, "Long operation complete"; !cmp.Equal(got, want) {
 		t.Errorf("toolResult = %v, want %v", got, want)
@@ -328,7 +328,7 @@ func TestAsyncTool_ExecuteWithError(t *testing.T) {
 	// Execute the async tool
 	result, err := asyncTool.Execute(context.Background(), json.RawMessage(`{}`))
 	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
+		t.Errorf("unexpected error: %v", err)
 	}
 	if !strings.Contains(result, "Request ID:") {
 		t.Errorf("result does not contain %q", "Request ID:")
@@ -338,7 +338,7 @@ func TestAsyncTool_ExecuteWithError(t *testing.T) {
 	var requestID string
 	_, err = fmt.Sscanf(result, "Request ID: %s", &requestID)
 	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
+		t.Errorf("unexpected error: %v", err)
 	}
 
 	// Wait for operation to complete
@@ -347,7 +347,7 @@ func TestAsyncTool_ExecuteWithError(t *testing.T) {
 	// Result should be an error message
 	toolResult, exists := asyncTool.GetResult(requestID)
 	if !exists {
-		t.Errorf("Expected exists to be true")
+		t.Errorf("expected exists to be true")
 	}
 	if !strings.Contains(toolResult, "Error:") {
 		t.Errorf("toolResult does not contain %q", "Error:")
@@ -389,7 +389,7 @@ func TestToolRegistry(t *testing.T) {
 	// Get a tool by name
 	retrievedTool, exists := registry.Get("tool1")
 	if !exists {
-		t.Errorf("Expected exists to be true")
+		t.Errorf("expected exists to be true")
 	}
 	if got, want := retrievedTool.Name(), "tool1"; !cmp.Equal(got, want) {
 		t.Errorf("retrievedTool.Name( = %v, want %v", got, want)
@@ -398,7 +398,7 @@ func TestToolRegistry(t *testing.T) {
 	// Try to get a non-existent tool
 	_, exists = registry.Get("non_existent")
 	if exists {
-		t.Errorf("Expected exists to be false")
+		t.Errorf("expected exists to be false")
 	}
 
 	// Get all tools

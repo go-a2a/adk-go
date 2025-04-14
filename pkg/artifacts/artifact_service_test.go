@@ -49,7 +49,7 @@ func TestInMemoryArtifactService(t *testing.T) {
 		t.Fatalf("SaveArtifact failed: %v", err)
 	}
 	if version1 != 0 {
-		t.Errorf("Expected version 0, got %d", version1)
+		t.Errorf("expected version 0, got %d", version1)
 	}
 
 	version2, err := service.SaveArtifact(ctx, appName, userID, sessionID, filename, artifact2)
@@ -57,7 +57,7 @@ func TestInMemoryArtifactService(t *testing.T) {
 		t.Fatalf("SaveArtifact failed: %v", err)
 	}
 	if version2 != 1 {
-		t.Errorf("Expected version 1, got %d", version2)
+		t.Errorf("expected version 1, got %d", version2)
 	}
 
 	// Save user namespace artifact
@@ -66,7 +66,7 @@ func TestInMemoryArtifactService(t *testing.T) {
 		t.Fatalf("SaveArtifact failed for user namespace: %v", err)
 	}
 	if userVersion != 0 {
-		t.Errorf("Expected user namespace version 0, got %d", userVersion)
+		t.Errorf("expected user namespace version 0, got %d", userVersion)
 	}
 
 	// Test LoadArtifact
@@ -77,7 +77,7 @@ func TestInMemoryArtifactService(t *testing.T) {
 		t.Fatalf("LoadArtifact failed: %v", err)
 	}
 	if !cmp.Equal(loaded, artifact1) {
-		t.Errorf("Expected %v, got %v", artifact1, loaded)
+		t.Errorf("expected %v, got %v", artifact1, loaded)
 	}
 
 	// Load latest version
@@ -86,7 +86,7 @@ func TestInMemoryArtifactService(t *testing.T) {
 		t.Fatalf("LoadArtifact failed: %v", err)
 	}
 	if !cmp.Equal(loaded, artifact2) {
-		t.Errorf("Expected %v, got %v", artifact2, loaded)
+		t.Errorf("expected %v, got %v", artifact2, loaded)
 	}
 
 	// Load user namespace artifact
@@ -95,7 +95,7 @@ func TestInMemoryArtifactService(t *testing.T) {
 		t.Fatalf("LoadArtifact failed for user namespace: %v", err)
 	}
 	if !cmp.Equal(loaded, userArtifact) {
-		t.Errorf("Expected %v, got %v", userArtifact, loaded)
+		t.Errorf("expected %v, got %v", userArtifact, loaded)
 	}
 
 	// Test ListArtifactKeys
@@ -105,7 +105,7 @@ func TestInMemoryArtifactService(t *testing.T) {
 	}
 	expectedKeys := []string{filename, userFilename}
 	if !cmp.Equal(keys, expectedKeys) {
-		t.Errorf("Expected keys %v, got %v", expectedKeys, keys)
+		t.Errorf("expected keys %v, got %v", expectedKeys, keys)
 	}
 
 	// Test ListVersions
@@ -115,7 +115,7 @@ func TestInMemoryArtifactService(t *testing.T) {
 	}
 	expectedVersions := []int{0, 1}
 	if !cmp.Equal(versions, expectedVersions) {
-		t.Errorf("Expected versions %v, got %v", expectedVersions, versions)
+		t.Errorf("expected versions %v, got %v", expectedVersions, versions)
 	}
 
 	// Test DeleteArtifact
@@ -130,7 +130,7 @@ func TestInMemoryArtifactService(t *testing.T) {
 		t.Fatalf("LoadArtifact failed after deletion: %v", err)
 	}
 	if loaded != nil {
-		t.Errorf("Expected nil after deletion, got %v", loaded)
+		t.Errorf("expected nil after deletion, got %v", loaded)
 	}
 
 	// User artifact should still exist
@@ -139,6 +139,6 @@ func TestInMemoryArtifactService(t *testing.T) {
 		t.Fatalf("LoadArtifact failed for user namespace after deletion: %v", err)
 	}
 	if !cmp.Equal(loaded, userArtifact) {
-		t.Errorf("Expected %v after deletion of other artifact, got %v", userArtifact, loaded)
+		t.Errorf("expected %v after deletion of other artifact, got %v", userArtifact, loaded)
 	}
 }

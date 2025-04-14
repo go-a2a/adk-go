@@ -40,7 +40,7 @@ func TestGoogleModel(t *testing.T) {
 
 	for _, capability := range capabilities {
 		if !m.HasCapability(capability) {
-			t.Errorf("Expected model to have capability %v", capability)
+			t.Errorf("expected model to have capability %v", capability)
 		}
 	}
 
@@ -99,7 +99,7 @@ func TestGoogleModel(t *testing.T) {
 	}
 
 	if len(resp.ToolCalls) == 0 {
-		t.Errorf("Expected tool calls in response")
+		t.Errorf("expected tool calls in response")
 	}
 
 	// Test GenerateStream
@@ -114,6 +114,6 @@ func TestGoogleModel(t *testing.T) {
 	}
 
 	if len(streamResponses) == 0 {
-		t.Errorf("Expected stream responses")
+		t.Errorf("expected stream responses")
 	}
 }

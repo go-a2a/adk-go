@@ -60,7 +60,7 @@ func TestDefaultGenerateOptions(t *testing.T) {
 		t.Errorf("options.MaxTokens = %v, want %v", got, want)
 	}
 	if options.Stream {
-		t.Errorf("Expected options.Stream to be false")
+		t.Errorf("expected options.Stream to be false")
 	}
 }
 
@@ -82,7 +82,7 @@ func TestToolDefinitionFromJSON(t *testing.T) {
 
 	toolDef, err := model.ToolDefinitionFromJSON(jsonData)
 	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
+		t.Errorf("unexpected error: %v", err)
 	}
 
 	if got, want := toolDef.Name, "search"; !cmp.Equal(got, want) {
@@ -151,13 +151,13 @@ func TestToolDefinition_ToJSON(t *testing.T) {
 
 	jsonData, err := toolDef.ToJSON()
 	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
+		t.Errorf("unexpected error: %v", err)
 	}
 
 	// Parse JSON back into tool definition
 	parsedDef, err := model.ToolDefinitionFromJSON(jsonData)
 	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
+		t.Errorf("unexpected error: %v", err)
 	}
 
 	if got, want := parsedDef.Name, toolDef.Name; !cmp.Equal(got, want) {

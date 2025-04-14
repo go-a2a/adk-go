@@ -87,7 +87,7 @@ func TestInMemoryMemoryService(t *testing.T) {
 
 			// Check result count
 			if len(res.Memories) != tc.wantResults {
-				t.Errorf("Expected %d memory results, got %d", tc.wantResults, len(res.Memories))
+				t.Errorf("expected %d memory results, got %d", tc.wantResults, len(res.Memories))
 			}
 
 			// Check content if results expected
@@ -106,7 +106,7 @@ func TestInMemoryMemoryService(t *testing.T) {
 				}
 
 				if !foundMatch {
-					t.Errorf("Expected to find content containing %q in results", tc.wantContent)
+					t.Errorf("expected to find content containing %q in results", tc.wantContent)
 				}
 			}
 		})
@@ -203,14 +203,14 @@ func TestVectorMemoryService(t *testing.T) {
 			// Check for expected sessions
 			for _, sid := range tc.wantSessions {
 				if !foundSessions[sid] {
-					t.Errorf("Expected to find session %s in results", sid)
+					t.Errorf("expected to find session %s in results", sid)
 				}
 			}
 
 			// Check sessions that should not be present
 			for _, sid := range tc.wantNotInSessions {
 				if foundSessions[sid] {
-					t.Errorf("Expected NOT to find session %s in results", sid)
+					t.Errorf("expected NOT to find session %s in results", sid)
 				}
 			}
 		})
@@ -314,7 +314,7 @@ func TestKnowledgeGraphMemoryService(t *testing.T) {
 			}
 
 			if totalEvents != tc.wantEvents {
-				t.Errorf("Expected %d total events, got %d", tc.wantEvents, totalEvents)
+				t.Errorf("expected %d total events, got %d", tc.wantEvents, totalEvents)
 			}
 		})
 	}
@@ -333,17 +333,17 @@ func TestMemoryResult(t *testing.T) {
 
 	// Test session ID
 	if result.SessionID != "test-session" {
-		t.Errorf("Expected session ID 'test-session', got '%s'", result.SessionID)
+		t.Errorf("expected session ID 'test-session', got '%s'", result.SessionID)
 	}
 
 	// Test events
 	if len(result.Events) != 2 {
-		t.Errorf("Expected 2 events, got %d", len(result.Events))
+		t.Errorf("expected 2 events, got %d", len(result.Events))
 	}
 
 	// Test event content
 	if result.Events[0].Content != "Hello" {
-		t.Errorf("Expected first event content 'Hello', got '%s'", result.Events[0].Content)
+		t.Errorf("expected first event content 'Hello', got '%s'", result.Events[0].Content)
 	}
 }
 
@@ -369,7 +369,7 @@ func TestSearchMemoryResponse(t *testing.T) {
 
 	// Test memories count
 	if len(response.Memories) != 2 {
-		t.Errorf("Expected 2 memories, got %d", len(response.Memories))
+		t.Errorf("expected 2 memories, got %d", len(response.Memories))
 	}
 
 	// Test memory session IDs
