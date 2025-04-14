@@ -1,16 +1,5 @@
-// Copyright 2024 The ADK Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2025 The adk-go Authors
+// SPDX-License-Identifier: Apache-2.0
 
 package tool_test
 
@@ -19,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -253,6 +243,7 @@ func TestNewAsyncTool(t *testing.T) {
 
 func TestAsyncTool_Execute(t *testing.T) {
 	executionDone := false
+	var executionMu sync.Mutex
 
 	baseTool := tool.NewBaseTool(
 		"long_running",
@@ -261,7 +252,9 @@ func TestAsyncTool_Execute(t *testing.T) {
 		func(ctx context.Context, args json.RawMessage) (string, error) {
 			// Simulate long-running task
 			time.Sleep(200 * time.Millisecond)
+			executionMu.Lock()
 			executionDone = true
+			executionMu.Unlock()
 			return "Long operation complete", nil
 		},
 	)
@@ -290,7 +283,10 @@ func TestAsyncTool_Execute(t *testing.T) {
 	}
 
 	// Initially, result should not be available immediately
-	if executionDone {
+	executionMu.Lock()
+	isDone := executionDone
+	executionMu.Unlock()
+	if isDone {
 		t.Errorf("Expected executionDone to be false")
 	}
 	_, exists := asyncTool.GetResult(requestID)
@@ -302,7 +298,10 @@ func TestAsyncTool_Execute(t *testing.T) {
 	time.Sleep(300 * time.Millisecond)
 
 	// Now result should be available
-	if !executionDone {
+	executionMu.Lock()
+	isDone = executionDone
+	executionMu.Unlock()
+	if !isDone {
 		t.Errorf("Expected executionDone to be true")
 	}
 	toolResult, exists := asyncTool.GetResult(requestID)

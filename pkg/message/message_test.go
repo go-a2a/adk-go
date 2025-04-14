@@ -1,16 +1,5 @@
-// Copyright 2024 The ADK Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2025 The adk-go Authors
+// SPDX-License-Identifier: Apache-2.0
 
 package message_test
 
@@ -27,30 +16,54 @@ func TestNewUserMessage(t *testing.T) {
 	content := "Hello, world!"
 	msg := message.NewUserMessage(content)
 
-	assert.Equal(t, message.RoleUser, msg.Role)
-	assert.Equal(t, content, msg.Content)
-	assert.NotEmpty(t, msg.ID)
-	assert.False(t, msg.Timestamp.IsZero())
+	if diff := cmp.Diff(message.RoleUser, msg.Role); diff != "" {
+		t.Errorf("incorrect role (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff(content, msg.Content); diff != "" {
+		t.Errorf("incorrect content (-want +got):\n%s", diff)
+	}
+	if msg.ID == "" {
+		t.Error("expected non-empty ID")
+	}
+	if msg.Timestamp.IsZero() {
+		t.Error("expected non-zero timestamp")
+	}
 }
 
 func TestNewSystemMessage(t *testing.T) {
 	content := "System instruction"
 	msg := message.NewSystemMessage(content)
 
-	assert.Equal(t, message.RoleSystem, msg.Role)
-	assert.Equal(t, content, msg.Content)
-	assert.NotEmpty(t, msg.ID)
-	assert.False(t, msg.Timestamp.IsZero())
+	if diff := cmp.Diff(message.RoleSystem, msg.Role); diff != "" {
+		t.Errorf("incorrect role (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff(content, msg.Content); diff != "" {
+		t.Errorf("incorrect content (-want +got):\n%s", diff)
+	}
+	if msg.ID == "" {
+		t.Error("expected non-empty ID")
+	}
+	if msg.Timestamp.IsZero() {
+		t.Error("expected non-zero timestamp")
+	}
 }
 
 func TestNewAssistantMessage(t *testing.T) {
 	content := "Assistant response"
 	msg := message.NewAssistantMessage(content)
 
-	assert.Equal(t, message.RoleAssistant, msg.Role)
-	assert.Equal(t, content, msg.Content)
-	assert.NotEmpty(t, msg.ID)
-	assert.False(t, msg.Timestamp.IsZero())
+	if diff := cmp.Diff(message.RoleAssistant, msg.Role); diff != "" {
+		t.Errorf("incorrect role (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff(content, msg.Content); diff != "" {
+		t.Errorf("incorrect content (-want +got):\n%s", diff)
+	}
+	if msg.ID == "" {
+		t.Error("expected non-empty ID")
+	}
+	if msg.Timestamp.IsZero() {
+		t.Error("expected non-zero timestamp")
+	}
 }
 
 func TestNewToolResultMessage(t *testing.T) {
@@ -58,12 +71,25 @@ func TestNewToolResultMessage(t *testing.T) {
 	content := "Tool result content"
 	msg := message.NewToolResultMessage(callID, content)
 
-	assert.Equal(t, message.RoleTool, msg.Role)
-	assert.NotEmpty(t, msg.ID)
-	assert.False(t, msg.Timestamp.IsZero())
-	assert.Len(t, msg.ToolResults, 1)
-	assert.Equal(t, callID, msg.ToolResults[0].CallID)
-	assert.Equal(t, content, msg.ToolResults[0].Content)
+	if diff := cmp.Diff(message.RoleTool, msg.Role); diff != "" {
+		t.Errorf("incorrect role (-want +got):\n%s", diff)
+	}
+	if msg.ID == "" {
+		t.Error("expected non-empty ID")
+	}
+	if msg.Timestamp.IsZero() {
+		t.Error("expected non-zero timestamp")
+	}
+	if len(msg.ToolResults) != 1 {
+		t.Errorf("expected 1 tool result, got %d", len(msg.ToolResults))
+	} else {
+		if diff := cmp.Diff(callID, msg.ToolResults[0].CallID); diff != "" {
+			t.Errorf("incorrect callID (-want +got):\n%s", diff)
+		}
+		if diff := cmp.Diff(content, msg.ToolResults[0].Content); diff != "" {
+			t.Errorf("incorrect content (-want +got):\n%s", diff)
+		}
+	}
 }
 
 func TestNewAssistantToolCallMessage(t *testing.T) {
@@ -82,11 +108,21 @@ func TestNewAssistantToolCallMessage(t *testing.T) {
 
 	msg := message.NewAssistantToolCallMessage(toolCalls)
 
-	assert.Equal(t, message.RoleAssistant, msg.Role)
-	assert.NotEmpty(t, msg.ID)
-	assert.False(t, msg.Timestamp.IsZero())
-	assert.Len(t, msg.ToolCalls, 2)
-	assert.Equal(t, toolCalls, msg.ToolCalls)
+	if diff := cmp.Diff(message.RoleAssistant, msg.Role); diff != "" {
+		t.Errorf("incorrect role (-want +got):\n%s", diff)
+	}
+	if msg.ID == "" {
+		t.Error("expected non-empty ID")
+	}
+	if msg.Timestamp.IsZero() {
+		t.Error("expected non-zero timestamp")
+	}
+	if len(msg.ToolCalls) != 2 {
+		t.Errorf("expected 2 tool calls, got %d", len(msg.ToolCalls))
+	}
+	if diff := cmp.Diff(toolCalls, msg.ToolCalls); diff != "" {
+		t.Errorf("incorrect tool calls (-want +got):\n%s", diff)
+	}
 }
 
 func TestToJSON(t *testing.T) {
@@ -105,22 +141,45 @@ func TestToJSON(t *testing.T) {
 	}
 
 	jsonData, err := msg.ToJSON()
-	assert.NoError(t, err)
-	assert.NotEmpty(t, jsonData)
+	if err != nil {
+		t.Fatalf("Failed to marshal message to JSON: %v", err)
+	}
+	if len(jsonData) == 0 {
+		t.Error("expected non-empty JSON data")
+	}
 
 	// Parse back into a message
 	parsedMsg, err := message.MessageFromJSON(jsonData)
-	assert.NoError(t, err)
+	if err != nil {
+		t.Fatalf("Failed to unmarshal message from JSON: %v", err)
+	}
 
 	// Verify fields
-	assert.Equal(t, msg.Role, parsedMsg.Role)
-	assert.Equal(t, msg.Content, parsedMsg.Content)
-	assert.Equal(t, msg.ID, parsedMsg.ID)
-	assert.Equal(t, msg.Timestamp.Unix(), parsedMsg.Timestamp.Unix())
-	assert.Len(t, parsedMsg.ToolCalls, 1)
-	assert.Equal(t, msg.ToolCalls[0].ID, parsedMsg.ToolCalls[0].ID)
-	assert.Equal(t, msg.ToolCalls[0].Name, parsedMsg.ToolCalls[0].Name)
-	assert.Equal(t, string(msg.ToolCalls[0].Args), string(parsedMsg.ToolCalls[0].Args))
+	if diff := cmp.Diff(msg.Role, parsedMsg.Role); diff != "" {
+		t.Errorf("incorrect role (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff(msg.Content, parsedMsg.Content); diff != "" {
+		t.Errorf("incorrect content (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff(msg.ID, parsedMsg.ID); diff != "" {
+		t.Errorf("incorrect ID (-want +got):\n%s", diff)
+	}
+	if msg.Timestamp.Unix() != parsedMsg.Timestamp.Unix() {
+		t.Errorf("incorrect timestamp: want %v, got %v", msg.Timestamp.Unix(), parsedMsg.Timestamp.Unix())
+	}
+	if len(parsedMsg.ToolCalls) != 1 {
+		t.Errorf("expected 1 tool call, got %d", len(parsedMsg.ToolCalls))
+		return
+	}
+	if diff := cmp.Diff(msg.ToolCalls[0].ID, parsedMsg.ToolCalls[0].ID); diff != "" {
+		t.Errorf("incorrect tool call ID (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff(msg.ToolCalls[0].Name, parsedMsg.ToolCalls[0].Name); diff != "" {
+		t.Errorf("incorrect tool call name (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff(string(msg.ToolCalls[0].Args), string(parsedMsg.ToolCalls[0].Args)); diff != "" {
+		t.Errorf("incorrect tool call args (-want +got):\n%s", diff)
+	}
 }
 
 func TestMessageFromJSON(t *testing.T) {
@@ -140,15 +199,32 @@ func TestMessageFromJSON(t *testing.T) {
 	}`)
 
 	msg, err := message.MessageFromJSON(jsonData)
-	assert.NoError(t, err)
+	if err != nil {
+		t.Fatalf("Failed to unmarshal message from JSON: %v", err)
+	}
 
-	assert.Equal(t, message.RoleAssistant, msg.Role)
-	assert.Equal(t, "Test content", msg.Content)
-	assert.Equal(t, "msg_123", msg.ID)
-	assert.Equal(t, 2023, msg.Timestamp.Year())
-	assert.Len(t, msg.ToolCalls, 1)
-	assert.Equal(t, "tool_call_1", msg.ToolCalls[0].ID)
-	assert.Equal(t, "search", msg.ToolCalls[0].Name)
+	if diff := cmp.Diff(message.RoleAssistant, msg.Role); diff != "" {
+		t.Errorf("incorrect role (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff("Test content", msg.Content); diff != "" {
+		t.Errorf("incorrect content (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff("msg_123", msg.ID); diff != "" {
+		t.Errorf("incorrect ID (-want +got):\n%s", diff)
+	}
+	if msg.Timestamp.Year() != 2023 {
+		t.Errorf("incorrect year: want 2023, got %d", msg.Timestamp.Year())
+	}
+	if len(msg.ToolCalls) != 1 {
+		t.Errorf("expected 1 tool call, got %d", len(msg.ToolCalls))
+		return
+	}
+	if diff := cmp.Diff("tool_call_1", msg.ToolCalls[0].ID); diff != "" {
+		t.Errorf("incorrect tool call ID (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff("search", msg.ToolCalls[0].Name); diff != "" {
+		t.Errorf("incorrect tool call name (-want +got):\n%s", diff)
+	}
 }
 
 func TestClone(t *testing.T) {
@@ -175,24 +251,52 @@ func TestClone(t *testing.T) {
 	clone := original.Clone()
 
 	// Verify all fields are copied
-	assert.Equal(t, original.Role, clone.Role)
-	assert.Equal(t, original.Content, clone.Content)
-	assert.Equal(t, original.ID, clone.ID)
-	assert.Equal(t, original.Timestamp, clone.Timestamp)
-	assert.Len(t, clone.ToolCalls, 1)
-	assert.Equal(t, original.ToolCalls[0].ID, clone.ToolCalls[0].ID)
-	assert.Equal(t, original.ToolCalls[0].Name, clone.ToolCalls[0].Name)
-	assert.Equal(t, string(original.ToolCalls[0].Args), string(clone.ToolCalls[0].Args))
-	assert.Len(t, clone.ToolResults, 1)
-	assert.Equal(t, original.ToolResults[0].CallID, clone.ToolResults[0].CallID)
-	assert.Equal(t, original.ToolResults[0].Content, clone.ToolResults[0].Content)
+	if diff := cmp.Diff(original.Role, clone.Role); diff != "" {
+		t.Errorf("incorrect role (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff(original.Content, clone.Content); diff != "" {
+		t.Errorf("incorrect content (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff(original.ID, clone.ID); diff != "" {
+		t.Errorf("incorrect ID (-want +got):\n%s", diff)
+	}
+	if !original.Timestamp.Equal(clone.Timestamp) {
+		t.Errorf("incorrect timestamp: want %v, got %v", original.Timestamp, clone.Timestamp)
+	}
+	if len(clone.ToolCalls) != 1 {
+		t.Errorf("expected 1 tool call, got %d", len(clone.ToolCalls))
+		return
+	}
+	if diff := cmp.Diff(original.ToolCalls[0].ID, clone.ToolCalls[0].ID); diff != "" {
+		t.Errorf("incorrect tool call ID (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff(original.ToolCalls[0].Name, clone.ToolCalls[0].Name); diff != "" {
+		t.Errorf("incorrect tool call name (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff(string(original.ToolCalls[0].Args), string(clone.ToolCalls[0].Args)); diff != "" {
+		t.Errorf("incorrect tool call args (-want +got):\n%s", diff)
+	}
+	if len(clone.ToolResults) != 1 {
+		t.Errorf("expected 1 tool result, got %d", len(clone.ToolResults))
+		return
+	}
+	if diff := cmp.Diff(original.ToolResults[0].CallID, clone.ToolResults[0].CallID); diff != "" {
+		t.Errorf("incorrect tool result callID (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff(original.ToolResults[0].Content, clone.ToolResults[0].Content); diff != "" {
+		t.Errorf("incorrect tool result content (-want +got):\n%s", diff)
+	}
 
 	// Verify deep copy by modifying the clone
 	clone.ToolCalls[0].Name = "modified"
 	clone.ToolResults[0].Content = "modified"
 
-	assert.NotEqual(t, clone.ToolCalls[0].Name, original.ToolCalls[0].Name)
-	assert.NotEqual(t, clone.ToolResults[0].Content, original.ToolResults[0].Content)
+	if original.ToolCalls[0].Name == clone.ToolCalls[0].Name {
+		t.Error("expected tool call name to be different after modification")
+	}
+	if original.ToolResults[0].Content == clone.ToolResults[0].Content {
+		t.Error("expected tool result content to be different after modification")
+	}
 }
 
 func TestGetToolByName(t *testing.T) {
@@ -213,13 +317,21 @@ func TestGetToolByName(t *testing.T) {
 
 	// Find existing tool
 	tool, found := msg.GetToolByName("calculator")
-	assert.True(t, found)
-	assert.Equal(t, "tool_call_2", tool.ID)
-	assert.Equal(t, "calculator", tool.Name)
+	if !found {
+		t.Error("expected to find tool with name 'calculator'")
+	}
+	if diff := cmp.Diff("tool_call_2", tool.ID); diff != "" {
+		t.Errorf("incorrect tool ID (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff("calculator", tool.Name); diff != "" {
+		t.Errorf("incorrect tool name (-want +got):\n%s", diff)
+	}
 
 	// Try to find non-existent tool
 	_, found = msg.GetToolByName("non_existent")
-	assert.False(t, found)
+	if found {
+		t.Error("expected not to find tool with name 'non_existent'")
+	}
 }
 
 func TestGetToolResultByCallID(t *testing.T) {
@@ -238,11 +350,19 @@ func TestGetToolResultByCallID(t *testing.T) {
 
 	// Find existing tool result
 	result, found := msg.GetToolResultByCallID("tool_call_2")
-	assert.True(t, found)
-	assert.Equal(t, "tool_call_2", result.CallID)
-	assert.Equal(t, "Calculation result: 2", result.Content)
+	if !found {
+		t.Error("expected to find tool result with callID 'tool_call_2'")
+	}
+	if diff := cmp.Diff("tool_call_2", result.CallID); diff != "" {
+		t.Errorf("incorrect result callID (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff("Calculation result: 2", result.Content); diff != "" {
+		t.Errorf("incorrect result content (-want +got):\n%s", diff)
+	}
 
 	// Try to find non-existent tool result
 	_, found = msg.GetToolResultByCallID("non_existent")
-	assert.False(t, found)
+	if found {
+		t.Error("expected not to find tool result with callID 'non_existent'")
+	}
 }

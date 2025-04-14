@@ -68,7 +68,7 @@ import (
 	"github.com/go-a2a/adk-go/pkg/models"
 	"github.com/go-a2a/adk-go/pkg/observability"
 	"github.com/go-a2a/adk-go/pkg/runner"
-	"github.com/go-a2a/adk-go/pkg/tools"
+	"github.com/go-a2a/adk-go/pkg/tool/tools"
 )
 
 func main() {

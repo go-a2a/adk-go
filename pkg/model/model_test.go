@@ -1,16 +1,5 @@
-// Copyright 2024 The ADK Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2025 The adk-go Authors
+// SPDX-License-Identifier: Apache-2.0
 
 package model_test
 
@@ -19,7 +8,6 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/google/go-cmp/cmp"
-	"github.com/stretchr/testify/require"
 
 	"github.com/go-a2a/adk-go/pkg/model"
 )
@@ -107,7 +95,9 @@ func TestToolDefinitionFromJSON(t *testing.T) {
 	paramSchema := toolDef.Parameters
 	// Use sonic to convert to JSON and back for comparison of nested maps
 	paramJSON, err := sonic.Marshal(paramSchema)
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatalf("Failed to marshal parameters: %v", err)
+	}
 
 	var expectedParams model.ToolParameterSpec
 	err = sonic.Unmarshal([]byte(`{
@@ -120,12 +110,27 @@ func TestToolDefinitionFromJSON(t *testing.T) {
 		},
 		"required": ["query"]
 	}`), &expectedParams)
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatalf("Failed to unmarshal expected parameters: %v", err)
+	}
 
 	expectedJSON, err := sonic.Marshal(expectedParams)
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatalf("Failed to marshal expected parameters: %v", err)
+	}
 
-	assert.JSONEq(t, string(expectedJSON), string(paramJSON))
+	// Compare JSON representations
+	var gotMap, expectedMap map[string]any
+	if err := sonic.Unmarshal(paramJSON, &gotMap); err != nil {
+		t.Fatalf("Failed to unmarshal paramJSON: %v", err)
+	}
+	if err := sonic.Unmarshal(expectedJSON, &expectedMap); err != nil {
+		t.Fatalf("Failed to unmarshal expectedJSON: %v", err)
+	}
+
+	if diff := cmp.Diff(expectedMap, gotMap); diff != "" {
+		t.Errorf("parameter maps mismatch (-want +got):\n%s", diff)
+	}
 }
 
 func TestToolDefinition_ToJSON(t *testing.T) {
@@ -164,10 +169,25 @@ func TestToolDefinition_ToJSON(t *testing.T) {
 
 	// Compare parameters (need to convert to JSON for deep comparison of maps)
 	toolDefParamsJSON, err := sonic.Marshal(toolDef.Parameters)
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatalf("Failed to marshal toolDef parameters: %v", err)
+	}
 
 	parsedDefParamsJSON, err := sonic.Marshal(parsedDef.Parameters)
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatalf("Failed to marshal parsedDef parameters: %v", err)
+	}
 
-	assert.JSONEq(t, string(toolDefParamsJSON), string(parsedDefParamsJSON))
+	// Compare JSON representations
+	var origMap, parsedMap map[string]any
+	if err := sonic.Unmarshal(toolDefParamsJSON, &origMap); err != nil {
+		t.Fatalf("Failed to unmarshal toolDefParamsJSON: %v", err)
+	}
+	if err := sonic.Unmarshal(parsedDefParamsJSON, &parsedMap); err != nil {
+		t.Fatalf("Failed to unmarshal parsedDefParamsJSON: %v", err)
+	}
+
+	if diff := cmp.Diff(origMap, parsedMap); diff != "" {
+		t.Errorf("parameter maps mismatch (-want +got):\n%s", diff)
+	}
 }

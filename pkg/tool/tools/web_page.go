@@ -1,21 +1,11 @@
-// Copyright 2024 The ADK Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2025 The adk-go Authors
+// SPDX-License-Identifier: Apache-2.0
 
 package tools
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log/slog"
@@ -209,7 +199,7 @@ func NewLoadWebPageTool() *tool.BaseTool {
 		"required": []string{"url"},
 	}
 
-	executeFn := func(ctx context.Context, args sonic.RawMessage) (string, error) {
+	executeFn := func(ctx context.Context, args json.RawMessage) (string, error) {
 		// Start span for load_web_page
 		ctx, span := observability.StartSpan(ctx, "tool.load_web_page")
 		defer span.End()
@@ -230,7 +220,7 @@ func NewLoadWebPageTool() *tool.BaseTool {
 		// Validate URL
 		parsedURL, err := url.Parse(params.URL)
 		if err != nil {
-			observability.Error(ctx, err, "Invalid URL", slog.String("url", params.URL))
+			observability.Error(ctx, err, "invalid URL", slog.String("url", params.URL))
 			return "", fmt.Errorf("invalid URL: %w", err)
 		}
 
@@ -377,7 +367,7 @@ func NewLoadWebPageTool() *tool.BaseTool {
 
 	return tool.NewBaseTool(
 		"load_web_page",
-		"Load a web page from a URL. Use this when you need to retrieve information from a specific website.",
+		"Loads content from a web page. Use this when you need to retrieve information from a specific website.",
 		paramSchema,
 		executeFn,
 	)
