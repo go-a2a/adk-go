@@ -1,5 +1,5 @@
 // Copyright 2025 The go-a2a Authors
-// Licensed under the Apache License, Version 2.0
+// SPDX-License-Identifier: Apache-2.0
 
 // Package planner provides planning capabilities for AI agents.
 // It defines interfaces and implementations for different planning strategies
