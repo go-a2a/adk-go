@@ -1,4 +1,4 @@
-// Copyright 2025 The adk-go Authors
+// Copyright 2025 The go-a2a Authors
 // SPDX-License-Identifier: Apache-2.0
 
 package tool
