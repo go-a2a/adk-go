@@ -62,7 +62,7 @@ func (a *SequentialAgent) Process(ctx context.Context, msg message.Message) (mes
 
 	for i, agent := range a.agents {
 		span.SetAttributes(attribute.Int("agent.current_step", i))
-		observability.Info(ctx, "SequentialAgent processing step",
+		observability.Logger(ctx).Info("SequentialAgent processing step",
 			slog.Int("step", i),
 			slog.String("agent", agent.Name()))
 
