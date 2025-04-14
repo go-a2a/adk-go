@@ -1,4 +1,4 @@
-// Copyright 2025 The adk-go Authors
+// Copyright 2025 The go-a2a Authors
 // SPDX-License-Identifier: Apache-2.0
 
 package models
@@ -109,8 +109,8 @@ func GetModel(modelID string) (model.Model, error) {
 
 // RegisterWithCapabilities is a helper function to create a model factory with specific capabilities.
 func RegisterWithCapabilities(pattern string, provider model.ModelProvider, capabilities []model.ModelCapability,
-	generatorFunc func(modelID string, messages []message.Message, opts model.GenerateOptions) (message.Message, error)) error {
-
+	generatorFunc func(modelID string, messages []message.Message, opts model.GenerateOptions) (message.Message, error),
+) error {
 	return Register(pattern, func(modelID string) (model.Model, error) {
 		return NewBaseModel(
 			modelID,
