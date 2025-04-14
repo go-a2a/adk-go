@@ -16,20 +16,16 @@ package auth
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
-	"sync"
 	"time"
-)
 
-// DefaultGCPMetadataHost is the host where the GCP metadata server runs.
-const DefaultGCPMetadataHost = "metadata.google.internal"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
+)
 
 // GCPMetadataCredentials represents credentials obtained from the GCP metadata server.
 type GCPMetadataCredentials struct {
-	metadataURL string
+	tokenSource oauth2.TokenSource
 }
 
 // Type returns the type of these credentials.
@@ -37,90 +33,37 @@ func (g *GCPMetadataCredentials) Type() string {
 	return "gcp_metadata"
 }
 
-// GCPMetadataAuthenticator uses the GCP metadata server for authentication.
-type GCPMetadataAuthenticator struct {
-	credentials *GCPMetadataCredentials
-	scopes      []string
-	tokenMu     sync.Mutex
-	token       string
-	tokenExpiry time.Time
-}
-
 // newGCPMetadataAuthenticator creates a new authenticator that uses the GCP metadata server.
 func newGCPMetadataAuthenticator(scopes ...string) (*GoogleAuthenticator, error) {
-	// Check if metadata server is available
-	if !isRunningOnGCP() {
-		return nil, fmt.Errorf("not running on GCP")
+	// Check if the code is running on GCP and try to get a token source
+	tokenSource, err := google.DefaultTokenSource(context.Background(), scopes...)
+	if err != nil {
+		return nil, fmt.Errorf("getting default token source: %w", err)
+	}
+
+	// Check if token source is valid by trying to get a token
+	_, err = tokenSource.Token()
+	if err != nil {
+		return nil, fmt.Errorf("validating token source: %w", err)
 	}
 
 	creds := &GCPMetadataCredentials{
-		metadataURL: fmt.Sprintf("http://%s/computeMetadata/v1/instance/service-accounts/default/token", DefaultGCPMetadataHost),
+		tokenSource: tokenSource,
 	}
 
 	return &GoogleAuthenticator{
 		credentials: creds,
 		scopes:      scopes,
+		tokenSource: tokenSource,
 	}, nil
 }
 
-// isRunningOnGCP checks if the code is running on GCP by making a request to the metadata server.
-func isRunningOnGCP() bool {
-	client := &http.Client{
-		Timeout: 500 * time.Millisecond,
-	}
-
-	req, err := http.NewRequest("GET", fmt.Sprintf("http://%s", DefaultGCPMetadataHost), nil)
-	if err != nil {
-		return false
-	}
-	req.Header.Set("Metadata-Flavor", "Google")
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return false
-	}
-	defer resp.Body.Close()
-
-	return resp.StatusCode == http.StatusOK
-}
-
-// GetAccessToken fetches a token from the GCP metadata server.
+// getAccessToken gets a token from the GCP metadata server.
 func (g *GCPMetadataCredentials) getAccessToken(ctx context.Context) (string, time.Time, error) {
-	req, err := http.NewRequestWithContext(ctx, "GET", g.metadataURL, nil)
+	token, err := g.tokenSource.Token()
 	if err != nil {
-		return "", time.Time{}, fmt.Errorf("creating request: %w", err)
+		return "", time.Time{}, fmt.Errorf("getting token from metadata server: %w", err)
 	}
 
-	// Required header for metadata server requests
-	req.Header.Set("Metadata-Flavor", "Google")
-
-	client := &http.Client{Timeout: 5 * time.Second}
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", time.Time{}, fmt.Errorf("token request failed: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return "", time.Time{}, fmt.Errorf("metadata server returned status code: %d", resp.StatusCode)
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", time.Time{}, fmt.Errorf("reading response body: %w", err)
-	}
-
-	var tokenResp struct {
-		AccessToken string `json:"access_token"`
-		ExpiresIn   int    `json:"expires_in"`
-		TokenType   string `json:"token_type"`
-	}
-
-	if err := json.Unmarshal(body, &tokenResp); err != nil {
-		return "", time.Time{}, fmt.Errorf("parsing token response: %w", err)
-	}
-
-	expiryTime := time.Now().Add(time.Duration(tokenResp.ExpiresIn) * time.Second)
-
-	return tokenResp.AccessToken, expiryTime, nil
+	return token.AccessToken, token.Expiry, nil
 }

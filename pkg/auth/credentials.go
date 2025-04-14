@@ -81,7 +81,7 @@ func (o *OAuth2Auth) Type() string {
 
 // ServiceAccountCredentials represents service account credentials.
 type ServiceAccountCredentials struct {
-	Type                string `json:"type"`
+	CredentialType      string `json:"type"`
 	ProjectID           string `json:"project_id"`
 	PrivateKeyID        string `json:"private_key_id"`
 	PrivateKey          string `json:"private_key"`

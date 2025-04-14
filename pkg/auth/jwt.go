@@ -15,75 +15,44 @@
 package auth
 
 import (
-	"crypto"
-	"crypto/rand"
+	"context"
 	"crypto/rsa"
-	"crypto/sha256"
 	"crypto/x509"
-	"encoding/base64"
-	"encoding/json"
 	"encoding/pem"
 	"fmt"
-	"strings"
 	"time"
+
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/jwt"
 )
 
-// createSignedJWT creates a signed JWT for service account authentication.
-func createSignedJWT(creds *ServiceAccountCredentials, scopes []string) (string, error) {
-	// Parse the private key
-	privateKey, err := parsePrivateKey(creds.PrivateKey)
+// createJWTConfig creates a JWT configuration for service account authentication.
+func createJWTConfig(creds *ServiceAccountCredentials, scopes []string) (*jwt.Config, error) {
+	// Check if the private key is valid
+	_, err := parsePrivateKey(creds.PrivateKey)
 	if err != nil {
-		return "", fmt.Errorf("failed to parse private key: %w", err)
+		return nil, fmt.Errorf("failed to parse private key: %w", err)
 	}
 
-	// Create the JWT header
-	header := map[string]string{
-		"alg": "RS256",
-		"typ": "JWT",
-		"kid": creds.PrivateKeyID,
+	config := &jwt.Config{
+		Email:      creds.ClientEmail,
+		PrivateKey: []byte(creds.PrivateKey),
+		Subject:    creds.ClientEmail,
+		TokenURL:   creds.TokenURI,
+		Scopes:     scopes,
 	}
 
-	// Create the JWT claim set
-	now := time.Now()
-	exp := now.Add(time.Hour)
-	claims := map[string]any{
-		"iss":   creds.ClientEmail,
-		"sub":   creds.ClientEmail,
-		"scope": strings.Join(scopes, " "),
-		"aud":   creds.TokenURI,
-		"exp":   exp.Unix(),
-		"iat":   now.Unix(),
-	}
+	return config, nil
+}
 
-	// Encode header and claims
-	headerJSON, err := json.Marshal(header)
+// getJWTTokenSource creates a token source from service account credentials.
+func getJWTTokenSource(creds *ServiceAccountCredentials, scopes []string) (oauth2.TokenSource, error) {
+	config, err := createJWTConfig(creds, scopes)
 	if err != nil {
-		return "", fmt.Errorf("failed to encode JWT header: %w", err)
+		return nil, fmt.Errorf("creating JWT config: %w", err)
 	}
 
-	claimsJSON, err := json.Marshal(claims)
-	if err != nil {
-		return "", fmt.Errorf("failed to encode JWT claims: %w", err)
-	}
-
-	// Create signature input (base64url-encoded header + "." + base64url-encoded claims)
-	headerEncoded := base64.RawURLEncoding.EncodeToString(headerJSON)
-	claimsEncoded := base64.RawURLEncoding.EncodeToString(claimsJSON)
-	signingInput := headerEncoded + "." + claimsEncoded
-
-	// Create signature
-	hashed := sha256.Sum256([]byte(signingInput))
-	signature, err := rsa.SignPKCS1v15(rand.Reader, privateKey, crypto.SHA256, hashed[:])
-	if err != nil {
-		return "", fmt.Errorf("failed to sign JWT: %w", err)
-	}
-
-	// Encode signature
-	signatureEncoded := base64.RawURLEncoding.EncodeToString(signature)
-
-	// Create complete JWT
-	jwt := signingInput + "." + signatureEncoded
-	return jwt, nil
+	return config.TokenSource(context.Background()), nil
 }
 
 // parsePrivateKey parses a PEM encoded private key.
@@ -108,4 +77,14 @@ func parsePrivateKey(pemKey string) (*rsa.PrivateKey, error) {
 	}
 
 	return rsaKey, nil
+}
+
+// tokenSourceToPair converts an oauth2.TokenSource to a token string and expiry time.
+func tokenSourceToPair(ctx context.Context, ts oauth2.TokenSource) (string, time.Time, error) {
+	token, err := ts.Token()
+	if err != nil {
+		return "", time.Time{}, fmt.Errorf("getting token: %w", err)
+	}
+
+	return token.AccessToken, token.Expiry, nil
 }

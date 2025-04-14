@@ -16,22 +16,21 @@ package auth
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
 	"log/slog"
 	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 	"time"
+
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
 )
 
 const (
-	googleOAuthTokenURL = "https://oauth2.googleapis.com/token"
-	defaultScope        = "https://www.googleapis.com/auth/cloud-platform"
+	defaultScope = "https://www.googleapis.com/auth/cloud-platform"
 )
 
 // GoogleAuthenticator implements the Authenticator interface for Google services.
@@ -41,6 +40,7 @@ type GoogleAuthenticator struct {
 	tokenMu     sync.Mutex
 	token       string
 	tokenExpiry time.Time
+	tokenSource oauth2.TokenSource
 }
 
 // NewGoogleAuthenticator creates a new GoogleAuthenticator with the given credentials.
@@ -54,10 +54,19 @@ func NewGoogleAuthenticator(credentials Credentials, scopes ...string) (*GoogleA
 		scopes = []string{defaultScope}
 	}
 
-	return &GoogleAuthenticator{
+	auth := &GoogleAuthenticator{
 		credentials: credentials,
 		scopes:      scopes,
-	}, nil
+	}
+
+	// Create token source based on credential type
+	ts, err := auth.createTokenSource(context.Background())
+	if err != nil {
+		return nil, fmt.Errorf("creating token source: %w", err)
+	}
+	auth.tokenSource = ts
+
+	return auth, nil
 }
 
 // NewGoogleAuthenticatorFromFile creates a new GoogleAuthenticator with credentials loaded from a file.
@@ -91,12 +100,21 @@ func (g *GoogleAuthenticator) GetAccessToken(ctx context.Context) (string, time.
 		return g.token, g.tokenExpiry, nil
 	}
 
-	// Get new token based on credential type
+	// Get token from token source
+	if g.tokenSource != nil {
+		token, err := g.tokenSource.Token()
+		if err != nil {
+			return "", time.Time{}, fmt.Errorf("getting token from token source: %w", err)
+		}
+		g.token = token.AccessToken
+		g.tokenExpiry = token.Expiry
+		return token.AccessToken, token.Expiry, nil
+	}
+
+	// Fallback to manually getting a token based on credential type
 	switch creds := g.credentials.(type) {
-	case *ServiceAccountCredentials:
-		return g.getServiceAccountToken(ctx, creds)
-	case *OAuth2Auth:
-		return g.getOAuth2Token(ctx, creds)
+	case *GCPMetadataCredentials:
+		return creds.getAccessToken(ctx)
 	case *APIKeyCredentials:
 		// API keys don't have expiry and are used differently
 		return creds.Key, time.Now().Add(24 * time.Hour), nil
@@ -116,122 +134,90 @@ func (g *GoogleAuthenticator) GetCredentials() Credentials {
 	return g.credentials
 }
 
-// getServiceAccountToken obtains an access token using service account credentials.
-func (g *GoogleAuthenticator) getServiceAccountToken(ctx context.Context, creds *ServiceAccountCredentials) (string, time.Time, error) {
-	// Create signed JWT
-	jwt, err := createSignedJWT(creds, g.scopes)
-	if err != nil {
-		return "", time.Time{}, fmt.Errorf("creating JWT: %w", err)
+// createTokenSource creates an oauth2.TokenSource based on the credential type.
+func (g *GoogleAuthenticator) createTokenSource(ctx context.Context) (oauth2.TokenSource, error) {
+	switch creds := g.credentials.(type) {
+	case *ServiceAccountCredentials:
+		return getJWTTokenSource(creds, g.scopes)
+	case *OAuth2Auth:
+		return g.createOAuth2TokenSource(ctx, creds)
+	case *GCPMetadataCredentials:
+		return creds.tokenSource, nil
+	case *APIKeyCredentials:
+		// API keys are used as access tokens
+		return oauth2.StaticTokenSource(&oauth2.Token{
+			AccessToken: creds.Key,
+			Expiry:      time.Now().Add(24 * time.Hour),
+		}), nil
+	case *HTTPAuth:
+		// HTTP auth tokens are used as access tokens if present
+		if creds.Token != "" {
+			return oauth2.StaticTokenSource(&oauth2.Token{
+				AccessToken: creds.Token,
+				Expiry:      time.Now().Add(24 * time.Hour),
+			}), nil
+		}
+		// Otherwise use a placeholder
+		return oauth2.StaticTokenSource(&oauth2.Token{
+			AccessToken: "placeholder",
+			Expiry:      time.Now().Add(24 * time.Hour),
+		}), nil
+	default:
+		return nil, fmt.Errorf("unsupported credentials type for token source: %s", creds.Type())
 	}
-
-	// Exchange JWT for access token
-	data := url.Values{}
-	data.Set("grant_type", "urn:ietf:params:oauth:grant-type:jwt-bearer")
-	data.Set("assertion", jwt)
-
-	token, expiry, err := g.exchangeToken(ctx, data)
-	if err != nil {
-		return "", time.Time{}, fmt.Errorf("exchanging token: %w", err)
-	}
-
-	g.token = token
-	g.tokenExpiry = expiry
-	return token, expiry, nil
 }
 
-// getOAuth2Token obtains an access token using OAuth2 credentials.
-func (g *GoogleAuthenticator) getOAuth2Token(ctx context.Context, creds *OAuth2Auth) (string, time.Time, error) {
-	// If we already have an access token, return it
+// createOAuth2TokenSource creates a token source for OAuth2 credentials.
+func (g *GoogleAuthenticator) createOAuth2TokenSource(ctx context.Context, creds *OAuth2Auth) (oauth2.TokenSource, error) {
+	// If we have an access token, use it
 	if creds.AccessToken != "" {
-		// Since we don't know when this token expires, assume a short lifetime
-		return creds.AccessToken, time.Now().Add(time.Hour), nil
+		return oauth2.StaticTokenSource(&oauth2.Token{
+			AccessToken: creds.AccessToken,
+			Expiry:      time.Now().Add(time.Hour), // Assume short lifetime
+		}), nil
 	}
 
-	// If we have a refresh token, use it to get a new access token
+	// If we have a refresh token, use it with a config
 	if creds.RefreshToken != "" {
-		data := url.Values{}
-		data.Set("grant_type", "refresh_token")
-		data.Set("refresh_token", creds.RefreshToken)
-
-		if creds.ClientID != "" && creds.ClientSecret != "" {
-			data.Set("client_id", creds.ClientID)
-			data.Set("client_secret", creds.ClientSecret)
+		config := &oauth2.Config{
+			ClientID:     creds.ClientID,
+			ClientSecret: creds.ClientSecret,
+			Endpoint:     google.Endpoint,
+			RedirectURL:  "urn:ietf:wg:oauth:2.0:oob",
 		}
 
-		token, expiry, err := g.exchangeToken(ctx, data)
-		if err != nil {
-			return "", time.Time{}, fmt.Errorf("refreshing token: %w", err)
+		if creds.Scopes != "" {
+			config.Scopes = strings.Split(creds.Scopes, " ")
+		} else if len(g.scopes) > 0 {
+			config.Scopes = g.scopes
 		}
 
-		g.token = token
-		g.tokenExpiry = expiry
-		return token, expiry, nil
+		token := &oauth2.Token{
+			RefreshToken: creds.RefreshToken,
+		}
+
+		return config.TokenSource(ctx, token), nil
 	}
 
 	// If we have client credentials, use the client credentials flow
 	if creds.ClientID != "" && creds.ClientSecret != "" {
-		data := url.Values{}
-		data.Set("grant_type", "client_credentials")
-		data.Set("client_id", creds.ClientID)
-		data.Set("client_secret", creds.ClientSecret)
+		config := &oauth2.Config{
+			ClientID:     creds.ClientID,
+			ClientSecret: creds.ClientSecret,
+			Endpoint:     google.Endpoint,
+			RedirectURL:  "urn:ietf:wg:oauth:2.0:oob",
+		}
 
 		if creds.Scopes != "" {
-			data.Set("scope", creds.Scopes)
+			config.Scopes = strings.Split(creds.Scopes, " ")
 		} else if len(g.scopes) > 0 {
-			data.Set("scope", strings.Join(g.scopes, " "))
+			config.Scopes = g.scopes
 		}
 
-		token, expiry, err := g.exchangeToken(ctx, data)
-		if err != nil {
-			return "", time.Time{}, fmt.Errorf("using client credentials: %w", err)
-		}
-
-		g.token = token
-		g.tokenExpiry = expiry
-		return token, expiry, nil
+		return config.TokenSource(ctx, nil), nil
 	}
 
-	return "", time.Time{}, fmt.Errorf("insufficient OAuth2 credentials")
-}
-
-// exchangeToken performs the HTTP request to exchange token information.
-func (g *GoogleAuthenticator) exchangeToken(ctx context.Context, data url.Values) (string, time.Time, error) {
-	req, err := http.NewRequestWithContext(ctx, "POST", googleOAuthTokenURL, strings.NewReader(data.Encode()))
-	if err != nil {
-		return "", time.Time{}, fmt.Errorf("creating token request: %w", err)
-	}
-
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
-	client := &http.Client{Timeout: 30 * time.Second}
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", time.Time{}, fmt.Errorf("token request failed: %w", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", time.Time{}, fmt.Errorf("reading token response: %w", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return "", time.Time{}, fmt.Errorf("token request failed with status %d: %s", resp.StatusCode, string(body))
-	}
-
-	var tokenResp struct {
-		AccessToken string `json:"access_token"`
-		ExpiresIn   int    `json:"expires_in"`
-		TokenType   string `json:"token_type"`
-	}
-
-	if err := json.Unmarshal(body, &tokenResp); err != nil {
-		return "", time.Time{}, fmt.Errorf("parsing token response: %w", err)
-	}
-
-	expiryTime := time.Now().Add(time.Duration(tokenResp.ExpiresIn) * time.Second)
-
-	return tokenResp.AccessToken, expiryTime, nil
+	return nil, fmt.Errorf("insufficient OAuth2 credentials")
 }
 
 // Application Default Credentials (ADC) handling
@@ -239,6 +225,33 @@ func (g *GoogleAuthenticator) exchangeToken(ctx context.Context, data url.Values
 // NewApplicationDefaultCredentials creates a new GoogleAuthenticator using
 // Application Default Credentials (ADC).
 func NewApplicationDefaultCredentials(ctx context.Context, scopes ...string) (*GoogleAuthenticator, error) {
+	// Use the Google Cloud SDK's DefaultTokenSource which implements ADC
+	tokenSource, err := google.DefaultTokenSource(ctx, scopes...)
+	if err != nil {
+		// If DefaultTokenSource fails, fall back to manual implementation
+		return fallbackADC(ctx, scopes...)
+	}
+
+	// Verify token source works by fetching a token
+	_, err = tokenSource.Token()
+	if err != nil {
+		return fallbackADC(ctx, scopes...)
+	}
+
+	// Create credentials from token source
+	creds := &GCPMetadataCredentials{
+		tokenSource: tokenSource,
+	}
+
+	return &GoogleAuthenticator{
+		credentials: creds,
+		scopes:      scopes,
+		tokenSource: tokenSource,
+	}, nil
+}
+
+// fallbackADC implements a manual ADC lookup as a fallback.
+func fallbackADC(ctx context.Context, scopes ...string) (*GoogleAuthenticator, error) {
 	// Step 1: Check GOOGLE_APPLICATION_CREDENTIALS environment variable
 	if credPath := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"); credPath != "" {
 		return NewGoogleAuthenticatorFromFile(credPath, scopes...)

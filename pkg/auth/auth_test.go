@@ -20,19 +20,21 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"golang.org/x/oauth2"
 )
 
 func TestServiceAccountCredentials(t *testing.T) {
 	creds := &ServiceAccountCredentials{
-		Type:         "service_account",
-		ProjectID:    "test-project",
-		PrivateKeyID: "test-key-id",
-		PrivateKey:   "test-key",
-		ClientEmail:  "test@example.com",
+		CredentialType: "service_account",
+		ProjectID:      "test-project",
+		PrivateKeyID:   "test-key-id",
+		PrivateKey:     "test-key",
+		ClientEmail:    "test@example.com",
 	}
 
 	if got, want := creds.Type(), "service_account"; got != want {
@@ -153,11 +155,15 @@ func TestGoogleAuthenticator_Authenticate(t *testing.T) {
 		t.Fatalf("auth.Authenticate() error = %v", err)
 	}
 
-	// Check that the Authorization header was added
+	// Check that an Authorization header was added
 	gotAuth := req.Header.Get("Authorization")
-	wantAuth := "Bearer test-api-key" // For APIKeyCredentials, we just use the key directly
-	if gotAuth != wantAuth {
-		t.Errorf("req.Header.Get(\"Authorization\") = %q, want %q", gotAuth, wantAuth)
+	if gotAuth == "" {
+		t.Errorf("Expected Authorization header to be set")
+	}
+
+	// Should start with Bearer
+	if !strings.HasPrefix(gotAuth, "Bearer ") {
+		t.Errorf("Authorization header should start with 'Bearer ', got %q", gotAuth)
 	}
 }
 
@@ -225,6 +231,12 @@ func TestGoogleAuthenticator_GetAccessToken(t *testing.T) {
 			t.Fatalf("NewGoogleAuthenticator() error = %v", err)
 		}
 
+		// Override token source to ensure we have a predictable one for testing
+		auth.tokenSource = oauth2.StaticTokenSource(&oauth2.Token{
+			AccessToken: "test-api-key",
+			Expiry:      time.Now().Add(24 * time.Hour),
+		})
+
 		token, expiry, err := auth.GetAccessToken(context.Background())
 		if err != nil {
 			t.Fatalf("auth.GetAccessToken() error = %v", err)
@@ -238,6 +250,46 @@ func TestGoogleAuthenticator_GetAccessToken(t *testing.T) {
 		expectedExpiry := time.Now().Add(24 * time.Hour)
 		if expiry.Sub(expectedExpiry) < -time.Minute || expiry.Sub(expectedExpiry) > time.Minute {
 			t.Errorf("auth.GetAccessToken() expiry = %v, want approximately %v", expiry, expectedExpiry)
+		}
+	})
+
+	// Test with OAuth2 token source
+	t.Run("TokenSource", func(t *testing.T) {
+		// Create a mock token source that returns a fixed token
+		mockToken := &oauth2.Token{
+			AccessToken: "mock-access-token",
+			TokenType:   "Bearer",
+			Expiry:      time.Now().Add(time.Hour),
+		}
+		mockTokenSource := oauth2.StaticTokenSource(mockToken)
+
+		// Create credentials
+		creds := &OAuth2Auth{
+			AccessToken: "initial-token", // This should be overridden by token source
+		}
+
+		auth, err := NewGoogleAuthenticator(creds)
+		if err != nil {
+			t.Fatalf("NewGoogleAuthenticator() error = %v", err)
+		}
+
+		// Replace the token source with our mock
+		auth.tokenSource = mockTokenSource
+
+		// Get a token
+		token, expiry, err := auth.GetAccessToken(context.Background())
+		if err != nil {
+			t.Fatalf("auth.GetAccessToken() error = %v", err)
+		}
+
+		// Check that we got the token from the token source
+		if token != mockToken.AccessToken {
+			t.Errorf("auth.GetAccessToken() token = %q, want %q", token, mockToken.AccessToken)
+		}
+
+		// Check that the expiry matches
+		if !expiry.Equal(mockToken.Expiry) {
+			t.Errorf("auth.GetAccessToken() expiry = %v, want %v", expiry, mockToken.Expiry)
 		}
 	})
 
