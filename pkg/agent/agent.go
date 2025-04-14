@@ -1,4 +1,4 @@
-// Copyright 2025 The adk-go Authors
+// Copyright 2025 The go-a2a Authors
 // SPDX-License-Identifier: Apache-2.0
 
 package agent
@@ -70,7 +70,7 @@ func (a *Agent) Process(ctx context.Context, msg message.Message) (message.Messa
 				return resp, nil
 			}
 			// Log the error but continue trying other sub-agents
-			observability.Warn(ctx, "Sub-agent processing failed",
+			observability.Logger(ctx).WarnContext(ctx, "Sub-agent processing failed",
 				slog.String("sub_agent", subAgent.Name()),
 				slog.String("error", err.Error()))
 		}
@@ -118,7 +118,7 @@ func (a *Agent) RunWithTools(ctx context.Context, req message.Message) (message.
 
 	// Process any tool calls in the response
 	if len(resp.ToolCalls) > 0 {
-		observability.Info(ctx, "Processing tool calls",
+		observability.Logger(ctx).InfoContext(ctx, "Processing tool calls",
 			slog.Int("num_calls", len(resp.ToolCalls)))
 
 		// Execute each tool call
@@ -132,21 +132,21 @@ func (a *Agent) RunWithTools(ctx context.Context, req message.Message) (message.
 			}
 
 			if tool == nil {
-				observability.Warn(ctx, "Tool not found",
+				observability.Logger(ctx).WarnContext(ctx, "Tool not found",
 					slog.String("tool_name", tc.Name))
 				continue
 			}
 
 			// Execute the tool
-			result, err := tool.Execute(ctx, tc.Arguments)
+			result, err := tool.Execute(ctx, tc.Args)
 
 			// Record the result
-			resp.ToolCalls[i].Result = message.ToolResult{
+			resp.ToolResults[i] = message.ToolResult{
 				Content: result,
 			}
 
 			if err != nil {
-				resp.ToolCalls[i].Result.Error = err.Error()
+				resp.ToolResults[i].Content = err.Error()
 			}
 		}
 

@@ -1,4 +1,4 @@
-// Copyright 2025 The adk-go Authors
+// Copyright 2025 The go-a2a Authors
 // SPDX-License-Identifier: Apache-2.0
 
 package agent
@@ -75,7 +75,7 @@ func (a *LoopAgent) Process(ctx context.Context, msg message.Message) (message.M
 	// Process in a loop until shouldContinue returns false or maxIterations is reached
 	for i := 0; i < a.maxIterations; i++ {
 		span.SetAttributes(attribute.Int("agent.current_iteration", i))
-		observability.Info(ctx, "LoopAgent iteration",
+		observability.Logger(ctx).InfoContext(ctx, "LoopAgent iteration",
 			slog.Int("iteration", i),
 			slog.String("agent", a.name))
 
@@ -88,12 +88,12 @@ func (a *LoopAgent) Process(ctx context.Context, msg message.Message) (message.M
 		// Check if we should continue
 		shouldCont, err := contFunc(ctx, currentMsg)
 		if err != nil {
-			observability.Warn(ctx, "Error in continuation condition",
+			observability.Logger(ctx).WarnContext(ctx, "Error in continuation condition",
 				slog.String("error", err.Error()))
 		}
 
 		if !shouldCont {
-			observability.Info(ctx, "LoopAgent stopping",
+			observability.Logger(ctx).InfoContext(ctx, "LoopAgent stopping",
 				slog.Int("completed_iterations", i+1),
 				slog.String("reason", "continuation condition returned false"))
 			break

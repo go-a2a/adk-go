@@ -1,4 +1,4 @@
-// Copyright 2025 The adk-go Authors
+// Copyright 2025 The go-a2a Authors
 // SPDX-License-Identifier: Apache-2.0
 
 package agent
@@ -106,7 +106,7 @@ func (a *ParallelAgent) Process(ctx context.Context, msg message.Message) (messa
 				attribute.Int("agent.worker.index", idx),
 			)
 
-			observability.Info(agentCtx, "ParallelAgent worker starting",
+			observability.Logger(ctx).InfoContext(agentCtx, "ParallelAgent worker starting",
 				slog.Int("worker", idx),
 				slog.String("agent", subAgent.Name()))
 
@@ -118,7 +118,7 @@ func (a *ParallelAgent) Process(ctx context.Context, msg message.Message) (messa
 					slog.Int("worker", idx),
 					slog.String("agent", subAgent.Name()))
 			} else {
-				observability.Info(agentCtx, "ParallelAgent worker completed",
+				observability.Logger(ctx).InfoContext(agentCtx, "ParallelAgent worker completed",
 					slog.Int("worker", idx),
 					slog.String("agent", subAgent.Name()))
 			}
@@ -150,7 +150,7 @@ func (a *ParallelAgent) Process(ctx context.Context, msg message.Message) (messa
 	// Log errors but don't necessarily fail if we have at least one success
 	if len(errors) > 0 {
 		for i, err := range errors {
-			observability.Warn(ctx, "ParallelAgent had worker failures",
+			observability.Logger(ctx).WarnContext(ctx, "ParallelAgent had worker failures",
 				slog.Int("error_index", i),
 				slog.String("error", err.Error()))
 		}
