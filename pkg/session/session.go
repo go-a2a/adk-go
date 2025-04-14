@@ -53,7 +53,7 @@ func (s *Session) AddEvent(e event.Event) {
 func (s *Session) GetEventsAfterTime(t time.Time) []event.Event {
 	var events []event.Event
 	for _, e := range s.Events {
-		if e.Timestamp().After(t) {
+		if e.Timestamp.After(t) {
 			events = append(events, e)
 		}
 	}
