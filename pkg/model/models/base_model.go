@@ -13,7 +13,7 @@ import (
 )
 
 // GeneratorFunc represents a function that generates a message based on the model ID, input messages, and generation options.
-type GeneratorFunc func(modelID string, messages []message.Message, opts model.GenerateOptions) (message.Message, error)
+type GeneratorFunc func(ctx context.Context, modelID string, messages []message.Message, opts model.GenerateOptions) (message.Message, error)
 
 // Model provides a common implementation for model functions.
 type Model struct {
@@ -70,7 +70,7 @@ func (m *Model) GenerateWithOptions(ctx context.Context, messages []message.Mess
 		return message.Message{}, fmt.Errorf("streaming not supported by model %s", m.modelID)
 	}
 
-	return m.generator(m.modelID, clonedMessages, opts)
+	return m.generator(ctx, m.modelID, clonedMessages, opts)
 }
 
 // GenerateWithTools implements the Model interface.

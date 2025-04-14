@@ -13,6 +13,14 @@ import (
 	"github.com/go-a2a/adk-go/pkg/observability"
 )
 
+func init() {
+	// Register OpenAI model patterns with the registry
+	Register("gpt-.*", func(modelID string) (model.Model, error) {
+		// In a real implementation, API key and endpoint would be configured properly
+		return NewOpenAIModel(modelID, "", "")
+	})
+}
+
 const (
 	// DefaultOpenAIModel is the default OpenAI model ID.
 	DefaultOpenAIModel = "gpt-4o"
@@ -52,7 +60,7 @@ func NewOpenAIModel(modelID string, apiKey string, apiEndpoint string) (*OpenAIM
 }
 
 // generateContent is the generator function for the OpenAI model.
-func (m *OpenAIModel) generateContent(modelID string, messages []message.Message, opts model.GenerateOptions) (message.Message, error) {
+func (m *OpenAIModel) generateContent(ctx context.Context, modelID string, messages []message.Message, opts model.GenerateOptions) (message.Message, error) {
 	// In a real implementation, this would make API calls to the OpenAI API
 	// For now, we'll return a placeholder response
 	logger := observability.Logger(context.Background())
@@ -123,12 +131,4 @@ func (m *OpenAIModel) GenerateStream(ctx context.Context, messages []message.Mes
 	}
 
 	return nil
-}
-
-func init() {
-	// Register OpenAI model patterns with the registry
-	Register("gpt-.*", func(modelID string) (model.Model, error) {
-		// In a real implementation, API key and endpoint would be configured properly
-		return NewOpenAIModel(modelID, "", "")
-	})
 }

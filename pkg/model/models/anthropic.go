@@ -13,6 +13,14 @@ import (
 	"github.com/go-a2a/adk-go/pkg/observability"
 )
 
+func init() {
+	// Register Claude model patterns with the registry
+	Register("claude-.*", func(modelID string) (model.Model, error) {
+		// In a real implementation, API key and endpoint would be configured properly
+		return NewAnthropicModel(modelID, "", "")
+	})
+}
+
 const (
 	// DefaultClaudeModel is the default Claude model ID.
 	DefaultClaudeModel = "claude-3-7-sonnet-latest"
@@ -52,10 +60,10 @@ func NewAnthropicModel(modelID string, apiKey string, apiEndpoint string) (*Anth
 }
 
 // generateContent is the generator function for the Claude model.
-func (m *AnthropicModel) generateContent(modelID string, messages []message.Message, opts model.GenerateOptions) (message.Message, error) {
+func (m *AnthropicModel) generateContent(ctx context.Context, modelID string, messages []message.Message, opts model.GenerateOptions) (message.Message, error) {
 	// In a real implementation, this would make API calls to the Anthropic API
 	// For now, we'll return a placeholder response
-	logger := observability.Logger(context.Background())
+	logger := observability.Logger(ctx)
 	logger.Debug("Generating content with Claude model",
 		slog.String("model", modelID),
 		slog.Int("numMessages", len(messages)),
@@ -123,12 +131,4 @@ func (m *AnthropicModel) GenerateStream(ctx context.Context, messages []message.
 	}
 
 	return nil
-}
-
-func init() {
-	// Register Claude model patterns with the registry
-	Register("claude-.*", func(modelID string) (model.Model, error) {
-		// In a real implementation, API key and endpoint would be configured properly
-		return NewAnthropicModel(modelID, "", "")
-	})
 }

@@ -8,7 +8,6 @@ import (
 	"regexp"
 	"sync"
 
-	"github.com/go-a2a/adk-go/pkg/message"
 	"github.com/go-a2a/adk-go/pkg/model"
 )
 
@@ -25,14 +24,14 @@ type modelRegEntry struct {
 type Registry struct {
 	mu      sync.RWMutex
 	entries []modelRegEntry
-	cache   map[string]model.Model
+	cache   *sync.Map // modelID -> model.Model
 }
 
 // NewRegistry creates a new model registry.
 func NewRegistry() *Registry {
 	return &Registry{
 		entries: make([]modelRegEntry, 0),
-		cache:   make(map[string]model.Model),
+		cache:   new(sync.Map),
 	}
 }
 
@@ -71,9 +70,9 @@ func (r *Registry) Resolve(modelID string) (ModelFactory, error) {
 // GetModel returns a model instance for the specified model ID.
 func (r *Registry) GetModel(modelID string) (model.Model, error) {
 	r.mu.RLock()
-	if m, ok := r.cache[modelID]; ok {
+	if m, ok := r.cache.Load(modelID); ok {
 		r.mu.RUnlock()
-		return m, nil
+		return m.(model.Model), nil
 	}
 	r.mu.RUnlock()
 
@@ -88,35 +87,28 @@ func (r *Registry) GetModel(modelID string) (model.Model, error) {
 	}
 
 	r.mu.Lock()
-	r.cache[modelID] = m
+	r.cache.Store(modelID, m)
 	r.mu.Unlock()
 
 	return m, nil
 }
 
-// DefaultRegistry is the default model registry.
-var DefaultRegistry = NewRegistry()
+// defaultRegistry is the default model registry.
+var defaultRegistry = NewRegistry()
 
 // Register registers a model factory with the default registry.
 func Register(pattern string, factory ModelFactory) error {
-	return DefaultRegistry.Register(pattern, factory)
+	return defaultRegistry.Register(pattern, factory)
 }
 
 // GetModel returns a model instance from the default registry.
 func GetModel(modelID string) (model.Model, error) {
-	return DefaultRegistry.GetModel(modelID)
+	return defaultRegistry.GetModel(modelID)
 }
 
 // RegisterWithCapabilities is a helper function to create a model factory with specific capabilities.
-func RegisterWithCapabilities(pattern string, provider model.ModelProvider, capabilities []model.ModelCapability,
-	generatorFunc func(modelID string, messages []message.Message, opts model.GenerateOptions) (message.Message, error),
-) error {
+func RegisterWithCapabilities(pattern string, provider model.ModelProvider, capabilities []model.ModelCapability, generatorFunc GeneratorFunc) error {
 	return Register(pattern, func(modelID string) (model.Model, error) {
-		return NewBaseModel(
-			modelID,
-			provider,
-			capabilities,
-			generatorFunc,
-		), nil
+		return NewBaseModel(modelID, provider, capabilities, generatorFunc), nil
 	})
 }

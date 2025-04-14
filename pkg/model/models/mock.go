@@ -42,7 +42,7 @@ func NewMockModel(modelID string) *MockModel {
 }
 
 // generateContent is the generator function for the mock model.
-func (m *MockModel) generateContent(modelID string, messages []message.Message, opts model.GenerateOptions) (message.Message, error) {
+func (m *MockModel) generateContent(ctx context.Context, modelID string, messages []message.Message, opts model.GenerateOptions) (message.Message, error) {
 	if m.ErrorToReturn != nil {
 		return message.Message{}, m.ErrorToReturn
 	}
