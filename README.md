@@ -1,5 +1,10 @@
 # ADK-Go: Agent Development Kit for Go
 
+> [!IMPORTANT]
+> This project is alpha stage.
+>
+> Flags, configuration, behavior and design may change significantly.
+
 An open-source, code-first Go toolkit for building, evaluating, and deploying sophisticated AI agents with flexibility and control.
 
 This is a Go implementation of the [Agent Development Kit (ADK)](https://github.com/google/adk-python), a toolkit for building, evaluating, and deploying sophisticated AI agents. ADK-Go follows the same architectural principles as the Python implementation, but with Go's strengths of type safety, performance, and concurrency.
