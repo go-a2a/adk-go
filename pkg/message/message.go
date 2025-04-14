@@ -163,3 +163,10 @@ func (m Message) GetToolResultByCallID(callID string) (ToolResult, bool) {
 	}
 	return ToolResult{}, false
 }
+
+// ProcessResult represents the result of a message processing operation,
+// which includes both a message and possibly an error.
+type ProcessResult struct {
+	Message Message
+	Error   error
+}
