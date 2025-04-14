@@ -57,8 +57,8 @@ func defaultOptions() LoggerOptions {
 	}
 }
 
-// SetupLogger initializes the global logger with the specified options.
-func SetupLogger(opts LoggerOptions) {
+// InitLogger initializes the global logger with the specified options.
+func InitLogger(opts LoggerOptions) {
 	var level slog.Level
 	switch opts.Level {
 	case LevelDebug:
