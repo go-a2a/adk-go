@@ -1,5 +1,5 @@
 // Copyright 2025 The go-a2a Authors
-// Licensed under the Apache License, Version 2.0
+// SPDX-License-Identifier: Apache-2.0
 
 // Package event provides structures and functionality for handling
 // conversation events between agents and users in the Agent Development Kit.
