@@ -1,5 +1,5 @@
 // Copyright 2025 The go-a2a Authors
-// Licensed under the Apache License, Version 2.0
+// SPDX-License-Identifier: Apache-2.0
 
 // Package codeexecutor provides functionality for executing code in various environments.
 // It supports local execution, containerized execution, and potentially cloud execution.
