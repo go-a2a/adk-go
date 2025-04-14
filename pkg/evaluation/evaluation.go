@@ -15,15 +15,15 @@ func NewDefaultEvaluator(logger *slog.Logger) *AgentEvaluator {
 	if logger == nil {
 		logger = slog.Default()
 	}
-	
+
 	// Create the evaluation client
 	evalClient := NewSimpleEvaluationClient(logger)
-	
+
 	// Create the component evaluators
 	evalGenerator := NewEvaluationGenerator(logger)
 	respEvaluator := NewResponseEvaluator(logger, evalClient)
 	trajEvaluator := NewTrajectoryEvaluator(logger)
-	
+
 	// Create and return the agent evaluator
 	return NewAgentEvaluator(logger, evalGenerator, respEvaluator, trajEvaluator)
 }
@@ -38,6 +38,6 @@ func RunEvaluation(
 ) ([]EvaluationResult, error) {
 	logger := slog.Default()
 	evaluator := NewDefaultEvaluator(logger)
-	
+
 	return evaluator.Evaluate(ctx, testFiles, agent, configDir, printDetails)
 }

@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
-	
+
 	"github.com/go-a2a/adk-go/pkg/event"
 	"github.com/go-a2a/adk-go/pkg/flow"
 )
@@ -16,7 +16,7 @@ import (
 // CodeExecutionRequestProcessor processes code execution in requests.
 type CodeExecutionRequestProcessor struct {
 	*RequestProcessor
-	
+
 	// EnableCodeExecution determines if code execution is enabled.
 	EnableCodeExecution bool
 }
@@ -51,7 +51,7 @@ func (p *CodeExecutionRequestProcessor) Process(
 		req.System += "You can execute code by using markdown code blocks with a language tag. " +
 			"The code will be executed and the results will be shown below the code."
 	}
-	
+
 	// Return empty channel as this processor doesn't generate events
 	ch := make(chan *event.Event)
 	close(ch)
@@ -73,10 +73,10 @@ func (p *CodeExecutionRequestProcessor) ProcessLive(
 // CodeExecutionResponseProcessor processes code execution in responses.
 type CodeExecutionResponseProcessor struct {
 	*ResponseProcessor
-	
+
 	// EnableCodeExecution determines if code execution is enabled.
 	EnableCodeExecution bool
-	
+
 	// CodeExecutor is the interface used to execute code.
 	CodeExecutor CodeExecutor
 }
@@ -108,7 +108,7 @@ func (p *CodeExecutionResponseProcessor) Process(
 		close(ch)
 		return ch, nil
 	}
-	
+
 	// Find all code blocks in the response
 	codeBlocks := extractCodeBlocks(resp.Content)
 	if len(codeBlocks) == 0 {
@@ -117,13 +117,13 @@ func (p *CodeExecutionResponseProcessor) Process(
 		close(ch)
 		return ch, nil
 	}
-	
+
 	// Execute each code block and append results
 	modifiedContent := resp.Content
 	for _, block := range codeBlocks {
 		// Execute the code
 		result, err := p.CodeExecutor.ExecuteCode(block.language, block.code)
-		
+
 		// Format the result
 		executionResult := "<code_execution_result>\n"
 		if err != nil {
@@ -132,15 +132,15 @@ func (p *CodeExecutionResponseProcessor) Process(
 			executionResult += result + "\n"
 		}
 		executionResult += "</code_execution_result>"
-		
+
 		// Append the result after the code block
 		blockWithResult := block.original + "\n\n" + executionResult
 		modifiedContent = strings.Replace(modifiedContent, block.original, blockWithResult, 1)
 	}
-	
+
 	// Update the response content with the executed code
 	resp.Content = modifiedContent
-	
+
 	// Return empty channel as this processor doesn't generate events
 	ch := make(chan *event.Event)
 	close(ch)
@@ -163,10 +163,10 @@ func (p *CodeExecutionResponseProcessor) ProcessLive(
 type CodeBlock struct {
 	// original is the original code block text including delimiters.
 	original string
-	
+
 	// language is the programming language of the code block.
 	language string
-	
+
 	// code is the code within the code block.
 	code string
 }
@@ -174,14 +174,14 @@ type CodeBlock struct {
 // extractCodeBlocks extracts all code blocks from the given text.
 func extractCodeBlocks(text string) []CodeBlock {
 	var blocks []CodeBlock
-	
+
 	// Regular expression to find code blocks with language
 	// ```language
 	// code
 	// ```
 	regex := regexp.MustCompile("```([a-zA-Z0-9]+)\\s*\\n([\\s\\S]*?)\\n```")
 	matches := regex.FindAllStringSubmatch(text, -1)
-	
+
 	for _, match := range matches {
 		if len(match) >= 3 {
 			blocks = append(blocks, CodeBlock{
@@ -191,14 +191,14 @@ func extractCodeBlocks(text string) []CodeBlock {
 			})
 		}
 	}
-	
+
 	// Also look for generic code blocks without language
 	// ```
 	// code
 	// ```
 	genericRegex := regexp.MustCompile("```\\s*\\n([\\s\\S]*?)\\n```")
 	genericMatches := genericRegex.FindAllStringSubmatch(text, -1)
-	
+
 	for _, match := range genericMatches {
 		if len(match) >= 2 {
 			// Check if this block is already captured by the language-specific regex
@@ -209,7 +209,7 @@ func extractCodeBlocks(text string) []CodeBlock {
 					break
 				}
 			}
-			
+
 			if !isDuplicate {
 				blocks = append(blocks, CodeBlock{
 					original: match[0],
@@ -219,6 +219,6 @@ func extractCodeBlocks(text string) []CodeBlock {
 			}
 		}
 	}
-	
+
 	return blocks
 }

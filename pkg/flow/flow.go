@@ -107,7 +107,7 @@ func DefaultFlowOptions() *FlowOptions {
 func RunFlowWithOptions(
 	ctx context.Context,
 	ic *InvocationContext,
-	client interface{},
+	client any,
 	options *FlowOptions,
 ) (<-chan *event.Event, error) {
 	// Create a flow based on the options
@@ -137,7 +137,7 @@ type FlowRegistry struct {
 }
 
 // FlowFactory creates a flow for a given client and options.
-type FlowFactory func(client interface{}, options *FlowOptions) (Flow, error)
+type FlowFactory func(client any, options *FlowOptions) (Flow, error)
 
 // NewFlowRegistry creates a new flow registry.
 func NewFlowRegistry() *FlowRegistry {
@@ -158,7 +158,7 @@ func (r *FlowRegistry) RegisterDefaultFlows() {
 }
 
 // CreateFlowForClient creates a flow for the given client and options.
-func (r *FlowRegistry) CreateFlowForClient(client interface{}, options *FlowOptions) (Flow, error) {
+func (r *FlowRegistry) CreateFlowForClient(client any, options *FlowOptions) (Flow, error) {
 	// Get the client type
 	clientType := fmt.Sprintf("%T", client)
 

@@ -251,16 +251,16 @@ func (s *GcsArtifactService) GetArtifact(ctx context.Context, key string) (strin
 	if len(parts) < 2 || parts[0] != "memory" {
 		return "", fmt.Errorf("invalid memory key format: %s", key)
 	}
-	
+
 	memoryKey := parts[1]
-	
+
 	// Construct a memory blob path
 	blobName := fmt.Sprintf("memory/%s", memoryKey)
 	it := s.bucket.Objects(ctx, &storage.Query{Prefix: blobName})
-	
+
 	var latestVersion int
 	var latestAttrs *storage.ObjectAttrs
-	
+
 	// Find the latest version
 	for {
 		attrs, err := it.Next()
@@ -270,23 +270,23 @@ func (s *GcsArtifactService) GetArtifact(ctx context.Context, key string) (strin
 		if err != nil {
 			return "", fmt.Errorf("failed to list memory objects: %w", err)
 		}
-		
+
 		versionStr := path.Base(attrs.Name)
 		version, err := strconv.Atoi(versionStr)
 		if err != nil {
 			continue // Skip objects with non-numeric version
 		}
-		
+
 		if latestAttrs == nil || version > latestVersion {
 			latestVersion = version
 			latestAttrs = attrs
 		}
 	}
-	
+
 	if latestAttrs == nil {
 		return "", nil // No memory found
 	}
-	
+
 	// Read the latest version
 	obj := s.bucket.Object(latestAttrs.Name)
 	r, err := obj.NewReader(ctx)
@@ -294,12 +294,12 @@ func (s *GcsArtifactService) GetArtifact(ctx context.Context, key string) (strin
 		return "", fmt.Errorf("failed to read memory object: %w", err)
 	}
 	defer r.Close()
-	
+
 	data, err := io.ReadAll(r)
 	if err != nil {
 		return "", fmt.Errorf("failed to read memory data: %w", err)
 	}
-	
+
 	return string(data), nil
 }
 
@@ -310,13 +310,13 @@ func (s *GcsArtifactService) SaveArtifactByKey(ctx context.Context, key string, 
 	if len(parts) < 2 || parts[0] != "memory" {
 		return fmt.Errorf("invalid memory key format: %s", key)
 	}
-	
+
 	memoryKey := parts[1]
-	
+
 	// Construct a memory blob path
 	blobPrefix := fmt.Sprintf("memory/%s", memoryKey)
 	it := s.bucket.Objects(ctx, &storage.Query{Prefix: blobPrefix})
-	
+
 	// Find the highest version
 	version := 0
 	for {
@@ -327,48 +327,48 @@ func (s *GcsArtifactService) SaveArtifactByKey(ctx context.Context, key string, 
 		if err != nil {
 			return fmt.Errorf("failed to list memory objects: %w", err)
 		}
-		
+
 		versionStr := path.Base(attrs.Name)
 		v, err := strconv.Atoi(versionStr)
 		if err != nil {
 			continue // Skip objects with non-numeric version
 		}
-		
+
 		if v >= version {
 			version = v + 1
 		}
 	}
-	
+
 	// Write the new version
 	blobName := fmt.Sprintf("%s/%d", blobPrefix, version)
 	obj := s.bucket.Object(blobName)
-	
+
 	w := obj.NewWriter(ctx)
 	w.ContentType = "text/plain"
-	
+
 	if _, err := w.Write([]byte(value)); err != nil {
 		w.Close()
 		return fmt.Errorf("failed to write memory data: %w", err)
 	}
-	
+
 	if err := w.Close(); err != nil {
 		return fmt.Errorf("failed to close writer: %w", err)
 	}
-	
+
 	return nil
 }
 
 // ListArtifacts implements ArtifactService.ListArtifacts.
 func (s *GcsArtifactService) ListArtifacts(ctx context.Context, path string, recursive bool) ([]string, error) {
 	var result []string
-	
+
 	// If path doesn't end with slash and it's not empty, add slash
 	if path != "" && !strings.HasSuffix(path, "/") {
 		path = path + "/"
 	}
-	
+
 	it := s.bucket.Objects(ctx, &storage.Query{Prefix: path})
-	
+
 	for {
 		attrs, err := it.Next()
 		if err == iterator.Done {
@@ -377,9 +377,9 @@ func (s *GcsArtifactService) ListArtifacts(ctx context.Context, path string, rec
 		if err != nil {
 			return nil, fmt.Errorf("failed to list objects: %w", err)
 		}
-		
+
 		objectPath := attrs.Name
-		
+
 		// If non-recursive, check if this is a direct child
 		if !recursive {
 			relative := strings.TrimPrefix(objectPath, path)
@@ -387,10 +387,10 @@ func (s *GcsArtifactService) ListArtifacts(ctx context.Context, path string, rec
 				continue
 			}
 		}
-		
+
 		result = append(result, objectPath)
 	}
-	
+
 	sort.Strings(result)
 	return result, nil
 }

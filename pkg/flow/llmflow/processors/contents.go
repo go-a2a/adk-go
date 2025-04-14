@@ -5,7 +5,7 @@ package processors
 
 import (
 	"context"
-	
+
 	"github.com/go-a2a/adk-go/pkg/event"
 	"github.com/go-a2a/adk-go/pkg/flow"
 )
@@ -13,10 +13,10 @@ import (
 // ContentsRequestProcessor optimizes content for LLM requests.
 type ContentsRequestProcessor struct {
 	*RequestProcessor
-	
+
 	// MaxContextLength is the maximum number of messages to include in context.
 	MaxContextLength int
-	
+
 	// SummarizeContext determines if older messages should be summarized.
 	SummarizeContext bool
 }
@@ -25,8 +25,8 @@ type ContentsRequestProcessor struct {
 func NewContentsRequestProcessor() *ContentsRequestProcessor {
 	return &ContentsRequestProcessor{
 		RequestProcessor: NewRequestProcessor("ContentsRequestProcessor"),
-		MaxContextLength: 20,              // Default max context length
-		SummarizeContext: false,           // Default to not summarize
+		MaxContextLength: 20,    // Default max context length
+		SummarizeContext: false, // Default to not summarize
 	}
 }
 
@@ -43,7 +43,7 @@ func (p *ContentsRequestProcessor) Process(
 		excess := len(req.Messages) - p.MaxContextLength
 		req.Messages = req.Messages[excess:]
 	}
-	
+
 	// Return empty channel as this processor doesn't generate events
 	ch := make(chan *event.Event)
 	close(ch)

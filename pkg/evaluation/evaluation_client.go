@@ -21,7 +21,7 @@ func NewSimpleEvaluationClient(logger *slog.Logger) *SimpleEvaluationClient {
 	if logger == nil {
 		logger = slog.Default()
 	}
-	
+
 	return &SimpleEvaluationClient{
 		Logger: logger,
 	}
@@ -33,14 +33,14 @@ func (c *SimpleEvaluationClient) EvaluateCoherence(query, response string) (floa
 	if response == "" {
 		return 0.0, nil
 	}
-	
+
 	// Simple coherence scoring based on length (for demonstration only)
 	// In a real implementation, this would use LLM-based evaluation or other metrics
-	
+
 	// Factor 1: Response length relative to query
 	lengthRatio := float64(len(response)) / float64(len(query))
 	var lengthScore float64
-	
+
 	if lengthRatio < 0.5 {
 		lengthScore = 1.0 // Too short
 	} else if lengthRatio > 5.0 {
@@ -48,11 +48,11 @@ func (c *SimpleEvaluationClient) EvaluateCoherence(query, response string) (floa
 	} else {
 		lengthScore = 4.0 // Reasonable length
 	}
-	
+
 	// Factor 2: Structure - presence of sentences
 	sentences := strings.Count(response, ".")
 	var structureScore float64
-	
+
 	if sentences == 0 {
 		structureScore = 1.0 // No complete sentences
 	} else if sentences == 1 {
@@ -60,20 +60,20 @@ func (c *SimpleEvaluationClient) EvaluateCoherence(query, response string) (floa
 	} else {
 		structureScore = 5.0 // Multiple sentences
 	}
-	
+
 	// Factor 3: Addresses query (simplified check for keyword presence)
 	keywords := extractKeywords(query)
 	keywordMatches := 0
-	
+
 	for _, keyword := range keywords {
 		if strings.Contains(strings.ToLower(response), strings.ToLower(keyword)) {
 			keywordMatches++
 		}
 	}
-	
+
 	keywordRatio := float64(keywordMatches) / float64(len(keywords))
 	var relevanceScore float64
-	
+
 	if keywordRatio == 0 {
 		relevanceScore = 1.0 // No keywords found
 	} else if keywordRatio < 0.5 {
@@ -81,10 +81,10 @@ func (c *SimpleEvaluationClient) EvaluateCoherence(query, response string) (floa
 	} else {
 		relevanceScore = 5.0 // Most keywords found
 	}
-	
+
 	// Combined score (weighted average)
 	finalScore := (lengthScore*0.2 + structureScore*0.3 + relevanceScore*0.5)
-	
+
 	// Log details for debugging
 	c.Logger.Debug("Coherence evaluation",
 		slog.String("query", query),
@@ -93,7 +93,7 @@ func (c *SimpleEvaluationClient) EvaluateCoherence(query, response string) (floa
 		slog.Float64("structure_score", structureScore),
 		slog.Float64("relevance_score", relevanceScore),
 		slog.Float64("final_score", finalScore))
-	
+
 	return finalScore, nil
 }
 
@@ -103,35 +103,35 @@ func (c *SimpleEvaluationClient) EvaluateResponseMatch(response, reference strin
 	if response == "" || reference == "" {
 		return 0.0, fmt.Errorf("empty response or reference")
 	}
-	
+
 	// Convert to lowercase for comparison
 	responseLower := strings.ToLower(response)
 	referenceLower := strings.ToLower(reference)
-	
+
 	// Simple matching techniques (for demonstration only)
 	// In a real implementation, this would use embedding similarity or other metrics
-	
+
 	// Exact match check
 	if responseLower == referenceLower {
 		return 1.0, nil
 	}
-	
+
 	// Word overlap
 	responseWords := strings.Fields(responseLower)
 	referenceWords := strings.Fields(referenceLower)
-	
+
 	// Create maps for word counting
 	responseWordMap := make(map[string]int)
 	referenceWordMap := make(map[string]int)
-	
+
 	for _, word := range responseWords {
 		responseWordMap[word]++
 	}
-	
+
 	for _, word := range referenceWords {
 		referenceWordMap[word]++
 	}
-	
+
 	// Count matching words
 	var matchingWords int
 	for word, count := range referenceWordMap {
@@ -139,22 +139,22 @@ func (c *SimpleEvaluationClient) EvaluateResponseMatch(response, reference strin
 			matchingWords += min(count, responseCount)
 		}
 	}
-	
+
 	// Calculate Jaccard similarity: intersection / union
 	totalWords := len(referenceWords) + len(responseWords) - matchingWords
 	if totalWords == 0 {
 		return 0.0, nil
 	}
-	
+
 	similarity := float64(matchingWords) / float64(totalWords)
-	
+
 	c.Logger.Debug("Response match evaluation",
 		slog.String("response", response),
 		slog.String("reference", reference),
 		slog.Int("matching_words", matchingWords),
 		slog.Int("total_words", totalWords),
 		slog.Float64("similarity", similarity))
-	
+
 	return similarity, nil
 }
 
@@ -162,7 +162,7 @@ func (c *SimpleEvaluationClient) EvaluateResponseMatch(response, reference strin
 func extractKeywords(query string) []string {
 	// Convert to lowercase and split into words
 	words := strings.Fields(strings.ToLower(query))
-	
+
 	// Filter out common stop words
 	stopWords := map[string]bool{
 		"a": true, "an": true, "the": true, "and": true, "or": true,
@@ -174,20 +174,20 @@ func extractKeywords(query string) []string {
 		"between": true, "under": true, "during": true, "without": true,
 		"of": true, "from": true,
 	}
-	
+
 	var keywords []string
 	for _, word := range words {
 		// Remove any punctuation
 		word = strings.Trim(word, ".,!?:;()\"-")
-		
+
 		// Skip empty strings and stop words
 		if word == "" || stopWords[word] {
 			continue
 		}
-		
+
 		keywords = append(keywords, word)
 	}
-	
+
 	return keywords
 }
 

@@ -13,8 +13,8 @@ import (
 // ContainerCodeExecutor executes code in a container for isolation.
 type ContainerCodeExecutor struct {
 	*BaseCodeExecutor
-	ImageName          string // Docker image name
-	DockerfilePath     string // Path to Dockerfile for building custom image
+	ImageName           string // Docker image name
+	DockerfilePath      string // Path to Dockerfile for building custom image
 	DockerClientBaseURL string // Base URL for Docker client (optional)
 }
 
@@ -26,7 +26,7 @@ func NewContainerCodeExecutor(options ...func(*ContainerCodeExecutor)) (*Contain
 
 	executor := &ContainerCodeExecutor{
 		BaseCodeExecutor:    base,
-		ImageName:          "adk-code-executor:latest",
+		ImageName:           "adk-code-executor:latest",
 		DockerClientBaseURL: "",
 	}
 

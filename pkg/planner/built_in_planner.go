@@ -22,7 +22,7 @@ func NewBuiltInPlanner(thinkingConfig *ThinkingConfig) *BuiltInPlanner {
 			Visible: false,
 		}
 	}
-	
+
 	return &BuiltInPlanner{
 		thinkingConfig: thinkingConfig,
 	}
@@ -36,7 +36,7 @@ func (p *BuiltInPlanner) BuildPlanningInstruction(ctx *Context, request *LlmRequ
 	if p.thinkingConfig != nil {
 		request.Thinking = p.thinkingConfig
 	}
-	
+
 	return "", nil
 }
 

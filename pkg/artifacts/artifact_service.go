@@ -42,7 +42,7 @@ type ArtifactService interface {
 	// GetArtifact gets an artifact by key.
 	// This is a simplified version of LoadArtifact for use with memory tools.
 	GetArtifact(ctx context.Context, key string) (string, error)
-	
+
 	// SaveArtifactByKey saves an artifact by key.
 	// This is a simplified version of SaveArtifact for use with memory tools.
 	SaveArtifactByKey(ctx context.Context, key string, value string) error

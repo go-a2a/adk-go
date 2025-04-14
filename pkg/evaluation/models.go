@@ -11,13 +11,13 @@ import (
 type EvaluationConfig struct {
 	// MinToolTrajectoryScore is the minimum required score for tool usage accuracy.
 	MinToolTrajectoryScore float64 `json:"min_tool_trajectory_score"`
-	
+
 	// MinResponseEvaluationScore is the minimum required score for response quality.
 	MinResponseEvaluationScore float64 `json:"min_response_evaluation_score"`
-	
+
 	// MinResponseMatchScore is the minimum required score for response match.
 	MinResponseMatchScore float64 `json:"min_response_match_score"`
-	
+
 	// Runs is the number of evaluation runs to perform.
 	Runs int `json:"runs"`
 }
@@ -34,9 +34,9 @@ func DefaultEvaluationConfig() EvaluationConfig {
 
 // ToolUse represents a tool invocation.
 type ToolUse struct {
-	ToolName   string                 `json:"tool_name"`
-	ToolInput  map[string]interface{} `json:"tool_input"`
-	ToolOutput interface{}            `json:"tool_output,omitempty"`
+	ToolName   string         `json:"tool_name"`
+	ToolInput  map[string]any `json:"tool_input"`
+	ToolOutput any            `json:"tool_output,omitempty"`
 }
 
 // Query represents a test query with expected results.
@@ -57,12 +57,12 @@ type EvaluationDataset []Session
 
 // EvaluationResult contains results from an evaluation run.
 type EvaluationResult struct {
-	ToolTrajectoryScore     float64                 `json:"tool_trajectory_score"`
-	ResponseEvaluationScore float64                 `json:"response_evaluation_score"`
-	ResponseMatchScore      float64                 `json:"response_match_score"`
-	Details                 map[string]interface{}  `json:"details,omitempty"`
-	Failures                []map[string]interface{} `json:"failures,omitempty"`
-	Config                  EvaluationConfig        `json:"config"`
-	Dataset                 EvaluationDataset       `json:"dataset"`
-	Timestamp               time.Time               `json:"timestamp"`
+	ToolTrajectoryScore     float64           `json:"tool_trajectory_score"`
+	ResponseEvaluationScore float64           `json:"response_evaluation_score"`
+	ResponseMatchScore      float64           `json:"response_match_score"`
+	Details                 map[string]any    `json:"details,omitempty"`
+	Failures                []map[string]any  `json:"failures,omitempty"`
+	Config                  EvaluationConfig  `json:"config"`
+	Dataset                 EvaluationDataset `json:"dataset"`
+	Timestamp               time.Time         `json:"timestamp"`
 }

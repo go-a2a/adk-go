@@ -10,6 +10,8 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/go-a2a/adk-go/pkg/agent"
 	"github.com/go-a2a/adk-go/pkg/artifacts"
 	"github.com/go-a2a/adk-go/pkg/event"
@@ -17,7 +19,6 @@ import (
 	"github.com/go-a2a/adk-go/pkg/message"
 	"github.com/go-a2a/adk-go/pkg/observability"
 	"github.com/go-a2a/adk-go/pkg/session"
-	"github.com/google/uuid"
 )
 
 // Runner represents a runner for managing agent execution within a session.
@@ -82,10 +83,10 @@ func NewRunner(rootAgent *agent.Agent, config RunnerConfig) *Runner {
 func (r *Runner) Run(ctx context.Context, userInput string) (message.Message, error) {
 	// Generate a random user ID for this single interaction
 	userID := uuid.NewString()
-	
+
 	// Create a new message from the user input
 	msg := message.NewUserMessage(userInput)
-	
+
 	// Run with a new session
 	return r.RunWithSession(ctx, userID, "", []message.Message{msg})
 }
@@ -130,7 +131,7 @@ func (r *Runner) RunWithSession(ctx context.Context, userID, sessionID string, m
 
 	// Process the last message from the user
 	lastMsg := messages[len(messages)-1]
-	
+
 	// Append user message to session and save any artifacts
 	if err := r.appendNewMessageToSession(ctx, invocationCtx, lastMsg); err != nil {
 		return message.Message{}, fmt.Errorf("failed to append message to session: %w", err)

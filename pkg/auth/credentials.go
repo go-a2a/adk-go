@@ -100,11 +100,11 @@ func (s *ServiceAccountCredentials) Type() string {
 
 // AuthCredential is a composite type that can hold any type of authentication credentials.
 type AuthCredential struct {
-	AuthType            AuthCredentialType      `json:"auth_type"`
-	APIKey              string                  `json:"api_key,omitempty"`
-	HTTP                *HTTPAuth               `json:"http,omitempty"`
-	OAuth2              *OAuth2Auth             `json:"oauth2,omitempty"`
-	ServiceAccount      *ServiceAccountCredentials `json:"service_account,omitempty"`
+	AuthType       AuthCredentialType         `json:"auth_type"`
+	APIKey         string                     `json:"api_key,omitempty"`
+	HTTP           *HTTPAuth                  `json:"http,omitempty"`
+	OAuth2         *OAuth2Auth                `json:"oauth2,omitempty"`
+	ServiceAccount *ServiceAccountCredentials `json:"service_account,omitempty"`
 }
 
 // Type returns the type of these credentials.

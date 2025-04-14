@@ -12,13 +12,13 @@ import (
 
 const (
 	// Planning tags used to structure model output
-	PlanningTag     = "<planning>"
-	PlanningEndTag  = "</planning>"
-	ReasoningTag    = "<reasoning>"
-	ReasoningEndTag = "</reasoning>"
-	ActionTag       = "<action>"
-	ActionEndTag    = "</action>"
-	FinalAnswerTag  = "<final_answer>"
+	PlanningTag       = "<planning>"
+	PlanningEndTag    = "</planning>"
+	ReasoningTag      = "<reasoning>"
+	ReasoningEndTag   = "</reasoning>"
+	ActionTag         = "<action>"
+	ActionEndTag      = "</action>"
+	FinalAnswerTag    = "<final_answer>"
 	FinalAnswerEndTag = "</final_answer>"
 )
 
@@ -28,7 +28,7 @@ const (
 type PlanReActPlanner struct {
 	// enableFinalAnswerCheck determines if the planner should ensure final answers are provided.
 	enableFinalAnswerCheck bool
-	
+
 	// requireStructuredOutput determines if the planner should enforce structured outputs.
 	requireStructuredOutput bool
 }
@@ -53,14 +53,14 @@ func WithStructuredOutput(required bool) PlanReActPlannerOption {
 // NewPlanReActPlanner creates a new PlanReActPlanner with the given options.
 func NewPlanReActPlanner(opts ...PlanReActPlannerOption) *PlanReActPlanner {
 	planner := &PlanReActPlanner{
-		enableFinalAnswerCheck: true,
+		enableFinalAnswerCheck:  true,
 		requireStructuredOutput: true,
 	}
-	
+
 	for _, opt := range opts {
 		opt(planner)
 	}
-	
+
 	return planner
 }
 
@@ -76,7 +76,7 @@ func (p *PlanReActPlanner) ProcessPlanningResponse(ctx *CallbackContext, respons
 	if len(responseParts) == 0 {
 		return responseParts, nil
 	}
-	
+
 	// Process non-function call parts
 	result := make([]message.Message, 0, len(responseParts))
 	for _, part := range responseParts {
@@ -92,7 +92,7 @@ func (p *PlanReActPlanner) ProcessPlanningResponse(ctx *CallbackContext, respons
 			result = append(result, processed)
 		}
 	}
-	
+
 	return result, nil
 }
 
@@ -101,19 +101,19 @@ func (p *PlanReActPlanner) handleNonFunctionCallParts(part message.Message) (mes
 	if !p.requireStructuredOutput {
 		return part, nil
 	}
-	
+
 	content := part.Content
-	
+
 	// Ensure content is properly structured if required
 	if p.enableFinalAnswerCheck && !strings.Contains(content, FinalAnswerTag) {
 		// If there's no final answer, wrap the content in final answer tags
-		if !strings.Contains(content, PlanningTag) && 
-		   !strings.Contains(content, ReasoningTag) && 
-		   !strings.Contains(content, ActionTag) {
+		if !strings.Contains(content, PlanningTag) &&
+			!strings.Contains(content, ReasoningTag) &&
+			!strings.Contains(content, ActionTag) {
 			content = fmt.Sprintf("%s%s%s", FinalAnswerTag, content, FinalAnswerEndTag)
 		}
 	}
-	
+
 	result := part.Clone()
 	result.Content = content
 	return result, nil
@@ -157,14 +157,14 @@ IMPORTANT GUIDELINES:
 - Ensure answers are specific and contextually appropriate
 - Use the designated tags to structure your response
 - Be thorough but concise in your explanations`.
-	Replace("${PlanningTag}", PlanningTag).
-	Replace("${PlanningEndTag}", PlanningEndTag).
-	Replace("${ReasoningTag}", ReasoningTag).
-	Replace("${ReasoningEndTag}", ReasoningEndTag).
-	Replace("${ActionTag}", ActionTag).
-	Replace("${ActionEndTag}", ActionEndTag).
-	Replace("${FinalAnswerTag}", FinalAnswerTag).
-	Replace("${FinalAnswerEndTag}", FinalAnswerEndTag)
+		Replace("${PlanningTag}", PlanningTag).
+		Replace("${PlanningEndTag}", PlanningEndTag).
+		Replace("${ReasoningTag}", ReasoningTag).
+		Replace("${ReasoningEndTag}", ReasoningEndTag).
+		Replace("${ActionTag}", ActionTag).
+		Replace("${ActionEndTag}", ActionEndTag).
+		Replace("${FinalAnswerTag}", FinalAnswerTag).
+		Replace("${FinalAnswerEndTag}", FinalAnswerEndTag)
 }
 
 // Replace is a helper method for string replacement.

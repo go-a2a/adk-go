@@ -22,14 +22,14 @@ type mockAgent struct {
 func newMockAgent() *mockAgent {
 	return &mockAgent{
 		responses: map[string]string{
-			"Hello": "Hi there!",
+			"Hello":            "Hi there!",
 			"What time is it?": "It's 3:00 PM.",
 		},
 		toolUses: map[string][]ToolUse{
 			"What time is it?": {
 				{
 					ToolName: "get_time",
-					ToolInput: map[string]interface{}{
+					ToolInput: map[string]any{
 						"timezone": "UTC",
 					},
 				},
@@ -43,12 +43,12 @@ func (m *mockAgent) Run(ctx context.Context, query string) (string, []ToolUse, e
 	if !ok {
 		response = "I don't know how to respond to that."
 	}
-	
+
 	toolUses, ok := m.toolUses[query]
 	if !ok {
 		toolUses = []ToolUse{}
 	}
-	
+
 	// Apply callback to tool uses if set
 	if m.callback != nil {
 		for i, tool := range toolUses {
@@ -57,7 +57,7 @@ func (m *mockAgent) Run(ctx context.Context, query string) (string, []ToolUse, e
 			}
 		}
 	}
-	
+
 	return response, toolUses, nil
 }
 
@@ -68,7 +68,7 @@ func (m *mockAgent) SetBeforeToolCallback(callback ToolCallback) {
 func TestTrajectoryEvaluator_Evaluate(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	evaluator := NewTrajectoryEvaluator(logger)
-	
+
 	dataset := EvaluationDataset{
 		Session{
 			Query{
@@ -76,7 +76,7 @@ func TestTrajectoryEvaluator_Evaluate(t *testing.T) {
 				ExpectedTools: []ToolUse{
 					{
 						ToolName: "get_time",
-						ToolInput: map[string]interface{}{
+						ToolInput: map[string]any{
 							"timezone": "UTC",
 						},
 					},
@@ -84,7 +84,7 @@ func TestTrajectoryEvaluator_Evaluate(t *testing.T) {
 				ActualTools: []ToolUse{
 					{
 						ToolName: "get_time",
-						ToolInput: map[string]interface{}{
+						ToolInput: map[string]any{
 							"timezone": "UTC",
 						},
 					},
@@ -92,12 +92,12 @@ func TestTrajectoryEvaluator_Evaluate(t *testing.T) {
 			},
 		},
 	}
-	
+
 	score, err := evaluator.Evaluate(dataset, false)
 	if err != nil {
 		t.Fatalf("Evaluate() error = %v", err)
 	}
-	
+
 	expected := 1.0
 	if !cmp.Equal(score, expected) {
 		t.Errorf("Evaluate() got = %v, want %v", score, expected)
@@ -107,7 +107,7 @@ func TestTrajectoryEvaluator_Evaluate(t *testing.T) {
 func TestResponseEvaluator_EvaluateCoherence(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	client := NewSimpleEvaluationClient(logger)
-	
+
 	tests := []struct {
 		name     string
 		query    string
@@ -127,14 +127,14 @@ func TestResponseEvaluator_EvaluateCoherence(t *testing.T) {
 			want:     4.5, // Approximate - coherence scoring is complex
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := client.EvaluateCoherence(tt.query, tt.response)
 			if err != nil {
 				t.Fatalf("EvaluateCoherence() error = %v", err)
 			}
-			
+
 			// Use approximate comparison for coherence scores
 			if got == 0 && tt.want != 0 || got > 0 && (got < tt.want*0.5 || got > tt.want*1.5) {
 				t.Errorf("EvaluateCoherence() got = %v, want approximately %v", got, tt.want)
@@ -147,11 +147,11 @@ func TestEvaluationGenerator_GenerateResponses(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	generator := NewEvaluationGenerator(logger)
 	agent := newMockAgent()
-	
+
 	dataset := EvaluationDataset{
 		Session{
 			Query{
-				Text: "Hello",
+				Text:          "Hello",
 				ExpectedTools: []ToolUse{},
 			},
 			Query{
@@ -159,7 +159,7 @@ func TestEvaluationGenerator_GenerateResponses(t *testing.T) {
 				ExpectedTools: []ToolUse{
 					{
 						ToolName: "get_time",
-						ToolInput: map[string]interface{}{
+						ToolInput: map[string]any{
 							"timezone": "UTC",
 						},
 					},
@@ -167,30 +167,30 @@ func TestEvaluationGenerator_GenerateResponses(t *testing.T) {
 			},
 		},
 	}
-	
+
 	resultDataset, err := generator.GenerateResponses(context.Background(), dataset, agent, 1)
 	if err != nil {
 		t.Fatalf("GenerateResponses() error = %v", err)
 	}
-	
+
 	// Verify responses were generated
 	if len(resultDataset) != len(dataset) {
 		t.Errorf("GenerateResponses() dataset length = %v, want %v", len(resultDataset), len(dataset))
 	}
-	
+
 	if len(resultDataset[0]) != len(dataset[0]) {
 		t.Errorf("GenerateResponses() session length = %v, want %v", len(resultDataset[0]), len(dataset[0]))
 	}
-	
+
 	// Check specific responses
 	if resultDataset[0][0].Response != "Hi there!" {
 		t.Errorf("GenerateResponses() first response = %v, want %v", resultDataset[0][0].Response, "Hi there!")
 	}
-	
+
 	if resultDataset[0][1].Response != "It's 3:00 PM." {
 		t.Errorf("GenerateResponses() second response = %v, want %v", resultDataset[0][1].Response, "It's 3:00 PM.")
 	}
-	
+
 	// Check tool uses
 	if len(resultDataset[0][1].ActualTools) != 1 || resultDataset[0][1].ActualTools[0].ToolName != "get_time" {
 		t.Errorf("GenerateResponses() tool use incorrect")

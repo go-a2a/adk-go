@@ -17,7 +17,7 @@ import (
 type MemoryResult struct {
 	// SessionID is the identifier for the session.
 	SessionID string `json:"session_id"`
-	
+
 	// Events contains the events from the session.
 	Events []*event.Event `json:"events"`
 }
@@ -32,19 +32,19 @@ type SearchMemoryResponse struct {
 type Session struct {
 	// ID is the unique identifier for the session.
 	ID string `json:"id"`
-	
+
 	// AppName is the name of the application associated with the session.
 	AppName string `json:"app_name"`
-	
+
 	// UserID is the identifier of the user associated with the session.
 	UserID string `json:"user_id"`
-	
+
 	// StartTime is when the session began.
 	StartTime time.Time `json:"start_time"`
-	
+
 	// EndTime is when the session ended (zero value if still active).
 	EndTime time.Time `json:"end_time,omitempty"`
-	
+
 	// Events contains the events in the session.
 	Events []*event.Event `json:"events"`
 }
@@ -54,7 +54,7 @@ type MemoryService interface {
 	// AddSessionToMemory adds a session to the memory service.
 	// A session can be added multiple times during its lifetime, e.g., after each turn.
 	AddSessionToMemory(ctx context.Context, session *Session) error
-	
+
 	// SearchMemory searches for sessions that match the query.
 	// Returns sessions that are relevant to the search terms, filtered by app and user.
 	SearchMemory(ctx context.Context, appName string, userID string, query string) (*SearchMemoryResponse, error)

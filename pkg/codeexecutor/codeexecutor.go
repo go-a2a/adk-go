@@ -28,7 +28,7 @@ const (
 // Errors returned by the package.
 var (
 	ErrUnsupportedExecutor = errors.New("unsupported executor type")
-	ErrInvalidConfig      = errors.New("invalid configuration")
+	ErrInvalidConfig       = errors.New("invalid configuration")
 )
 
 // ExecutorConfig contains configuration for creating a code executor.
@@ -63,7 +63,7 @@ func NewCodeExecutor(config ExecutorConfig) (CodeExecutor, error) {
 		if config.ImageName == "" && config.DockerfilePath == "" {
 			return nil, fmt.Errorf("%w: either ImageName or DockerfilePath must be provided", ErrInvalidConfig)
 		}
-		
+
 		var options []func(*ContainerCodeExecutor)
 
 		if config.ImageName != "" {

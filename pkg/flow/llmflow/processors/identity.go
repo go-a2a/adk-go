@@ -5,7 +5,7 @@ package processors
 
 import (
 	"context"
-	
+
 	"github.com/go-a2a/adk-go/pkg/event"
 	"github.com/go-a2a/adk-go/pkg/flow"
 )
@@ -36,7 +36,7 @@ func (p *IdentityRequestProcessor) Process(
 		}
 		req.System += "Your name is " + identity + ". When referring to yourself, use this name."
 	}
-	
+
 	// Return empty channel as this processor doesn't generate events
 	ch := make(chan *event.Event)
 	close(ch)

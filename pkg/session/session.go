@@ -66,10 +66,10 @@ func (s *Session) GetLastNEvents(n int) []event.Event {
 	if n <= 0 {
 		return nil
 	}
-	
+
 	if n >= len(s.Events) {
 		return s.Events
 	}
-	
+
 	return s.Events[len(s.Events)-n:]
 }

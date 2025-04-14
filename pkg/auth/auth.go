@@ -31,10 +31,10 @@ type Credentials interface {
 type Authenticator interface {
 	// Authenticate adds authentication information to the given request.
 	Authenticate(ctx context.Context, req *http.Request) error
-	
+
 	// GetAccessToken returns a valid access token.
 	GetAccessToken(ctx context.Context) (string, time.Time, error)
-	
+
 	// GetCredentials returns the credentials used by this authenticator.
 	GetCredentials() Credentials
 }

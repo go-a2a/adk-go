@@ -10,17 +10,16 @@ import (
 	"time"
 
 	"github.com/go-a2a/adk-go/pkg/event"
-	"github.com/google/go-cmp/cmp"
 )
 
 // TestInMemoryMemoryService tests the InMemoryMemoryService implementation.
 func TestInMemoryMemoryService(t *testing.T) {
 	// Create service
 	service := NewInMemoryMemoryService()
-	
+
 	// Create context
 	ctx := context.Background()
-	
+
 	// Test session
 	session := &Session{
 		ID:        "test-session",
@@ -45,13 +44,13 @@ func TestInMemoryMemoryService(t *testing.T) {
 			},
 		},
 	}
-	
+
 	// Add session to memory
 	err := service.AddSessionToMemory(ctx, session)
 	if err != nil {
 		t.Fatalf("Failed to add session to memory: %v", err)
 	}
-	
+
 	// Test search
 	testCases := []struct {
 		name        string
@@ -77,7 +76,7 @@ func TestInMemoryMemoryService(t *testing.T) {
 			wantResults: 0,
 		},
 	}
-	
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Search memory
@@ -85,12 +84,12 @@ func TestInMemoryMemoryService(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Failed to search memory: %v", err)
 			}
-			
+
 			// Check result count
 			if len(res.Memories) != tc.wantResults {
 				t.Errorf("Expected %d memory results, got %d", tc.wantResults, len(res.Memories))
 			}
-			
+
 			// Check content if results expected
 			if tc.wantResults > 0 && len(res.Memories) > 0 {
 				foundMatch := false
@@ -105,7 +104,7 @@ func TestInMemoryMemoryService(t *testing.T) {
 						break
 					}
 				}
-				
+
 				if !foundMatch {
 					t.Errorf("Expected to find content containing %q in results", tc.wantContent)
 				}
@@ -121,10 +120,10 @@ func TestVectorMemoryService(t *testing.T) {
 		WithSimilarityTopK(3),
 		WithDistanceThreshold(0.2),
 	)
-	
+
 	// Create context
 	ctx := context.Background()
-	
+
 	// Test session 1
 	session1 := &Session{
 		ID:        "session1",
@@ -139,7 +138,7 @@ func TestVectorMemoryService(t *testing.T) {
 			},
 		},
 	}
-	
+
 	// Test session 2
 	session2 := &Session{
 		ID:        "session2",
@@ -154,39 +153,39 @@ func TestVectorMemoryService(t *testing.T) {
 			},
 		},
 	}
-	
+
 	// Add sessions to memory
 	err := service.AddSessionToMemory(ctx, session1)
 	if err != nil {
 		t.Fatalf("Failed to add session1 to memory: %v", err)
 	}
-	
+
 	err = service.AddSessionToMemory(ctx, session2)
 	if err != nil {
 		t.Fatalf("Failed to add session2 to memory: %v", err)
 	}
-	
+
 	// Test search
 	testCases := []struct {
-		name          string
-		query         string
-		wantSessions  []string
+		name              string
+		query             string
+		wantSessions      []string
 		wantNotInSessions []string
 	}{
 		{
-			name:          "Search for AI",
-			query:         "AI and neural networks",
-			wantSessions:  []string{"session1"},
+			name:              "Search for AI",
+			query:             "AI and neural networks",
+			wantSessions:      []string{"session1"},
 			wantNotInSessions: []string{"session2"},
 		},
 		{
-			name:          "Search for Go web",
-			query:         "web development with Go",
-			wantSessions:  []string{"session2"},
+			name:              "Search for Go web",
+			query:             "web development with Go",
+			wantSessions:      []string{"session2"},
 			wantNotInSessions: []string{"session1"},
 		},
 	}
-	
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Search memory
@@ -194,20 +193,20 @@ func TestVectorMemoryService(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Failed to search memory: %v", err)
 			}
-			
+
 			// Create map of found session IDs
 			foundSessions := make(map[string]bool)
 			for _, memory := range res.Memories {
 				foundSessions[memory.SessionID] = true
 			}
-			
+
 			// Check for expected sessions
 			for _, sid := range tc.wantSessions {
 				if !foundSessions[sid] {
 					t.Errorf("Expected to find session %s in results", sid)
 				}
 			}
-			
+
 			// Check sessions that should not be present
 			for _, sid := range tc.wantNotInSessions {
 				if foundSessions[sid] {
@@ -231,10 +230,10 @@ func createTestEvent(id, author, content string) *event.Event {
 func TestKnowledgeGraphMemoryService(t *testing.T) {
 	// Create service
 	service := NewKnowledgeGraphMemoryService()
-	
+
 	// Create context
 	ctx := context.Background()
-	
+
 	// Create test entities
 	entityGo := &Entity{
 		Type:       "entity",
@@ -246,7 +245,7 @@ func TestKnowledgeGraphMemoryService(t *testing.T) {
 			"Go has garbage collection, type safety, and CSP-style concurrency",
 		},
 	}
-	
+
 	entityRust := &Entity{
 		Type:       "entity",
 		Name:       "Rust",
@@ -257,13 +256,13 @@ func TestKnowledgeGraphMemoryService(t *testing.T) {
 			"Rust enforces memory safety without using garbage collection",
 		},
 	}
-	
+
 	// Add entities to graph
 	service.mu.Lock()
 	service.graph.Entities[entityGo.Name] = entityGo
 	service.graph.Entities[entityRust.Name] = entityRust
 	service.mu.Unlock()
-	
+
 	// Test session
 	session := &Session{
 		ID:        "test-session",
@@ -275,13 +274,13 @@ func TestKnowledgeGraphMemoryService(t *testing.T) {
 			createTestEvent("id2", "assistant", "Memory management varies across languages. Garbage collection is used in Go."),
 		},
 	}
-	
+
 	// Add session to memory
 	err := service.AddSessionToMemory(ctx, session)
 	if err != nil {
 		t.Fatalf("Failed to add session to memory: %v", err)
 	}
-	
+
 	// Test search
 	testCases := []struct {
 		name       string
@@ -299,7 +298,7 @@ func TestKnowledgeGraphMemoryService(t *testing.T) {
 			wantEvents: 1, // From the session
 		},
 	}
-	
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Search memory
@@ -307,13 +306,13 @@ func TestKnowledgeGraphMemoryService(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Failed to search memory: %v", err)
 			}
-			
+
 			// Count total events
 			totalEvents := 0
 			for _, memory := range res.Memories {
 				totalEvents += len(memory.Events)
 			}
-			
+
 			if totalEvents != tc.wantEvents {
 				t.Errorf("Expected %d total events, got %d", tc.wantEvents, totalEvents)
 			}
@@ -331,17 +330,17 @@ func TestMemoryResult(t *testing.T) {
 			createTestEvent("id2", "assistant", "Hi there"),
 		},
 	}
-	
+
 	// Test session ID
 	if result.SessionID != "test-session" {
 		t.Errorf("Expected session ID 'test-session', got '%s'", result.SessionID)
 	}
-	
+
 	// Test events
 	if len(result.Events) != 2 {
 		t.Errorf("Expected 2 events, got %d", len(result.Events))
 	}
-	
+
 	// Test event content
 	if result.Events[0].Content != "Hello" {
 		t.Errorf("Expected first event content 'Hello', got '%s'", result.Events[0].Content)
@@ -367,12 +366,12 @@ func TestSearchMemoryResponse(t *testing.T) {
 			},
 		},
 	}
-	
+
 	// Test memories count
 	if len(response.Memories) != 2 {
 		t.Errorf("Expected 2 memories, got %d", len(response.Memories))
 	}
-	
+
 	// Test memory session IDs
 	if response.Memories[0].SessionID != "session1" || response.Memories[1].SessionID != "session2" {
 		t.Errorf("Session IDs don't match expected values")

@@ -16,10 +16,10 @@ import (
 var (
 	// ErrInvalidEventID indicates an invalid event ID.
 	ErrInvalidEventID = errors.New("invalid event ID")
-	
+
 	// ErrEmptyAuthor indicates an empty author field.
 	ErrEmptyAuthor = errors.New("author cannot be empty")
-	
+
 	// DefaultIDLength is the default length of generated IDs.
 	DefaultIDLength = 8
 )
@@ -28,16 +28,16 @@ var (
 type FunctionCall struct {
 	// ID is the unique identifier for this function call.
 	ID string `json:"id,omitempty"`
-	
+
 	// Name is the name of the function.
 	Name string `json:"name"`
-	
+
 	// Parameters contains the parameters passed to the function.
-	Parameters map[string]interface{} `json:"parameters"`
-	
+	Parameters map[string]any `json:"parameters"`
+
 	// Response contains the response from the function call.
-	Response map[string]interface{} `json:"response,omitempty"`
-	
+	Response map[string]any `json:"response,omitempty"`
+
 	// IsLongRunning indicates if this is a long-running function call.
 	IsLongRunning bool `json:"is_long_running,omitempty"`
 }
@@ -46,25 +46,25 @@ type FunctionCall struct {
 type Event struct {
 	// InvocationID is a unique identifier for this event.
 	InvocationID string `json:"invocation_id"`
-	
+
 	// Author is who created the event ("user" or agent name).
 	Author string `json:"author"`
-	
+
 	// Content is the text content of the event.
 	Content string `json:"content"`
-	
+
 	// Actions contains actions taken by the agent.
 	Actions *EventActions `json:"actions,omitempty"`
-	
+
 	// FunctionCalls contains the function calls in this event.
 	FunctionCalls []FunctionCall `json:"function_calls,omitempty"`
-	
+
 	// LongRunningToolIDs contains IDs of long-running function calls.
 	LongRunningToolIDs []string `json:"long_running_tool_ids,omitempty"`
-	
+
 	// Branch tracks the agent conversation hierarchy.
 	Branch string `json:"branch,omitempty"`
-	
+
 	// Timestamp is when the event was created.
 	Timestamp time.Time `json:"timestamp"`
 }
@@ -74,20 +74,20 @@ func NewEvent(author, content string) (*Event, error) {
 	if author == "" {
 		return nil, ErrEmptyAuthor
 	}
-	
+
 	id, err := NewID()
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate ID: %w", err)
 	}
-	
+
 	return &Event{
-		InvocationID:      id,
-		Author:            author,
-		Content:           content,
-		Actions:           NewEventActions(),
-		FunctionCalls:     []FunctionCall{},
+		InvocationID:       id,
+		Author:             author,
+		Content:            content,
+		Actions:            NewEventActions(),
+		FunctionCalls:      []FunctionCall{},
 		LongRunningToolIDs: []string{},
-		Timestamp:         time.Now(),
+		Timestamp:          time.Now(),
 	}, nil
 }
 
@@ -108,51 +108,51 @@ func (e *Event) WithBranch(branch string) *Event {
 }
 
 // AddFunctionCall adds a function call to the event.
-func (e *Event) AddFunctionCall(name string, parameters map[string]interface{}) (*FunctionCall, error) {
+func (e *Event) AddFunctionCall(name string, parameters map[string]any) (*FunctionCall, error) {
 	id, err := NewID()
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate function call ID: %w", err)
 	}
-	
+
 	fc := FunctionCall{
 		ID:         id,
 		Name:       name,
 		Parameters: parameters,
 	}
-	
+
 	e.FunctionCalls = append(e.FunctionCalls, fc)
 	return &fc, nil
 }
 
 // AddLongRunningFunctionCall adds a long-running function call to the event.
-func (e *Event) AddLongRunningFunctionCall(name string, parameters map[string]interface{}) (*FunctionCall, error) {
+func (e *Event) AddLongRunningFunctionCall(name string, parameters map[string]any) (*FunctionCall, error) {
 	id, err := NewID()
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate function call ID: %w", err)
 	}
-	
+
 	fc := FunctionCall{
-		ID:           id,
-		Name:         name,
-		Parameters:   parameters,
+		ID:            id,
+		Name:          name,
+		Parameters:    parameters,
 		IsLongRunning: true,
 	}
-	
+
 	e.FunctionCalls = append(e.FunctionCalls, fc)
 	e.LongRunningToolIDs = append(e.LongRunningToolIDs, id)
-	
+
 	return &fc, nil
 }
 
 // SetFunctionResponse sets the response for a function call.
-func (e *Event) SetFunctionResponse(id string, response map[string]interface{}) error {
+func (e *Event) SetFunctionResponse(id string, response map[string]any) error {
 	for i, fc := range e.FunctionCalls {
 		if fc.ID == id {
 			e.FunctionCalls[i].Response = response
 			return nil
 		}
 	}
-	
+
 	return fmt.Errorf("function call with ID %s not found", id)
 }
 
@@ -162,19 +162,19 @@ func (e *Event) IsFinalResponse() bool {
 	if e.Author == "user" {
 		return false
 	}
-	
+
 	// If there are long-running tools, it's not final
 	if len(e.LongRunningToolIDs) > 0 {
 		return false
 	}
-	
+
 	// Check if all function calls have responses
 	for _, fc := range e.FunctionCalls {
 		if fc.Response == nil {
 			return false
 		}
 	}
-	
+
 	return true
 }
 
@@ -187,22 +187,22 @@ func (e *Event) GetFunctionCalls() []FunctionCall {
 }
 
 // GetFunctionResponses retrieves function responses.
-func (e *Event) GetFunctionResponses() map[string]map[string]interface{} {
-	responses := make(map[string]map[string]interface{})
-	
+func (e *Event) GetFunctionResponses() map[string]map[string]any {
+	responses := make(map[string]map[string]any)
+
 	for _, fc := range e.FunctionCalls {
 		if fc.Response != nil {
 			responses[fc.Name] = fc.Response
 		}
 	}
-	
+
 	return responses
 }
 
 // HasTrailingCodeExecutionResult checks for code execution results.
 func (e *Event) HasTrailingCodeExecutionResult() bool {
-	return strings.Contains(e.Content, "<code_execution_result>") && 
-		   strings.HasSuffix(strings.TrimSpace(e.Content), "</code_execution_result>")
+	return strings.Contains(e.Content, "<code_execution_result>") &&
+		strings.HasSuffix(strings.TrimSpace(e.Content), "</code_execution_result>")
 }
 
 // NewID generates a random ID with the default length.
@@ -217,6 +217,6 @@ func GenerateRandomID(length int) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	
+
 	return hex.EncodeToString(bytes), nil
 }

@@ -176,9 +176,9 @@ func NewOpenAPITool() *tool.BaseTool {
 		var respBody any
 		if err := json.Unmarshal(respBodyBytes, &respBody); err != nil {
 			// Not valid JSON, return as string
-			return fmt.Sprintf("Status: %d\nHeaders: %v\nBody: %s", 
-				resp.StatusCode, 
-				resp.Header, 
+			return fmt.Sprintf("Status: %d\nHeaders: %v\nBody: %s",
+				resp.StatusCode,
+				resp.Header,
 				string(respBodyBytes),
 			), nil
 		}
@@ -189,9 +189,9 @@ func NewOpenAPITool() *tool.BaseTool {
 			return string(respBodyBytes), nil
 		}
 
-		return fmt.Sprintf("Status: %d\nHeaders: %v\nBody: %s", 
-			resp.StatusCode, 
-			resp.Header, 
+		return fmt.Sprintf("Status: %d\nHeaders: %v\nBody: %s",
+			resp.StatusCode,
+			resp.Header,
 			string(prettyJSON),
 		), nil
 	}

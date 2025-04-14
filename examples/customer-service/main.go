@@ -74,7 +74,7 @@ func setupTools() []tool.Tool {
 		"product_search",
 		"Search for products in the store's inventory",
 		model.ToolParameterSpec{
-			"type":       "object",
+			"type": "object",
 			"properties": map[string]any{
 				"query": map[string]any{
 					"type":        "string",
@@ -113,7 +113,7 @@ func setupTools() []tool.Tool {
 		"order_lookup",
 		"Look up details of a customer order",
 		model.ToolParameterSpec{
-			"type":       "object",
+			"type": "object",
 			"properties": map[string]any{
 				"order_id": map[string]any{
 					"type":        "string",
@@ -152,7 +152,7 @@ func setupTools() []tool.Tool {
 		"schedule_appointment",
 		"Schedule a consultation or service appointment",
 		model.ToolParameterSpec{
-			"type":       "object",
+			"type": "object",
 			"properties": map[string]any{
 				"service_type": map[string]any{
 					"type":        "string",
@@ -191,7 +191,7 @@ func setupTools() []tool.Tool {
 			}
 
 			// Mock appointment scheduling functionality
-			appointment := mockScheduleAppointment(params.ServiceType, params.PreferredDate, 
+			appointment := mockScheduleAppointment(params.ServiceType, params.PreferredDate,
 				params.PreferredTime, params.CustomerName, params.ContactInfo)
 
 			return fmt.Sprintf("Appointment scheduled successfully.\n\nConfirmation Number: %s\n\nDetails:\n- Service: %s\n- Date: %s\n- Time: %s\n- Name: %s\n- Contact: %s",
@@ -206,7 +206,7 @@ func setupTools() []tool.Tool {
 
 	// Register the tools
 	registry.Register(productSearchTool)
-	 registry.Register(orderLookupTool)
+	registry.Register(orderLookupTool)
 	registry.Register(appointmentTool)
 
 	return registry.GetAll()
@@ -225,12 +225,12 @@ type Product struct {
 
 // Order represents a customer order
 type Order struct {
-	OrderID      string    `json:"order_id"`
-	CustomerName string    `json:"customer_name"`
-	OrderDate    string    `json:"order_date"`
-	Status       string    `json:"status"`
-	Items        []OrderItem `json:"items"`
-	Total        float64   `json:"total"`
+	OrderID      string        `json:"order_id"`
+	CustomerName string        `json:"customer_name"`
+	OrderDate    string        `json:"order_date"`
+	Status       string        `json:"status"`
+	Items        []OrderItem   `json:"items"`
+	Total        float64       `json:"total"`
 	Shipping     *ShippingInfo `json:"shipping,omitempty"`
 }
 
@@ -244,10 +244,10 @@ type OrderItem struct {
 
 // ShippingInfo represents shipping information for an order
 type ShippingInfo struct {
-	Carrier        string `json:"carrier"`
-	TrackingNumber string `json:"tracking_number,omitempty"`
+	Carrier           string `json:"carrier"`
+	TrackingNumber    string `json:"tracking_number,omitempty"`
 	EstimatedDelivery string `json:"estimated_delivery,omitempty"`
-	ShippedDate    string `json:"shipped_date,omitempty"`
+	ShippedDate       string `json:"shipped_date,omitempty"`
 }
 
 // Appointment represents a customer service appointment
@@ -316,7 +316,7 @@ func mockProductSearch(query, category string) []Product {
 	for _, p := range products {
 		if strings.Contains(strings.ToLower(p.Name), strings.ToLower(query)) ||
 			strings.Contains(strings.ToLower(p.Description), strings.ToLower(query)) {
-			
+
 			// Filter by category if provided
 			if category == "" || strings.EqualFold(p.Category, category) {
 				results = append(results, p)
@@ -351,10 +351,10 @@ func mockOrderLookup(orderID string) Order {
 		},
 		Total: 54.98,
 		Shipping: &ShippingInfo{
-			Carrier:        "FastShip",
-			TrackingNumber: "FS3845729",
+			Carrier:           "FastShip",
+			TrackingNumber:    "FS3845729",
 			EstimatedDelivery: "2025-03-20",
-			ShippedDate:    "2025-03-16",
+			ShippedDate:       "2025-03-16",
 		},
 	}
 }
@@ -365,7 +365,7 @@ func mockScheduleAppointment(serviceType, date, time, name, contact string) Appo
 	if time == "" {
 		time = "Morning (9:00-12:00)"
 	}
-	
+
 	return Appointment{
 		ConfirmationNumber: fmt.Sprintf("APPT-%d", os.Getpid()),
 		ServiceType:        serviceType,
@@ -384,7 +384,7 @@ func runInteractiveSession(ctx context.Context, agent *agent.Agent) {
 
 	// Initialize scanner for user input
 	scanner := bufio.NewScanner(os.Stdin)
-	
+
 	// Start the conversation history with a system message
 	history := []message.Message{
 		message.NewSystemMessage(getSystemPrompt()),
@@ -397,17 +397,17 @@ func runInteractiveSession(ctx context.Context, agent *agent.Agent) {
 			break
 		}
 		userInput := scanner.Text()
-		
+
 		// Check for exit command
 		if strings.EqualFold(userInput, "exit") || strings.EqualFold(userInput, "quit") {
 			fmt.Println("\nThank you for using Cymbal Home & Garden Customer Service. Have a great day!")
 			break
 		}
-		
+
 		// Add user message to history
 		userMsg := message.NewUserMessage(userInput)
 		history = append(history, userMsg)
-		
+
 		// Create a context with trace information
 		ctxWithSpan, span := observability.StartSpan(ctx, "process_user_input")
 		span.SetAttributes(attribute.String("user_input", userInput))
@@ -419,10 +419,10 @@ func runInteractiveSession(ctx context.Context, agent *agent.Agent) {
 			fmt.Printf("\nError: %v\n", err)
 			continue
 		}
-		
+
 		// Add response to history
 		history = append(history, resp)
-		
+
 		// Display the response
 		fmt.Printf("\nAgent: %s\n", resp.Content)
 	}

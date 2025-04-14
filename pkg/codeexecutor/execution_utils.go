@@ -25,7 +25,7 @@ func (u *CodeExecutionUtils) GetEncodedFileContent(data []byte) []byte {
 	if err == nil {
 		return data
 	}
-	
+
 	// Encode to base64
 	return []byte(base64.StdEncoding.EncodeToString(data))
 }
@@ -35,19 +35,19 @@ func (u *CodeExecutionUtils) ExtractCodeAndTruncateContent(content string, delim
 	for _, delimiter := range delimiters {
 		regexPattern := regexp.QuoteMeta(delimiter.Start) + "\\s*\\n([\\s\\S]*?)" + regexp.QuoteMeta(delimiter.End)
 		regex := regexp.MustCompile(regexPattern)
-		
+
 		matches := regex.FindStringSubmatch(content)
 		if len(matches) > 1 {
 			code := strings.TrimSpace(matches[1])
-			
+
 			// Truncate content after the code block
 			loc := regex.FindStringIndex(content)
 			truncatedContent := content[loc[1]:]
-			
+
 			return code, truncatedContent
 		}
 	}
-	
+
 	return "", content
 }
 
@@ -61,34 +61,34 @@ func (u *CodeExecutionUtils) BuildCodeExecutionResultPart(result CodeExecutionRe
 	if len(delimiters) == 0 {
 		return ""
 	}
-	
+
 	delimiter := delimiters[0]
 	var builder strings.Builder
-	
+
 	builder.WriteString(delimiter.Start)
 	builder.WriteString("\n")
-	
+
 	// Add timestamp
 	builder.WriteString("Timestamp: " + result.Timestamp.Format(time.RFC3339) + "\n")
-	
+
 	// Add stdout if it exists
 	if result.Stdout != "" {
 		builder.WriteString("\nStdout:\n")
 		builder.WriteString(result.Stdout)
 	}
-	
+
 	// Add stderr if it exists
 	if result.Stderr != "" {
 		builder.WriteString("\nStderr:\n")
 		builder.WriteString(result.Stderr)
 	}
-	
+
 	// Add error if it exists
 	if result.Error != "" {
 		builder.WriteString("\nError:\n")
 		builder.WriteString(result.Error)
 	}
-	
+
 	// Add output files if they exist
 	if len(result.OutputFiles) > 0 {
 		builder.WriteString("\nOutput Files:\n")
@@ -96,7 +96,7 @@ func (u *CodeExecutionUtils) BuildCodeExecutionResultPart(result CodeExecutionRe
 			builder.WriteString("- " + file.Name + "\n")
 		}
 	}
-	
+
 	builder.WriteString("\n" + delimiter.End)
 	return builder.String()
 }

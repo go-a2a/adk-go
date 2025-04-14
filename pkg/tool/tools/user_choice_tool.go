@@ -63,7 +63,7 @@ func NewGetUserChoiceTool(handler UserChoiceHandler) *tool.BaseTool {
 			return "", fmt.Errorf("at least one option is required")
 		}
 
-		logger.Debug("Getting user choice", 
+		logger.Debug("Getting user choice",
 			slog.String("question", params.Question),
 			slog.Any("options", params.Options),
 		)
@@ -100,6 +100,6 @@ func (h *DefaultUserChoiceHandler) GetUserChoice(ctx context.Context, question s
 	if len(options) > 0 {
 		return options[0], nil
 	}
-	
+
 	return "", fmt.Errorf("no options provided")
 }

@@ -7,8 +7,6 @@
 package planner
 
 import (
-	"context"
-
 	"github.com/go-a2a/adk-go/pkg/message"
 )
 
@@ -32,7 +30,7 @@ type CallbackContext struct {
 	*Context
 
 	// PlannerState contains state information for the planner.
-	PlannerState map[string]interface{}
+	PlannerState map[string]any
 }
 
 // NewContext creates a new planning context.
@@ -49,7 +47,7 @@ func NewContext(messages []message.Message, query, userID, sessionID string) *Co
 func NewCallbackContext(ctx *Context) *CallbackContext {
 	return &CallbackContext{
 		Context:      ctx,
-		PlannerState: make(map[string]interface{}),
+		PlannerState: make(map[string]any),
 	}
 }
 

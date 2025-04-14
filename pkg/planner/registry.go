@@ -19,11 +19,11 @@ func NewRegistry() *Registry {
 	registry := &Registry{
 		planners: make(map[string]Planner),
 	}
-	
+
 	// Register default planners
 	registry.Register("built_in", NewBuiltInPlanner(nil))
 	registry.Register("plan_re_act", NewPlanReActPlanner())
-	
+
 	return registry
 }
 
@@ -31,7 +31,7 @@ func NewRegistry() *Registry {
 func (r *Registry) Register(name string, planner Planner) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	
+
 	r.planners[name] = planner
 }
 
@@ -39,12 +39,12 @@ func (r *Registry) Register(name string, planner Planner) {
 func (r *Registry) Get(name string) (Planner, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	
+
 	planner, ok := r.planners[name]
 	if !ok {
 		return nil, fmt.Errorf("planner not found: %s", name)
 	}
-	
+
 	return planner, nil
 }
 
@@ -52,11 +52,11 @@ func (r *Registry) Get(name string) (Planner, error) {
 func (r *Registry) List() []string {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	
+
 	names := make([]string, 0, len(r.planners))
 	for name := range r.planners {
 		names = append(names, name)
 	}
-	
+
 	return names
 }

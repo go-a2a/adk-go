@@ -28,11 +28,11 @@ import (
 
 func TestServiceAccountCredentials(t *testing.T) {
 	creds := &ServiceAccountCredentials{
-		Type:        "service_account",
-		ProjectID:   "test-project",
+		Type:         "service_account",
+		ProjectID:    "test-project",
 		PrivateKeyID: "test-key-id",
-		PrivateKey:  "test-key",
-		ClientEmail: "test@example.com",
+		PrivateKey:   "test-key",
+		ClientEmail:  "test@example.com",
 	}
 
 	if got, want := creds.Type(), "service_account"; got != want {
@@ -247,9 +247,9 @@ func TestGoogleAuthenticator_GetAccessToken(t *testing.T) {
 
 func TestAuthSchemeGetSchemeType(t *testing.T) {
 	tests := []struct {
-		name    string
-		scheme  AuthScheme
-		want    AuthSchemeType
+		name   string
+		scheme AuthScheme
+		want   AuthSchemeType
 	}{
 		{
 			name: "APIKey scheme",
@@ -276,7 +276,7 @@ func TestAuthSchemeGetSchemeType(t *testing.T) {
 			name: "OAuth2 scheme",
 			scheme: AuthScheme{
 				OAuth2: &OAuth2Scheme{
-					Type: SchemeTypeOAuth2,
+					Type:  SchemeTypeOAuth2,
 					Flows: OAuthFlows{},
 				},
 			},

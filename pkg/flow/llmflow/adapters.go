@@ -5,7 +5,7 @@ package llmflow
 
 import (
 	"context"
-	
+
 	"github.com/go-a2a/adk-go/pkg/event"
 	"github.com/go-a2a/adk-go/pkg/flow"
 	"github.com/go-a2a/adk-go/pkg/flow/llmflow/processors"
@@ -13,11 +13,11 @@ import (
 
 // ProcessorAdapter adapts flow.RequestProcessor to llmflow.RequestProcessor.
 type ProcessorAdapter struct {
-	Processor interface{}
+	Processor any
 }
 
 // AdaptFlowProcessor adapts a flow processor to a llmflow processor.
-func AdaptFlowProcessor(processor interface{}) interface{} {
+func AdaptFlowProcessor(processor any) any {
 	switch p := processor.(type) {
 	case *processors.BasicRequestProcessor:
 		return &FlowRequestProcessorAdapter{p}
@@ -44,7 +44,7 @@ func AdaptFlowProcessor(processor interface{}) interface{} {
 
 // FlowRequestProcessorAdapter adapts flow.RequestProcessor to llmflow.RequestProcessor.
 type FlowRequestProcessorAdapter struct {
-	Processor interface{}
+	Processor any
 }
 
 // Process implements RequestProcessor.Process.
@@ -60,25 +60,25 @@ func (a *FlowRequestProcessorAdapter) Process(
 		Events:      ic.Events,
 		Properties:  ic.Properties,
 	}
-	
+
 	// Convert LLMRequest to flow.LLMRequest
 	flowRequest := &flow.LLMRequest{
 		Model:             req.Model,
 		System:            req.System,
 		ConnectionOptions: req.ConnectionOptions,
 	}
-	
+
 	// Convert Messages
 	for _, msg := range req.Messages {
 		flowMessage := flow.Message{
-			Role:         msg.Role,
-			Content:      msg.Content,
-			Name:         msg.Name,
+			Role:          msg.Role,
+			Content:       msg.Content,
+			Name:          msg.Name,
 			FunctionCalls: msg.FunctionCalls,
 		}
 		flowRequest.Messages = append(flowRequest.Messages, flowMessage)
 	}
-	
+
 	// Convert Tools
 	for _, tool := range req.Tools {
 		flowTool := flow.Tool{
@@ -88,7 +88,7 @@ func (a *FlowRequestProcessorAdapter) Process(
 		}
 		flowRequest.Tools = append(flowRequest.Tools, flowTool)
 	}
-	
+
 	// Convert GenerationConfig
 	if req.GenerationConfig != nil {
 		flowRequest.GenerationConfig = &flow.GenerationConfig{
@@ -99,11 +99,11 @@ func (a *FlowRequestProcessorAdapter) Process(
 			StopSequences: req.GenerationConfig.StopSequences,
 		}
 	}
-	
+
 	// Call the underlying processor's Process method
 	var eventsCh <-chan *event.Event
 	var err error
-	
+
 	switch p := a.Processor.(type) {
 	case *processors.BasicRequestProcessor:
 		eventsCh, err = p.Process(ctx, flowContext, flowRequest)
@@ -120,11 +120,11 @@ func (a *FlowRequestProcessorAdapter) Process(
 	case *processors.AgentTransferRequestProcessor:
 		eventsCh, err = p.Process(ctx, flowContext, flowRequest)
 	}
-	
+
 	// Copy back any changes from flow.LLMRequest to LLMRequest
 	req.Model = flowRequest.Model
 	req.System = flowRequest.System
-	
+
 	return eventsCh, err
 }
 
@@ -142,17 +142,17 @@ func (a *FlowRequestProcessorAdapter) ProcessLive(
 		Events:      ic.Events,
 		Properties:  ic.Properties,
 	}
-	
+
 	// Convert LLMRequest to flow.LLMRequest
 	flowRequest := &flow.LLMRequest{
 		Model:             req.Model,
 		System:            req.System,
 		ConnectionOptions: req.ConnectionOptions,
 	}
-	
+
 	// Call the underlying processor's ProcessLive method
 	var err error
-	
+
 	switch p := a.Processor.(type) {
 	case *processors.BasicRequestProcessor:
 		err = p.ProcessLive(ctx, flowContext, flowRequest, callback)
@@ -169,17 +169,17 @@ func (a *FlowRequestProcessorAdapter) ProcessLive(
 	case *processors.AgentTransferRequestProcessor:
 		err = p.ProcessLive(ctx, flowContext, flowRequest, callback)
 	}
-	
+
 	// Copy back any changes from flow.LLMRequest to LLMRequest
 	req.Model = flowRequest.Model
 	req.System = flowRequest.System
-	
+
 	return err
 }
 
 // FlowResponseProcessorAdapter adapts flow.ResponseProcessor to llmflow.ResponseProcessor.
 type FlowResponseProcessorAdapter struct {
-	Processor interface{}
+	Processor any
 }
 
 // Process implements ResponseProcessor.Process.
@@ -195,27 +195,27 @@ func (a *FlowResponseProcessorAdapter) Process(
 		Events:      ic.Events,
 		Properties:  ic.Properties,
 	}
-	
+
 	// Convert LLMResponse to flow.LLMResponse
 	flowResponse := &flow.LLMResponse{
 		Content:       resp.Content,
 		FunctionCalls: resp.FunctionCalls,
 	}
-	
+
 	// Call the underlying processor's Process method
 	var eventsCh <-chan *event.Event
 	var err error
-	
+
 	switch p := a.Processor.(type) {
 	case *processors.NLPlanningResponseProcessor:
 		eventsCh, err = p.Process(ctx, flowContext, flowResponse)
 	case *processors.CodeExecutionResponseProcessor:
 		eventsCh, err = p.Process(ctx, flowContext, flowResponse)
 	}
-	
+
 	// Copy back any changes from flow.LLMResponse to LLMResponse
 	resp.Content = flowResponse.Content
-	
+
 	return eventsCh, err
 }
 
@@ -233,25 +233,25 @@ func (a *FlowResponseProcessorAdapter) ProcessLive(
 		Events:      ic.Events,
 		Properties:  ic.Properties,
 	}
-	
+
 	// Convert LLMResponse to flow.LLMResponse
 	flowResponse := &flow.LLMResponse{
 		Content:       resp.Content,
 		FunctionCalls: resp.FunctionCalls,
 	}
-	
+
 	// Call the underlying processor's ProcessLive method
 	var err error
-	
+
 	switch p := a.Processor.(type) {
 	case *processors.NLPlanningResponseProcessor:
 		err = p.ProcessLive(ctx, flowContext, flowResponse, callback)
 	case *processors.CodeExecutionResponseProcessor:
 		err = p.ProcessLive(ctx, flowContext, flowResponse, callback)
 	}
-	
+
 	// Copy back any changes from flow.LLMResponse to LLMResponse
 	resp.Content = flowResponse.Content
-	
+
 	return err
 }

@@ -14,17 +14,17 @@ import (
 
 // TransferToAgentParams defines the parameters for transferring to another agent.
 type TransferToAgentParams struct {
-	AgentID     string `json:"agent_id"`
-	Question    string `json:"question"`
-	Context     string `json:"context,omitempty"`
-	ReturnToMe  bool   `json:"return_to_me,omitempty"`
+	AgentID    string `json:"agent_id"`
+	Question   string `json:"question"`
+	Context    string `json:"context,omitempty"`
+	ReturnToMe bool   `json:"return_to_me,omitempty"`
 }
 
 // AgentTransferRegistry provides an interface to transfer questions to other agents.
 type AgentTransferRegistry interface {
 	// TransferQuestion sends a question to another agent and returns the response.
 	TransferQuestion(ctx context.Context, agentID string, question string, context string, returnToMe bool) (string, error)
-	
+
 	// ListAgents returns a list of available agents.
 	ListAgents(ctx context.Context) ([]AgentInfo, error)
 }
@@ -103,7 +103,7 @@ func NewTransferToAgentTool(registry AgentTransferRegistry) *tool.BaseTool {
 // NewListAgentsTool creates a new tool for listing available agents.
 func NewListAgentsTool(registry AgentTransferRegistry) *tool.BaseTool {
 	paramSchema := model.ToolParameterSpec{
-		"type": "object",
+		"type":       "object",
 		"properties": map[string]any{},
 	}
 
@@ -120,8 +120,8 @@ func NewListAgentsTool(registry AgentTransferRegistry) *tool.BaseTool {
 		// Format the response
 		result := "Available agents:\n\n"
 		for _, agent := range agents {
-			result += fmt.Sprintf("ID: %s\nName: %s\nDescription: %s\n\n", 
-				agent.ID, 
+			result += fmt.Sprintf("ID: %s\nName: %s\nDescription: %s\n\n",
+				agent.ID,
 				agent.Name,
 				agent.Description,
 			)

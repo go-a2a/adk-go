@@ -94,18 +94,18 @@ type OpenIDConnectScheme struct {
 
 // OpenIDConfig represents the configuration for OpenID Connect.
 type OpenIDConfig struct {
-	Issuer                 string                 `json:"issuer"`
-	AuthorizationEndpoint  string                 `json:"authorization_endpoint"`
-	TokenEndpoint          string                 `json:"token_endpoint"`
-	UserInfoEndpoint       string                 `json:"userinfo_endpoint,omitempty"`
-	JwksURI                string                 `json:"jwks_uri,omitempty"`
-	RegistrationEndpoint   string                 `json:"registration_endpoint,omitempty"`
-	RevocationEndpoint     string                 `json:"revocation_endpoint,omitempty"`
-	TokenIntrospectionURI  string                 `json:"token_introspection_uri,omitempty"`
-	ScopesSupported        []string               `json:"scopes_supported,omitempty"`
-	ResponseTypesSupported []string               `json:"response_types_supported,omitempty"`
-	GrantTypesSupported    []string               `json:"grant_types_supported,omitempty"`
-	Additional             map[string]interface{} `json:"-"`
+	Issuer                 string         `json:"issuer"`
+	AuthorizationEndpoint  string         `json:"authorization_endpoint"`
+	TokenEndpoint          string         `json:"token_endpoint"`
+	UserInfoEndpoint       string         `json:"userinfo_endpoint,omitempty"`
+	JwksURI                string         `json:"jwks_uri,omitempty"`
+	RegistrationEndpoint   string         `json:"registration_endpoint,omitempty"`
+	RevocationEndpoint     string         `json:"revocation_endpoint,omitempty"`
+	TokenIntrospectionURI  string         `json:"token_introspection_uri,omitempty"`
+	ScopesSupported        []string       `json:"scopes_supported,omitempty"`
+	ResponseTypesSupported []string       `json:"response_types_supported,omitempty"`
+	GrantTypesSupported    []string       `json:"grant_types_supported,omitempty"`
+	Additional             map[string]any `json:"-"`
 }
 
 // AuthScheme represents an authentication scheme (union of all scheme types).

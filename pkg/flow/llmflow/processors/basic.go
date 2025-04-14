@@ -5,7 +5,7 @@ package processors
 
 import (
 	"context"
-	
+
 	"github.com/go-a2a/adk-go/pkg/event"
 	"github.com/go-a2a/adk-go/pkg/flow"
 )
@@ -33,7 +33,7 @@ func (p *BasicRequestProcessor) Process(
 		// In a real implementation, this would get the model from the agent's configuration
 		req.Model = "gemini-1.5-pro"
 	}
-	
+
 	// Set default generation config if not fully configured
 	if req.GenerationConfig == nil {
 		req.GenerationConfig = &flow.GenerationConfig{
@@ -53,12 +53,12 @@ func (p *BasicRequestProcessor) Process(
 			req.GenerationConfig.TopP = 0.95
 		}
 	}
-	
+
 	// Initialize connection options if not set
 	if req.ConnectionOptions == nil {
-		req.ConnectionOptions = make(map[string]interface{})
+		req.ConnectionOptions = make(map[string]any)
 	}
-	
+
 	// Convert events to messages if not already done
 	if len(req.Messages) == 0 && len(ic.Events) > 0 {
 		for _, evt := range ic.Events {
@@ -66,16 +66,16 @@ func (p *BasicRequestProcessor) Process(
 				Role:    evt.Author,
 				Content: evt.Content,
 			}
-			
+
 			// Add function calls from the event
 			for _, fc := range evt.GetFunctionCalls() {
 				msg.FunctionCalls = append(msg.FunctionCalls, fc)
 			}
-			
+
 			req.Messages = append(req.Messages, msg)
 		}
 	}
-	
+
 	// Return empty channel as this processor doesn't generate events
 	ch := make(chan *event.Event)
 	close(ch)

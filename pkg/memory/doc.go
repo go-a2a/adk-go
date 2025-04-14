@@ -6,17 +6,17 @@ Package memory provides storage and retrieval services for agent conversations a
 
 It defines interfaces and implementations for managing memory in AI agent systems, including:
 
-- MemoryService interface that defines core operations for adding sessions to memory
-  and searching memory based on queries.
+  - MemoryService interface that defines core operations for adding sessions to memory
+    and searching memory based on queries.
 
-- InMemoryMemoryService for simple, in-memory storage using keyword matching.
-  This is primarily intended for prototyping and testing.
+  - InMemoryMemoryService for simple, in-memory storage using keyword matching.
+    This is primarily intended for prototyping and testing.
 
-- VectorMemoryService for simulated vector-based search and retrieval.
-  This mimics how systems like Vertex AI RAG would work in production.
+  - VectorMemoryService for simulated vector-based search and retrieval.
+    This mimics how systems like Vertex AI RAG would work in production.
 
-- KnowledgeGraphMemoryService for storing and retrieving information from a
-  knowledge graph, demonstrating a structured approach to memory with entities and relations.
+  - KnowledgeGraphMemoryService for storing and retrieving information from a
+    knowledge graph, demonstrating a structured approach to memory with entities and relations.
 
 Sessions are the core unit of memory storage, representing conversations between
 users and agents. Each session contains events, which are individual user and agent messages.

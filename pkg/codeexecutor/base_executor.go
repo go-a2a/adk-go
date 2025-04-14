@@ -10,10 +10,10 @@ import (
 
 // BaseCodeExecutor provides the base implementation for code executors.
 type BaseCodeExecutor struct {
-	OptimizeDataFile        bool                      // Whether to extract/process data files
-	Stateful                bool                      // Whether the executor maintains state between executions
-	ErrorRetryAttempts      int                       // Number of retry attempts for errors
-	CodeBlockDelimiters     []CodeBlockDelimiter      // Delimiters for code blocks
+	OptimizeDataFile        bool                       // Whether to extract/process data files
+	Stateful                bool                       // Whether the executor maintains state between executions
+	ErrorRetryAttempts      int                        // Number of retry attempts for errors
+	CodeBlockDelimiters     []CodeBlockDelimiter       // Delimiters for code blocks
 	ExecutionResultDelimits []ExecutionResultDelimiter // Delimiters for execution results
 }
 
@@ -21,7 +21,7 @@ type BaseCodeExecutor struct {
 func NewBaseCodeExecutor() *BaseCodeExecutor {
 	return &BaseCodeExecutor{
 		OptimizeDataFile:   false,
-		Stateful:          false,
+		Stateful:           false,
 		ErrorRetryAttempts: 2,
 		CodeBlockDelimiters: []CodeBlockDelimiter{
 			{

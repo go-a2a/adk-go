@@ -12,10 +12,10 @@ import (
 const (
 	// AppPrefix is used for app-level state keys
 	AppPrefix = "app:"
-	
+
 	// UserPrefix is used for user-level state keys
 	UserPrefix = "user:"
-	
+
 	// TempPrefix is used for temporary state keys
 	TempPrefix = "temp:"
 )
@@ -45,12 +45,12 @@ func (s *State) Get(key string) (value any, exists bool) {
 	if v, ok := s.delta[key]; ok {
 		return v, true
 	}
-	
+
 	// Then check current value
 	if v, ok := s.value[key]; ok {
 		return v, true
 	}
-	
+
 	return nil, false
 }
 
@@ -67,7 +67,7 @@ func (s *State) Set(key string, value any) {
 func (s *State) HasDelta() bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	
+
 	return len(s.delta) > 0
 }
 
@@ -88,17 +88,17 @@ func (s *State) ToMap() map[string]any {
 	defer s.mu.RUnlock()
 
 	result := make(map[string]any, len(s.value)+len(s.delta))
-	
+
 	// Copy all values
 	for k, v := range s.value {
 		result[k] = v
 	}
-	
+
 	// Apply deltas (overwriting existing values)
 	for k, v := range s.delta {
 		result[k] = v
 	}
-	
+
 	return result
 }
 
@@ -106,23 +106,23 @@ func (s *State) ToMap() map[string]any {
 func (s *State) GetAppState() map[string]any {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	
+
 	result := make(map[string]any)
-	
+
 	// Add from value map
 	for k, v := range s.value {
 		if len(k) > len(AppPrefix) && k[:len(AppPrefix)] == AppPrefix {
 			result[k[len(AppPrefix):]] = v
 		}
 	}
-	
+
 	// Override with delta map
 	for k, v := range s.delta {
 		if len(k) > len(AppPrefix) && k[:len(AppPrefix)] == AppPrefix {
 			result[k[len(AppPrefix):]] = v
 		}
 	}
-	
+
 	return result
 }
 
@@ -130,23 +130,23 @@ func (s *State) GetAppState() map[string]any {
 func (s *State) GetUserState() map[string]any {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	
+
 	result := make(map[string]any)
-	
+
 	// Add from value map
 	for k, v := range s.value {
 		if len(k) > len(UserPrefix) && k[:len(UserPrefix)] == UserPrefix {
 			result[k[len(UserPrefix):]] = v
 		}
 	}
-	
+
 	// Override with delta map
 	for k, v := range s.delta {
 		if len(k) > len(UserPrefix) && k[:len(UserPrefix)] == UserPrefix {
 			result[k[len(UserPrefix):]] = v
 		}
 	}
-	
+
 	return result
 }
 
@@ -154,7 +154,7 @@ func (s *State) GetUserState() map[string]any {
 func (s *State) ClearDelta() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	
+
 	s.delta = make(map[string]any)
 }
 
@@ -162,10 +162,10 @@ func (s *State) ClearDelta() {
 func (s *State) CommitDelta() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	
+
 	for k, v := range s.delta {
 		s.value[k] = v
 	}
-	
+
 	s.delta = make(map[string]any)
 }

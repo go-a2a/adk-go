@@ -82,14 +82,14 @@ func (h *AuthHandler) generateOAuth2URI(scheme *OAuth2Scheme, state string) (str
 
 	flow := scheme.Flows.AuthorizationCode
 	baseURL := flow.AuthorizationURL
-	
+
 	// Prepare query parameters
 	params := url.Values{}
 	params.Set("response_type", "code")
 	params.Set("client_id", h.config.ClientID)
 	params.Set("redirect_uri", h.config.RedirectURI)
 	params.Set("state", state)
-	
+
 	if len(h.config.Scopes) > 0 {
 		params.Set("scope", strings.Join(h.config.Scopes, " "))
 	}
@@ -104,14 +104,14 @@ func (h *AuthHandler) generateOAuth2URI(scheme *OAuth2Scheme, state string) (str
 // generateOpenIDConnectURI generates an authorization URI for OpenID Connect.
 func (h *AuthHandler) generateOpenIDConnectURI(scheme *OpenIDConnectScheme, state string) (string, error) {
 	baseURL := scheme.OpenIDConfig.AuthorizationEndpoint
-	
+
 	// Prepare query parameters
 	params := url.Values{}
 	params.Set("response_type", "code")
 	params.Set("client_id", h.config.ClientID)
 	params.Set("redirect_uri", h.config.RedirectURI)
 	params.Set("state", state)
-	
+
 	if len(h.config.Scopes) > 0 {
 		params.Set("scope", strings.Join(h.config.Scopes, " "))
 	}

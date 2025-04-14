@@ -86,7 +86,7 @@ func setupTools(artifactService artifacts.ArtifactService) []tool.Tool {
 		"search_documents",
 		"Search for documents that contain specific keywords",
 		model.ToolParameterSpec{
-			"type":       "object",
+			"type": "object",
 			"properties": map[string]any{
 				"query": map[string]any{
 					"type":        "string",
@@ -125,7 +125,7 @@ func setupTools(artifactService artifacts.ArtifactService) []tool.Tool {
 		"get_document",
 		"Retrieve a document by its ID",
 		model.ToolParameterSpec{
-			"type":       "object",
+			"type": "object",
 			"properties": map[string]any{
 				"id": map[string]any{
 					"type":        "string",
@@ -158,7 +158,7 @@ func setupTools(artifactService artifacts.ArtifactService) []tool.Tool {
 		"upload_document",
 		"Upload a new document to the repository",
 		model.ToolParameterSpec{
-			"type":       "object",
+			"type": "object",
 			"properties": map[string]any{
 				"title": map[string]any{
 					"type":        "string",
@@ -224,9 +224,9 @@ type Document struct {
 
 // SearchResult represents a document search result
 type SearchResult struct {
-	ID          string `json:"id"`
-	Title       string `json:"title"`
-	Snippet     string `json:"snippet,omitempty"`
+	ID             string  `json:"id"`
+	Title          string  `json:"title"`
+	Snippet        string  `json:"snippet,omitempty"`
 	RelevanceScore float64 `json:"relevance_score"`
 }
 
@@ -239,10 +239,10 @@ func initializeDocumentStore(ctx context.Context, service artifacts.ArtifactServ
 			Title:   "Introduction to Artificial Intelligence",
 			Content: "Artificial Intelligence (AI) is the simulation of human intelligence processes by machines, especially computer systems. These processes include learning (the acquisition of information and rules for using the information), reasoning (using rules to reach approximate or definite conclusions), and self-correction. Particular applications of AI include expert systems, speech recognition, and machine vision.\n\nThe field of AI research was founded at a workshop held on the campus of Dartmouth College in the summer of 1956. The attendees, including John McCarthy, Marvin Minsky, Allen Newell, and Herbert Simon, became the leaders of AI research for many decades. They and their students wrote programs that were, to most people, simply astonishing: computers were solving word problems in algebra, proving logical theorems, and speaking English.\n\nBy the 1980s, AI research was in full swing, with many practical applications emerging in various fields. However, the field faced challenges in the form of what became known as the 'AI winter,' a period of reduced funding and interest in AI research. Despite these challenges, AI has continued to evolve and is now a critical component of many technologies we use daily.",
 			Metadata: map[string]string{
-				"author":     "John Smith",
-				"year":       "2023",
-				"category":   "Technology",
-				"keywords":   "AI, Artificial Intelligence, Machine Learning, Deep Learning",
+				"author":   "John Smith",
+				"year":     "2023",
+				"category": "Technology",
+				"keywords": "AI, Artificial Intelligence, Machine Learning, Deep Learning",
 			},
 		},
 		{
@@ -250,10 +250,10 @@ func initializeDocumentStore(ctx context.Context, service artifacts.ArtifactServ
 			Title:   "Machine Learning Fundamentals",
 			Content: "Machine Learning (ML) is a subset of artificial intelligence that provides systems the ability to automatically learn and improve from experience without being explicitly programmed. It focuses on the development of computer programs that can access data and use it to learn for themselves.\n\nThe learning process begins with observations or data, such as examples, direct experience, or instruction, in order to look for patterns in data and make better decisions in the future based on the examples that we provide. The primary aim is to allow the computers to learn automatically without human intervention or assistance and adjust actions accordingly.\n\nMachine learning algorithms are often categorized as supervised, unsupervised, or reinforcement learning:\n\n1. Supervised learning: The algorithm is provided with a labeled dataset, which means some data has already been tagged with the correct answer. It involves learning a function that maps an input to an output based on example input-output pairs.\n\n2. Unsupervised learning: The algorithm is given data without explicit instructions on what to do with it. It involves finding patterns or structures in the input data without labeled outputs.\n\n3. Reinforcement learning: The algorithm learns by interacting with an environment and receiving rewards or penalties for actions taken. It involves learning how to act in order to maximize a reward signal.\n\nCommon machine learning algorithms include linear regression, logistic regression, decision trees, random forests, support vector machines, naive Bayes, k-nearest neighbors, k-means clustering, and neural networks (including deep learning architectures).",
 			Metadata: map[string]string{
-				"author":     "Jane Doe",
-				"year":       "2022",
-				"category":   "Technology",
-				"keywords":   "Machine Learning, Algorithms, Supervised Learning, Unsupervised Learning",
+				"author":   "Jane Doe",
+				"year":     "2022",
+				"category": "Technology",
+				"keywords": "Machine Learning, Algorithms, Supervised Learning, Unsupervised Learning",
 			},
 		},
 		{
@@ -261,10 +261,10 @@ func initializeDocumentStore(ctx context.Context, service artifacts.ArtifactServ
 			Title:   "Natural Language Processing Overview",
 			Content: "Natural Language Processing (NLP) is a field of artificial intelligence that gives computers the ability to understand, interpret, and manipulate human language. NLP draws from many disciplines, including computer science and computational linguistics, to fill the gap between human communication and computer understanding.\n\nThe goal of NLP is to enable computers to process and analyze large amounts of natural language data. This involves tasks such as:\n\n1. Text classification: Categorizing text into predefined categories, such as spam detection or sentiment analysis.\n\n2. Text extraction: Identifying and extracting specific information from text, such as named entities or key phrases.\n\n3. Machine translation: Automatically translating text from one language to another.\n\n4. Text generation: Creating coherent and contextually relevant text, such as summaries or responses in a conversation.\n\n5. Speech recognition: Converting spoken language into written text.\n\nModern NLP approaches often use machine learning, particularly deep learning models like recurrent neural networks (RNNs), long short-term memory networks (LSTMs), and transformers. These models learn patterns and relationships in language from large datasets.\n\nTransformer models, such as BERT (Bidirectional Encoder Representations from Transformers) and GPT (Generative Pre-trained Transformer), have revolutionized NLP by enabling more effective learning of language context and semantics. These models have achieved state-of-the-art results on a wide range of NLP tasks.\n\nApplications of NLP include virtual assistants, chatbots, translation services, sentiment analysis tools, and content recommendation systems. As NLP continues to advance, we can expect more sophisticated and human-like language processing capabilities in our technology.",
 			Metadata: map[string]string{
-				"author":     "Michael Johnson",
-				"year":       "2021",
-				"category":   "Technology",
-				"keywords":   "NLP, Natural Language Processing, Text Analysis, BERT, GPT",
+				"author":   "Michael Johnson",
+				"year":     "2021",
+				"category": "Technology",
+				"keywords": "NLP, Natural Language Processing, Text Analysis, BERT, GPT",
 			},
 		},
 	}
@@ -332,9 +332,9 @@ func searchDocuments(ctx context.Context, service artifacts.ArtifactService, que
 			snippet := extractSnippet(content, query)
 
 			results = append(results, SearchResult{
-				ID:            doc.ID,
-				Title:         doc.Title,
-				Snippet:       snippet,
+				ID:             doc.ID,
+				Title:          doc.Title,
+				Snippet:        snippet,
 				RelevanceScore: relevance,
 			})
 		}
@@ -472,7 +472,7 @@ func runInteractiveSession(ctx context.Context, agent *agent.Agent) {
 
 	// Initialize scanner for user input
 	scanner := bufio.NewScanner(os.Stdin)
-	
+
 	// Start the conversation history with a system message
 	history := []message.Message{
 		message.NewSystemMessage(getSystemPrompt()),
@@ -485,17 +485,17 @@ func runInteractiveSession(ctx context.Context, agent *agent.Agent) {
 			break
 		}
 		userInput := scanner.Text()
-		
+
 		// Check for exit command
 		if strings.EqualFold(userInput, "exit") || strings.EqualFold(userInput, "quit") {
 			fmt.Println("\nThank you for using the RAG Agent. Goodbye!")
 			break
 		}
-		
+
 		// Add user message to history
 		userMsg := message.NewUserMessage(userInput)
 		history = append(history, userMsg)
-		
+
 		// Create a context with trace information
 		ctxWithSpan, span := observability.StartSpan(ctx, "process_user_input")
 		span.SetAttributes(attribute.String("user_input", userInput))
@@ -507,10 +507,10 @@ func runInteractiveSession(ctx context.Context, agent *agent.Agent) {
 			fmt.Printf("\nError: %v\n", err)
 			continue
 		}
-		
+
 		// Add response to history
 		history = append(history, resp)
-		
+
 		// Display the response
 		fmt.Printf("\nAgent: %s\n", resp.Content)
 	}

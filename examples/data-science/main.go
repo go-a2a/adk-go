@@ -44,13 +44,13 @@ func main() {
 
 // MultiAgentSystem encapsulates a team of specialized agents
 type MultiAgentSystem struct {
-	coordinator *agent.Agent
-	dataAnalyst *agent.Agent
+	coordinator  *agent.Agent
+	dataAnalyst  *agent.Agent
 	statistician *agent.Agent
-	visualizer *agent.Agent
-	interpreter *agent.Agent
-	memory map[string]string
-	memoryMutex sync.RWMutex
+	visualizer   *agent.Agent
+	interpreter  *agent.Agent
+	memory       map[string]string
+	memoryMutex  sync.RWMutex
 }
 
 func createMultiAgentSystem(model model.Model) *MultiAgentSystem {
@@ -222,7 +222,7 @@ func setupCoordinatorTools(memory map[string]string) []tool.Tool {
 		"delegate_task",
 		"Delegate a task to a specialist on the team",
 		model.ToolParameterSpec{
-			"type":       "object",
+			"type": "object",
 			"properties": map[string]any{
 				"specialist": map[string]any{
 					"type":        "string",
@@ -253,7 +253,7 @@ func setupCoordinatorTools(memory map[string]string) []tool.Tool {
 
 			// In a real implementation, this would queue the task for the specialist
 			// For this example, we'll simulate the delegation process
-			return fmt.Sprintf("Task delegated to %s: '%s'. They will work on this and store results in shared memory.", 
+			return fmt.Sprintf("Task delegated to %s: '%s'. They will work on this and store results in shared memory.",
 				params.Specialist, params.Task), nil
 		},
 	)
@@ -276,7 +276,7 @@ func setupDataAnalystTools(memory map[string]string) []tool.Tool {
 		"analyze_data",
 		"Load and analyze a dataset",
 		model.ToolParameterSpec{
-			"type":       "object",
+			"type": "object",
 			"properties": map[string]any{
 				"dataset_name": map[string]any{
 					"type":        "string",
@@ -308,11 +308,11 @@ func setupDataAnalystTools(memory map[string]string) []tool.Tool {
 			// In a real implementation, this would perform actual data analysis
 			// For this example, we'll simulate the analysis process
 			result := simulateDataAnalysis(params.DatasetName, params.AnalysisType)
-			
+
 			// Store the result in shared memory
 			memory[params.OutputKey] = result
-			
-			return fmt.Sprintf("Completed %s analysis on dataset '%s'. Results stored at key '%s'.", 
+
+			return fmt.Sprintf("Completed %s analysis on dataset '%s'. Results stored at key '%s'.",
 				params.AnalysisType, params.DatasetName, params.OutputKey), nil
 		},
 	)
@@ -335,7 +335,7 @@ func setupStatisticianTools(memory map[string]string) []tool.Tool {
 		"statistical_analysis",
 		"Perform statistical analysis on processed data",
 		model.ToolParameterSpec{
-			"type":       "object",
+			"type": "object",
 			"properties": map[string]any{
 				"data_key": map[string]any{
 					"type":        "string",
@@ -378,11 +378,11 @@ func setupStatisticianTools(memory map[string]string) []tool.Tool {
 			// In a real implementation, this would perform actual statistical analysis
 			// For this example, we'll simulate the analysis process
 			result := simulateStatisticalAnalysis(inputData, params.AnalysisType, params.Parameters)
-			
+
 			// Store the result in shared memory
 			memory[params.OutputKey] = result
-			
-			return fmt.Sprintf("Completed %s analysis. Results stored at key '%s'.", 
+
+			return fmt.Sprintf("Completed %s analysis. Results stored at key '%s'.",
 				params.AnalysisType, params.OutputKey), nil
 		},
 	)
@@ -405,7 +405,7 @@ func setupVisualizerTools(memory map[string]string) []tool.Tool {
 		"create_visualization",
 		"Create data visualizations from analysis results",
 		model.ToolParameterSpec{
-			"type":       "object",
+			"type": "object",
 			"properties": map[string]any{
 				"data_key": map[string]any{
 					"type":        "string",
@@ -448,11 +448,11 @@ func setupVisualizerTools(memory map[string]string) []tool.Tool {
 			// In a real implementation, this would create actual visualizations
 			// For this example, we'll simulate the visualization process
 			result := simulateVisualization(inputData, params.VizType, params.Parameters)
-			
+
 			// Store the result in shared memory
 			memory[params.OutputKey] = result
-			
-			return fmt.Sprintf("Created %s visualization. Result stored at key '%s'.", 
+
+			return fmt.Sprintf("Created %s visualization. Result stored at key '%s'.",
 				params.VizType, params.OutputKey), nil
 		},
 	)
@@ -475,7 +475,7 @@ func setupInterpreterTools(memory map[string]string) []tool.Tool {
 		"interpret_results",
 		"Interpret analysis results and provide insights",
 		model.ToolParameterSpec{
-			"type":       "object",
+			"type": "object",
 			"properties": map[string]any{
 				"analysis_key": map[string]any{
 					"type":        "string",
@@ -501,7 +501,7 @@ func setupInterpreterTools(memory map[string]string) []tool.Tool {
 			var params struct {
 				AnalysisKey      string `json:"analysis_key"`
 				VisualizationKey string `json:"visualization_key,omitempty"`
-				DomainContext   string `json:"domain_context,omitempty"`
+				DomainContext    string `json:"domain_context,omitempty"`
 				OutputKey        string `json:"output_key"`
 			}
 			if err := json.Unmarshal(args, &params); err != nil {
@@ -526,11 +526,11 @@ func setupInterpreterTools(memory map[string]string) []tool.Tool {
 			// In a real implementation, this would provide actual interpretation
 			// For this example, we'll simulate the interpretation process
 			result := simulateInterpretation(analysisData, vizData, params.DomainContext)
-			
+
 			// Store the result in shared memory
 			memory[params.OutputKey] = result
-			
-			return fmt.Sprintf("Completed interpretation of results. Insights stored at key '%s'.", 
+
+			return fmt.Sprintf("Completed interpretation of results. Insights stored at key '%s'.",
 				params.OutputKey), nil
 		},
 	)
@@ -551,7 +551,7 @@ func createSharedMemoryTool(memory map[string]string) tool.Tool {
 		"shared_memory",
 		"Access the shared memory for storing and retrieving information",
 		model.ToolParameterSpec{
-			"type":       "object",
+			"type": "object",
 			"properties": map[string]any{
 				"action": map[string]any{
 					"type":        "string",

@@ -47,12 +47,12 @@ func createSignedJWT(creds *ServiceAccountCredentials, scopes []string) (string,
 	now := time.Now()
 	exp := now.Add(time.Hour)
 	claims := map[string]any{
-		"iss": creds.ClientEmail,
-		"sub": creds.ClientEmail,
+		"iss":   creds.ClientEmail,
+		"sub":   creds.ClientEmail,
 		"scope": strings.Join(scopes, " "),
-		"aud": creds.TokenURI,
-		"exp": exp.Unix(),
-		"iat": now.Unix(),
+		"aud":   creds.TokenURI,
+		"exp":   exp.Unix(),
+		"iat":   now.Unix(),
 	}
 
 	// Encode header and claims

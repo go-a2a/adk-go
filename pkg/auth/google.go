@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"os"
@@ -26,8 +27,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"log/slog"
 )
 
 const (
@@ -124,7 +123,7 @@ func (g *GoogleAuthenticator) getServiceAccountToken(ctx context.Context, creds 
 	if err != nil {
 		return "", time.Time{}, fmt.Errorf("creating JWT: %w", err)
 	}
-	
+
 	// Exchange JWT for access token
 	data := url.Values{}
 	data.Set("grant_type", "urn:ietf:params:oauth:grant-type:jwt-bearer")
@@ -153,7 +152,7 @@ func (g *GoogleAuthenticator) getOAuth2Token(ctx context.Context, creds *OAuth2A
 		data := url.Values{}
 		data.Set("grant_type", "refresh_token")
 		data.Set("refresh_token", creds.RefreshToken)
-		
+
 		if creds.ClientID != "" && creds.ClientSecret != "" {
 			data.Set("client_id", creds.ClientID)
 			data.Set("client_secret", creds.ClientSecret)
@@ -175,7 +174,7 @@ func (g *GoogleAuthenticator) getOAuth2Token(ctx context.Context, creds *OAuth2A
 		data.Set("grant_type", "client_credentials")
 		data.Set("client_id", creds.ClientID)
 		data.Set("client_secret", creds.ClientSecret)
-		
+
 		if creds.Scopes != "" {
 			data.Set("scope", creds.Scopes)
 		} else if len(g.scopes) > 0 {
@@ -201,37 +200,37 @@ func (g *GoogleAuthenticator) exchangeToken(ctx context.Context, data url.Values
 	if err != nil {
 		return "", time.Time{}, fmt.Errorf("creating token request: %w", err)
 	}
-	
+
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	
+
 	client := &http.Client{Timeout: 30 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
 		return "", time.Time{}, fmt.Errorf("token request failed: %w", err)
 	}
 	defer resp.Body.Close()
-	
+
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", time.Time{}, fmt.Errorf("reading token response: %w", err)
 	}
-	
+
 	if resp.StatusCode != http.StatusOK {
 		return "", time.Time{}, fmt.Errorf("token request failed with status %d: %s", resp.StatusCode, string(body))
 	}
-	
+
 	var tokenResp struct {
 		AccessToken string `json:"access_token"`
 		ExpiresIn   int    `json:"expires_in"`
 		TokenType   string `json:"token_type"`
 	}
-	
+
 	if err := json.Unmarshal(body, &tokenResp); err != nil {
 		return "", time.Time{}, fmt.Errorf("parsing token response: %w", err)
 	}
-	
+
 	expiryTime := time.Now().Add(time.Duration(tokenResp.ExpiresIn) * time.Second)
-	
+
 	return tokenResp.AccessToken, expiryTime, nil
 }
 

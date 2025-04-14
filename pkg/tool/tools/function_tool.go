@@ -17,10 +17,10 @@ import (
 
 // FunctionToolConfig defines the configuration for a function tool.
 type FunctionToolConfig struct {
-	Name           string
-	Description    string
+	Name            string
+	Description     string
 	ParameterSchema model.ToolParameterSpec
-	Function       func(ctx context.Context, args json.RawMessage) (string, error)
+	Function        func(ctx context.Context, args json.RawMessage) (string, error)
 }
 
 // NewFunctionTool creates a new tool that wraps a custom function.
@@ -36,7 +36,7 @@ func NewFunctionTool(config FunctionToolConfig) *tool.BaseTool {
 
 	if config.ParameterSchema == nil {
 		config.ParameterSchema = model.ToolParameterSpec{
-			"type": "object",
+			"type":       "object",
 			"properties": map[string]any{},
 		}
 	}

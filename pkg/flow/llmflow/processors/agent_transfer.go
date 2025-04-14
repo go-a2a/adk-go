@@ -5,7 +5,7 @@ package processors
 
 import (
 	"context"
-	
+
 	"github.com/go-a2a/adk-go/pkg/event"
 	"github.com/go-a2a/adk-go/pkg/flow"
 )
@@ -13,7 +13,7 @@ import (
 // AgentTransferRequestProcessor handles agent transfers in requests.
 type AgentTransferRequestProcessor struct {
 	*RequestProcessor
-	
+
 	// AllowPeerTransfer determines if peer transfers are allowed.
 	AllowPeerTransfer bool
 }
@@ -21,7 +21,7 @@ type AgentTransferRequestProcessor struct {
 // NewAgentTransferRequestProcessor creates a new AgentTransferRequestProcessor.
 func NewAgentTransferRequestProcessor(allowPeerTransfer bool) *AgentTransferRequestProcessor {
 	return &AgentTransferRequestProcessor{
-		RequestProcessor: NewRequestProcessor("AgentTransferRequestProcessor"),
+		RequestProcessor:  NewRequestProcessor("AgentTransferRequestProcessor"),
 		AllowPeerTransfer: allowPeerTransfer,
 	}
 }
@@ -40,23 +40,23 @@ func (p *AgentTransferRequestProcessor) Process(
 	// Check for transfer request in the last event
 	if len(ic.Events) > 0 {
 		lastEvent := ic.Events[len(ic.Events)-1]
-		
+
 		// Check if this is a user event (no transfers for user events)
 		if lastEvent.Author == "user" {
 			ch := make(chan *event.Event)
 			close(ch)
 			return ch, nil
 		}
-		
+
 		// Check if there's a transfer request in the actions
 		if lastEvent.Actions != nil && lastEvent.Actions.TransferToAgent != "" {
 			transferTo := lastEvent.Actions.TransferToAgent
-			
+
 			// In a real implementation, we would validate the target agent
 			// and handle the transfer logic
 			// For now, we'll store the transfer target in the invocation context properties
 			ic.Properties["transfer_to_agent"] = transferTo
-			
+
 			// Check if this is a peer transfer
 			if p.isPeerTransfer(ic, transferTo) {
 				// Only allow if peer transfers are enabled
@@ -68,7 +68,7 @@ func (p *AgentTransferRequestProcessor) Process(
 			}
 		}
 	}
-	
+
 	// Return empty channel as this processor doesn't generate events directly
 	ch := make(chan *event.Event)
 	close(ch)
@@ -96,7 +96,7 @@ func (p *AgentTransferRequestProcessor) isPeerTransfer(ic *flow.InvocationContex
 	if !ok || currentAgent == "" {
 		return false
 	}
-	
+
 	// This is a very simplistic check - in a real implementation we would have proper hierarchy
 	return currentAgent != targetAgent
 }

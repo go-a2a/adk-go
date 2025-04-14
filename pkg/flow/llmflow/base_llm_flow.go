@@ -190,7 +190,7 @@ func (f *BaseLLMFlow) AddNewResponseProcessor(processor flow.ResponseProcessor) 
 
 // Run executes the flow with the given context and returns a channel of events.
 // This method supports both old-style InvocationContext and new-style flow.InvocationContext.
-func (f *BaseLLMFlow) Run(ctx context.Context, ic interface{}) (<-chan *event.Event, error) {
+func (f *BaseLLMFlow) Run(ctx context.Context, ic any) (<-chan *event.Event, error) {
 	// Choose execution strategy based on context type
 	switch typedIC := ic.(type) {
 	case *InvocationContext:
@@ -225,7 +225,7 @@ func (f *BaseLLMFlow) runLegacy(ctx context.Context, ic *InvocationContext) (<-c
 				Temperature: 0.7,
 				MaxTokens:   1024,
 			},
-			ConnectionOptions: make(map[string]interface{}),
+			ConnectionOptions: make(map[string]any),
 		}
 
 		// Preprocess the request with all request processors
@@ -342,7 +342,7 @@ func (f *BaseLLMFlow) RunLive(
 			Temperature: 0.7,
 			MaxTokens:   1024,
 		},
-		ConnectionOptions: make(map[string]interface{}),
+		ConnectionOptions: make(map[string]any),
 	}
 
 	// Create a context with a span for the flow execution

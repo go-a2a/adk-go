@@ -38,9 +38,9 @@ func ExampleBuiltInPlanner() {
 	fmt.Println("Planning instruction:", instruction)
 	fmt.Println("Thinking enabled:", request.Thinking.Enabled)
 	fmt.Println("Thinking visible:", request.Thinking.Visible)
-	
+
 	// Output:
-	// Planning instruction: 
+	// Planning instruction:
 	// Thinking enabled: true
 	// Thinking visible: true
 }
@@ -72,14 +72,14 @@ func ExamplePlanReActPlanner() {
 
 	// Create a response to process
 	response := message.NewAssistantMessage("The area of a circle is calculated using the formula A = πr².")
-	
+
 	// Process the response
 	callbackCtx := planner.NewCallbackContext(ctx)
 	processedResponses, _ := reactPlanner.ProcessPlanningResponse(callbackCtx, []message.Message{response})
-	
+
 	// Check that the response has been structured
 	fmt.Println("Response contains final answer tag:", strings.Contains(processedResponses[0].Content, planner.FinalAnswerTag))
-	
+
 	// Output:
 	// Planning instruction contains PLANNING tag: true
 	// Planning instruction contains REASONING tag: true
@@ -110,7 +110,7 @@ func ExampleRegistry() {
 	// Verify registration
 	customRetrieval, _ := registry.Get("custom_planner")
 	fmt.Printf("Custom planner type: %T\n", customRetrieval)
-	
+
 	// Output:
 	// Available planners: built_in, plan_re_act
 	// Retrieved planner type: *planner.PlanReActPlanner

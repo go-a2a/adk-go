@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
 
 	"github.com/go-a2a/adk-go/pkg/event"
@@ -248,7 +247,7 @@ func TestInMemorySessionService(t *testing.T) {
 
 	// Test AppendEvent
 	mockEvent := newMockEvent("test-event", map[string]any{
-		AppPrefix + "app_key": "app_value",
+		AppPrefix + "app_key":   "app_value",
 		UserPrefix + "user_key": "user_value",
 	})
 

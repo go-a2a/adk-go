@@ -67,8 +67,7 @@ func TestUnsafeLocalCodeExecutor_ExecuteCode(t *testing.T) {
 	if _, err := executor.ExecuteCode(
 		context.Background(),
 		InvocationContext{ExecutionID: "test", StartTime: time.Now()},
-		CodeExecutionInput{Code: "print('Hello, World!')"});
-		err != nil {
+		CodeExecutionInput{Code: "print('Hello, World!')"}); err != nil {
 		t.Skip("Skipping test as Python3 is not available")
 	}
 

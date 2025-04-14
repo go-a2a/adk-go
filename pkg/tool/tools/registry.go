@@ -14,7 +14,7 @@ func RegisterStandardTools(registry *tool.ToolRegistry, artifactService artifact
 	registry.Register(NewGoogleSearchTool())
 	registry.Register(NewLoadWebPageTool())
 	registry.Register(NewOpenAPITool())
-	
+
 	// Register memory and artifact tools if artifact service is provided
 	if artifactService != nil {
 		registry.Register(NewLoadMemoryTool(artifactService))
@@ -43,7 +43,7 @@ func RegisterUserInteractionTools(registry *tool.ToolRegistry, userChoiceHandler
 
 // RegisterAllTools registers all available tools with the given registry.
 func RegisterAllTools(
-	registry *tool.ToolRegistry, 
+	registry *tool.ToolRegistry,
 	artifactService artifacts.ArtifactService,
 	agentRegistry AgentTransferRegistry,
 	userChoiceHandler UserChoiceHandler,
