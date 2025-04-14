@@ -1,6 +1,5 @@
-// Copyright 2025 The ADK Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
+// Copyright 2025 The go-a2a Authors
+// SPDX-License-Identifier: Apache-2.0
 
 package runner_test
 
@@ -251,7 +250,6 @@ func TestRunner_Run(t *testing.T) {
 
 	// Test with a simple message
 	response, err := r.Run(context.Background(), "Hello, world!")
-
 	// Verify response
 	if err != nil {
 		t.Errorf("Run returned error: %v", err)
@@ -294,7 +292,6 @@ func TestRunner_RunConversation(t *testing.T) {
 
 	// Run the conversation
 	response, err := r.RunConversation(context.Background(), userID, messages)
-
 	// Verify response
 	if err != nil {
 		t.Errorf("RunConversation returned error: %v", err)
@@ -346,7 +343,6 @@ func TestRunner_RunWithSession(t *testing.T) {
 	// Run with the existing session
 	message := message.NewUserMessage("Hello with session")
 	response, err := r.RunWithSession(context.Background(), userID, sessionID, []message.Message{message})
-
 	// Verify response
 	if err != nil {
 		t.Errorf("RunWithSession returned error: %v", err)
@@ -410,7 +406,6 @@ func TestRunner_RunWithSession_EmptyMessages(t *testing.T) {
 
 	// Run with empty messages
 	response, err := r.RunWithSession(context.Background(), userID, "", []message.Message{})
-
 	// Should not error, but return empty message
 	if err != nil {
 		t.Errorf("RunWithSession with empty messages returned error: %v", err)
@@ -438,7 +433,6 @@ func TestRunner_RunWithArtifacts(t *testing.T) {
 
 	// Run with the artifact
 	response, err := r.RunWithSession(context.Background(), userID, "", []message.Message{msg})
-
 	// Verify response
 	if err != nil {
 		t.Errorf("RunWithSession returned error: %v", err)
