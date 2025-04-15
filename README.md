@@ -73,11 +73,11 @@ import (
 	"log/slog"
 	"os"
 	
-	"github.com/go-a2a/adk-go/pkg/agent"
-	"github.com/go-a2a/adk-go/pkg/models"
-	"github.com/go-a2a/adk-go/pkg/observability"
-	"github.com/go-a2a/adk-go/pkg/runner"
-	"github.com/go-a2a/adk-go/pkg/tool/tools"
+	"github.com/go-a2a/adk-go/agent"
+	"github.com/go-a2a/adk-go/models"
+	"github.com/go-a2a/adk-go/observability"
+	"github.com/go-a2a/adk-go/runner"
+	"github.com/go-a2a/adk-go/tool/tools"
 )
 
 func main() {
