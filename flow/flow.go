@@ -8,7 +8,6 @@ import (
 
 	"google.golang.org/genai"
 
-	"github.com/go-a2a/adk-go/agent"
 	"github.com/go-a2a/adk-go/artifact"
 	"github.com/go-a2a/adk-go/event"
 	"github.com/go-a2a/adk-go/memory"
@@ -27,20 +26,20 @@ type Flow interface {
 
 // InvocationContext contains necessary context for processing events and invoking tools.
 type InvocationContext struct {
+	AppName         string
+	UserID          string
 	Context         context.Context
 	ArtifactService artifact.ArtifactService
 	SessionService  session.SessionService
 	MemoryService   memory.MemoryService
-	ID              string
 	Branch          string
-	Agent           *agent.BaseAgent
 	UserContent     *genai.Content
 	Session         *session.Session
 	EndInvocation   bool
 }
 
 // NewInvocationContext creates a new InvocationContext with the provided context and session.
-func NewInvocationContext(ctx context.Context, sess *session.Session) *InvocationContext {
+func NewInvocationContext(ctx context.Context, appName string, sess *session.Session) *InvocationContext {
 	return &InvocationContext{
 		Context: ctx,
 		Session: sess,
@@ -56,9 +55,9 @@ type LlmFlowContext struct {
 }
 
 // NewLlmFlowContext creates a new LlmFlowContext.
-func NewLlmFlowContext(ctx context.Context, sess *session.Session, models *genai.Models) *LlmFlowContext {
+func NewLlmFlowContext(ctx context.Context, appName string, sess *session.Session, models *genai.Models) *LlmFlowContext {
 	return &LlmFlowContext{
-		InvocationContext: NewInvocationContext(ctx, sess),
+		InvocationContext: NewInvocationContext(ctx, appName, sess),
 		Models:            models,
 	}
 }

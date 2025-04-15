@@ -8,11 +8,13 @@ import (
 	"regexp"
 	"sync"
 
+	"google.golang.org/genai"
+
 	"github.com/go-a2a/adk-go/model"
 )
 
 // ModelFactory is a function that creates a new model instance.
-type ModelFactory func(modelID string) (model.Model, error)
+type ModelFactory func(modelID string) (*genai.Model, error)
 
 // modelRegEntry represents a model registry entry.
 type modelRegEntry struct {
@@ -68,11 +70,11 @@ func (r *Registry) Resolve(modelID string) (ModelFactory, error) {
 }
 
 // GetModel returns a model instance for the specified model ID.
-func (r *Registry) GetModel(modelID string) (model.Model, error) {
+func (r *Registry) GetModel(modelID string) (*genai.Model, error) {
 	r.mu.RLock()
 	if m, ok := r.cache.Load(modelID); ok {
 		r.mu.RUnlock()
-		return m.(model.Model), nil
+		return m.(*genai.Model), nil
 	}
 	r.mu.RUnlock()
 
@@ -102,13 +104,13 @@ func Register(pattern string, factory ModelFactory) error {
 }
 
 // GetModel returns a model instance from the default registry.
-func GetModel(modelID string) (model.Model, error) {
+func GetModel(modelID string) (*genai.Model, error) {
 	return DefaultRegistry.GetModel(modelID)
 }
 
 // RegisterWithCapabilities is a helper function to create a model factory with specific capabilities.
 func RegisterWithCapabilities(pattern string, provider model.ModelProvider, capabilities []model.ModelCapability, generatorFunc GeneratorFunc) error {
-	return Register(pattern, func(modelID string) (model.Model, error) {
+	return Register(pattern, func(modelID string) (*genai.Model, error) {
 		return NewBaseModel(modelID, provider, capabilities, generatorFunc), nil
 	})
 }

@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-a2a/adk-go/message"
 	"github.com/go-a2a/adk-go/model"
+	"google.golang.org/genai"
 )
 
 // GeneratorFunc represents a function that generates a message based on the model ID, input messages, and generation options.
@@ -25,18 +26,19 @@ type Model struct {
 }
 
 // NewBaseModel creates a new BaseModel instance.
-func NewBaseModel(modelID string, provider model.ModelProvider, capabilities []model.ModelCapability, generator GeneratorFunc) *Model {
+func NewBaseModel(modelID string, provider model.ModelProvider, capabilities []model.ModelCapability, generator GeneratorFunc) *genai.Model {
 	capMap := make(map[model.ModelCapability]bool)
 	for _, c := range capabilities {
 		capMap[c] = true
 	}
 
-	return &Model{
-		modelID:      modelID,
-		provider:     provider,
-		capabilities: capMap,
-		generator:    generator,
-	}
+	return &genai.Model{}
+	// return &Model{
+	// 	modelID:      modelID,
+	// 	provider:     provider,
+	// 	capabilities: capMap,
+	// 	generator:    generator,
+	// }
 }
 
 // Generate implements the Model interface.

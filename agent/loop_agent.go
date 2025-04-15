@@ -16,24 +16,19 @@ import (
 	"github.com/go-a2a/adk-go/tool"
 )
 
+// ShouldContinueFunc represents a function type that determines whether the LoopAgent should continue processing.
+type ShouldContinueFunc func(ctx context.Context, msg message.Message) (bool, error)
+
 // LoopAgent represents an agent that loops over processing steps until a condition is met.
 // This is useful for multi-step reasoning or iterative problem solving.
 type LoopAgent struct {
 	Agent
 	maxIterations  int
-	shouldContinue func(ctx context.Context, msg message.Message) (bool, error)
+	shouldContinue ShouldContinueFunc
 }
 
 // NewLoopAgent creates a new LoopAgent with the provided configuration.
-func NewLoopAgent(
-	name string,
-	model model.Model,
-	instruction,
-	description string,
-	tools []tool.Tool,
-	maxIterations int,
-	shouldContinue func(ctx context.Context, msg message.Message) (bool, error),
-) *LoopAgent {
+func NewLoopAgent(name string, model model.Model, instruction, description string, tools []tool.Tool, maxIterations int, shouldContinue ShouldContinueFunc) *LoopAgent {
 	baseAgent := NewAgent(name, model, instruction, description, tools)
 
 	return &LoopAgent{

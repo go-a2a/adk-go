@@ -15,13 +15,16 @@ import (
 	"github.com/go-a2a/adk-go/observability"
 )
 
+// ResultAggregatorFunc represents a function type for aggregating results from multiple agents.
+type ResultAggregatorFunc func(ctx context.Context, results []message.Message) (message.Message, error)
+
 // ParallelAgent represents an agent that processes a message through multiple sub-agents in parallel.
 // This can be useful for tasks that can be processed independently and then combined.
 type ParallelAgent struct {
 	name             string
 	description      string
 	agents           []*Agent
-	resultAggregator func(ctx context.Context, results []message.Message) (message.Message, error)
+	resultAggregator ResultAggregatorFunc
 }
 
 // DefaultAggregator provides a simple aggregation strategy that concatenates results.
@@ -42,12 +45,7 @@ func DefaultAggregator(ctx context.Context, results []message.Message) (message.
 }
 
 // NewParallelAgent creates a new ParallelAgent with the provided configuration.
-func NewParallelAgent(
-	name,
-	description string,
-	resultAggregator func(ctx context.Context, results []message.Message) (message.Message, error),
-	agents ...*Agent,
-) *ParallelAgent {
+func NewParallelAgent(name, description string, resultAggregator ResultAggregatorFunc, agents ...*Agent) *ParallelAgent {
 	// Use default aggregator if none provided
 	if resultAggregator == nil {
 		resultAggregator = DefaultAggregator

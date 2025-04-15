@@ -60,7 +60,7 @@ func (f *BaseLlmFlow) Run(ctx context.Context, sess *session.Session) (<-chan ev
 		return nil, fmt.Errorf("failed to get model provider: %w", err)
 	}
 
-	flowCtx := flow.NewLlmFlowContext(ctx, sess, modelProvider)
+	flowCtx := flow.NewLlmFlowContext(ctx, "", sess, modelProvider)
 	eventCh := make(chan event.Event, 100)
 
 	go func() {

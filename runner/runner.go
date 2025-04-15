@@ -254,7 +254,7 @@ func NewInMemoryRunner(appName string, rootAgent *agent.Agent) *Runner {
 		AppName:         appName,
 		ArtifactService: artifact.NewInMemoryArtifactService(),
 		SessionService:  session.NewInMemorySessionService(),
-		MemoryService:   memory.NewInMemoryService(),
+		MemoryService:   memory.NewInMemoryMemoryService(),
 		Logger:          slog.Default(),
 	})
 }

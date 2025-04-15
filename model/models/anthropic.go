@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"log/slog"
 
+	"google.golang.org/genai"
+
 	"github.com/go-a2a/adk-go/message"
 	"github.com/go-a2a/adk-go/model"
 	"github.com/go-a2a/adk-go/observability"
@@ -15,7 +17,7 @@ import (
 
 func init() {
 	// Register Claude model patterns with the registry
-	Register("claude-.*", func(modelID string) (model.Model, error) {
+	Register("claude-.*", func(modelID string) (*genai.Model, error) {
 		// In a real implementation, API key and endpoint would be configured properly
 		return NewAnthropicModel(modelID, "", "")
 	})
@@ -28,7 +30,7 @@ const (
 
 // AnthropicModel represents the Claude language model from Anthropic.
 type AnthropicModel struct {
-	*Model
+	*genai.Model
 
 	apiKey      string
 	apiEndpoint string
