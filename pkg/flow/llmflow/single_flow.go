@@ -4,51 +4,31 @@
 package llmflow
 
 import (
-	"log/slog"
-
-	"github.com/go-a2a/adk-go/pkg/flow/llmflow/processors"
+	"github.com/go-a2a/adk-go/pkg/flow/llmflow/processor"
+	"github.com/go-a2a/adk-go/pkg/model"
 )
 
-// SingleFlow represents a simple flow with a single agent and no sub-agents.
+// SingleFlow is an LLM flow that handles tool calls.
+// It is designed for a single agent with tools and does not allow sub-agents.
 type SingleFlow struct {
-	*BaseLLMFlow
+	*BaseLlmFlow
 }
 
-// NewSingleFlow creates a new SingleFlow with standard processors.
-func NewSingleFlow(client LLMClient, logger *slog.Logger) *SingleFlow {
-	baseFlow := NewBaseLLMFlow("SingleFlow", client, logger)
-
+// NewSingleFlow creates a new SingleFlow with the specified model ID and options.
+func NewSingleFlow(modelID string, modelOptions model.Options) *SingleFlow {
 	flow := &SingleFlow{
-		BaseLLMFlow: baseFlow,
+		BaseLlmFlow: NewBaseLlmFlow(modelID, modelOptions),
 	}
 
-	// Add standard request processors
-	reqProcessors := []any{
-		processors.NewBasicRequestProcessor(),
-		processors.NewInstructionsRequestProcessor(),
-		processors.NewIdentityRequestProcessor(),
-		processors.NewContentsRequestProcessor(),
-		processors.NewNLPlanningRequestProcessor(),
-		processors.NewCodeExecutionRequestProcessor(),
-	}
+	// Add request processors in specific order
+	flow.AddRequestProcessor(processor.NewBasicProcessor())
+	flow.AddRequestProcessor(processor.NewIdentityProcessor())
+	flow.AddRequestProcessor(processor.NewInstructionsProcessor())
+	flow.AddRequestProcessor(processor.NewContentsProcessor())
+	flow.AddRequestProcessor(processor.NewCodeExecutionRequestProcessor())
 
-	for _, p := range reqProcessors {
-		if adapter, ok := AdaptFlowProcessor(p).(RequestProcessor); ok {
-			flow.AddRequestProcessor(adapter)
-		}
-	}
-
-	// Add standard response processors
-	respProcessors := []any{
-		processors.NewNLPlanningResponseProcessor(),
-		processors.NewCodeExecutionResponseProcessor(),
-	}
-
-	for _, p := range respProcessors {
-		if adapter, ok := AdaptFlowProcessor(p).(ResponseProcessor); ok {
-			flow.AddResponseProcessor(adapter)
-		}
-	}
+	// Add response processors
+	flow.AddResponseProcessor(processor.NewCodeExecutionResponseProcessor())
 
 	return flow
 }

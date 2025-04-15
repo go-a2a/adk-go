@@ -4,218 +4,111 @@
 package llmflow
 
 import (
-	"context"
-	"log/slog"
-	"os"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+
 	"github.com/go-a2a/adk-go/pkg/event"
+	"github.com/go-a2a/adk-go/pkg/flow"
+	"github.com/go-a2a/adk-go/pkg/model/models"
+	"github.com/go-a2a/adk-go/pkg/tool"
 )
 
-// MockLLMClient is a mock implementation of LLMClient for testing.
-type MockLLMClient struct {
-	// GenerateCalled indicates if Generate was called.
-	GenerateCalled bool
-
-	// GenerateResponse is the response to return from Generate.
-	GenerateResponse *LLMResponse
-
-	// GenerateError is the error to return from Generate.
-	GenerateError error
-
-	// GenerateStreamCalled indicates if GenerateStream was called.
-	GenerateStreamCalled bool
-
-	// GenerateStreamError is the error to return from GenerateStream.
-	GenerateStreamError error
-}
-
-// Generate implements LLMClient.Generate.
-func (c *MockLLMClient) Generate(
-	ctx context.Context,
-	req *LLMRequest,
-) (*LLMResponse, error) {
-	c.GenerateCalled = true
-
-	if c.GenerateResponse == nil {
-		// Return a default response if none was provided
-		return &LLMResponse{
-			Content: "This is a mock response",
-		}, c.GenerateError
-	}
-
-	return c.GenerateResponse, c.GenerateError
-}
-
-// GenerateStream implements LLMClient.GenerateStream.
-func (c *MockLLMClient) GenerateStream(
-	ctx context.Context,
-	req *LLMRequest,
-	callback func(*LLMResponse),
-) error {
-	c.GenerateStreamCalled = true
-
-	if c.GenerateResponse != nil {
-		callback(c.GenerateResponse)
-	} else {
-		// Send a default response if none was provided
-		callback(&LLMResponse{
-			Content: "This is a mock streaming response",
-		})
-	}
-
-	return c.GenerateStreamError
-}
-
-// MockRequestProcessor is a mock implementation of RequestProcessor for testing.
+// MockRequestProcessor is a mock LlmRequestProcessor for testing.
 type MockRequestProcessor struct {
-	// ProcessCalled indicates if Process was called.
-	ProcessCalled bool
-
-	// ProcessLiveCalled indicates if ProcessLive was called.
-	ProcessLiveCalled bool
-
-	// Name is the name of this processor.
-	Name string
+	processFunc func(ctx *flow.LlmFlowContext, request *models.LlmRequest) (<-chan event.Event, error)
 }
 
-// Process implements RequestProcessor.Process.
-func (p *MockRequestProcessor) Process(
-	ctx context.Context,
-	ic *InvocationContext,
-	req *LLMRequest,
-) (<-chan *event.Event, error) {
-	p.ProcessCalled = true
-
-	// Return empty channel
-	ch := make(chan *event.Event)
-	close(ch)
-	return ch, nil
+func (m *MockRequestProcessor) Run(ctx *flow.LlmFlowContext, request *models.LlmRequest) (<-chan event.Event, error) {
+	return m.processFunc(ctx, request)
 }
 
-// ProcessLive implements RequestProcessor.ProcessLive.
-func (p *MockRequestProcessor) ProcessLive(
-	ctx context.Context,
-	ic *InvocationContext,
-	req *LLMRequest,
-	callback func(*event.Event),
-) error {
-	p.ProcessLiveCalled = true
-	return nil
-}
-
-// MockResponseProcessor is a mock implementation of ResponseProcessor for testing.
+// MockResponseProcessor is a mock LlmResponseProcessor for testing.
 type MockResponseProcessor struct {
-	// ProcessCalled indicates if Process was called.
-	ProcessCalled bool
-
-	// ProcessLiveCalled indicates if ProcessLive was called.
-	ProcessLiveCalled bool
-
-	// Name is the name of this processor.
-	Name string
+	processFunc func(ctx *flow.LlmFlowContext, response *models.LlmResponse) (<-chan event.Event, error)
 }
 
-// Process implements ResponseProcessor.Process.
-func (p *MockResponseProcessor) Process(
-	ctx context.Context,
-	ic *InvocationContext,
-	resp *LLMResponse,
-) (<-chan *event.Event, error) {
-	p.ProcessCalled = true
-
-	// Return empty channel
-	ch := make(chan *event.Event)
-	close(ch)
-	return ch, nil
+func (m *MockResponseProcessor) Run(ctx *flow.LlmFlowContext, response *models.LlmResponse) (<-chan event.Event, error) {
+	return m.processFunc(ctx, response)
 }
 
-// ProcessLive implements ResponseProcessor.ProcessLive.
-func (p *MockResponseProcessor) ProcessLive(
-	ctx context.Context,
-	ic *InvocationContext,
-	resp *LLMResponse,
-	callback func(*event.Event),
-) error {
-	p.ProcessLiveCalled = true
-	return nil
+func TestNewBaseLlmFlow(t *testing.T) {
+	modelID := "test-model"
+	modelOptions := models.Option{}
+
+	flow := NewBaseLlmFlow(modelID, modelOptions)
+
+	if flow.modelID != modelID {
+		t.Errorf("Expected modelID %s, got %s", modelID, flow.modelID)
+	}
+
+	if diff := cmp.Diff(modelOptions, flow.modelOptions); diff != "" {
+		t.Errorf("ModelOptions mismatch (-want +got):\n%s", diff)
+	}
+
+	if len(flow.requestProcessors) != 0 {
+		t.Errorf("Expected 0 request processors, got %d", len(flow.requestProcessors))
+	}
+
+	if len(flow.responseProcessors) != 0 {
+		t.Errorf("Expected 0 response processors, got %d", len(flow.responseProcessors))
+	}
 }
 
-func TestBaseLLMFlow(t *testing.T) {
-	// Create a mock client
-	client := &MockLLMClient{}
+func TestAddRequestProcessor(t *testing.T) {
+	flow := NewBaseLlmFlow("test-model", models.Option{})
 
-	// Create a logger
-	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
-
-	// Create a flow
-	flow := NewBaseLLMFlow("test-flow", client, logger)
-
-	// Add a request processor
-	reqProcessor := &MockRequestProcessor{Name: "test-req-processor"}
-	flow.AddRequestProcessor(reqProcessor)
-
-	// Add a response processor
-	respProcessor := &MockResponseProcessor{Name: "test-resp-processor"}
-	flow.AddResponseProcessor(respProcessor)
-
-	// Create a context
-	ctx := context.Background()
-
-	// Create an invocation context
-	ic := &InvocationContext{
-		SessionID:   "test-session",
-		ExecutionID: "test-execution",
-		Events:      []*event.Event{},
-		Properties:  make(map[string]any),
+	processor := &MockRequestProcessor{
+		processFunc: func(ctx *flow.LlmFlowContext, request *models.LlmRequest) (<-chan event.Event, error) {
+			ch := make(chan event.Event)
+			close(ch)
+			return ch, nil
+		},
 	}
 
-	// Run the flow
-	eventCh, err := flow.Run(ctx, ic)
-	if err != nil {
-		t.Fatalf("Error running flow: %v", err)
+	flow.AddRequestProcessor(processor)
+
+	if len(flow.requestProcessors) != 1 {
+		t.Errorf("Expected 1 request processor, got %d", len(flow.requestProcessors))
+	}
+}
+
+func TestAddResponseProcessor(t *testing.T) {
+	flow := NewBaseLlmFlow("test-model", models.Option{})
+
+	processor := &MockResponseProcessor{
+		processFunc: func(ctx *flow.LlmFlowContext, response *models.LlmResponse) (<-chan event.Event, error) {
+			ch := make(chan event.Event)
+			close(ch)
+			return ch, nil
+		},
 	}
 
-	// Consume all events
-	for range eventCh {
-		// Just drain the channel
+	flow.AddResponseProcessor(processor)
+
+	if len(flow.responseProcessors) != 1 {
+		t.Errorf("Expected 1 response processor, got %d", len(flow.responseProcessors))
+	}
+}
+
+func TestSetTools(t *testing.T) {
+	flow := NewBaseLlmFlow("test-model", models.Option{})
+
+	tools := []tool.Tool{
+		{
+			Name:        "test-tool",
+			Description: "Test tool",
+			Parameters:  map[string]any{},
+		},
 	}
 
-	// Verify the processors were called
-	if !reqProcessor.ProcessCalled {
-		t.Errorf("expected request processor to be called")
+	flow.SetTools(tools)
+
+	if len(flow.tools) != 1 {
+		t.Errorf("Expected 1 tool, got %d", len(flow.tools))
 	}
 
-	if !respProcessor.ProcessCalled {
-		t.Errorf("expected response processor to be called")
-	}
-
-	// Verify the client was called
-	if !client.GenerateCalled {
-		t.Errorf("expected client Generate to be called")
-	}
-
-	// Test RunLive
-	eventHandler := func(evt *event.Event) {
-		// Do nothing in this test
-	}
-
-	err = flow.RunLive(ctx, ic, eventHandler)
-	if err != nil {
-		t.Fatalf("Error running flow live: %v", err)
-	}
-
-	// Verify the processors were called in live mode
-	if !reqProcessor.ProcessLiveCalled {
-		t.Errorf("expected request processor ProcessLive to be called")
-	}
-
-	if !respProcessor.ProcessLiveCalled {
-		t.Errorf("expected response processor ProcessLive to be called")
-	}
-
-	// Verify the client was called in streaming mode
-	if !client.GenerateStreamCalled {
-		t.Errorf("expected client GenerateStream to be called")
+	if flow.tools[0].Name != "test-tool" {
+		t.Errorf("Expected tool name 'test-tool', got '%s'", flow.tools[0].Name)
 	}
 }

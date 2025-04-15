@@ -8,7 +8,29 @@ import (
 	"fmt"
 
 	"github.com/go-a2a/adk-go/pkg/model"
+	"github.com/go-a2a/adk-go/pkg/tool"
+	"google.golang.org/genai"
 )
+
+type Option struct {
+	// The title for the generated JSON schema, defaults to the model's name
+	Title string
+}
+
+// LlmRequest represents a request to a language model.
+type LlmRequest struct {
+	ModelID      string
+	ModelOptions Option
+	Contents     []genai.Content
+	Tools        []tool.Tool
+}
+
+// LlmResponse represents a response from a language model.
+type LlmResponse struct {
+	Request       *LlmRequest
+	Contents      []genai.Content
+	FunctionCalls []genai.FunctionCall
+}
 
 // NewModelFromID creates a new model instance from a model ID.
 func NewModelFromID(modelID string) (model.Model, error) {

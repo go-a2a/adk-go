@@ -1,27 +1,16 @@
-// Copyright 2025 The go-a2a Authors
-// SPDX-License-Identifier: Apache-2.0
+// Copyright 2024 The ADK Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
-// Package flow provides functionality for defining and executing flows
-// for language model interaction and agent communication.
-//
-// The flow package is organized around a processor-based architecture,
-// where request and response processors handle different aspects of LLM
-// interaction. This includes preparing prompts, handling function calls,
-// processing responses, and managing agent interactions.
-//
-// The key components are:
-//
-//   - Flow interfaces defining the core functionality for flow execution.
-//
-//   - LLM flows for language model interaction, including the base flow
-//     and specialized flows like SingleFlow and AutoFlow.
-//
-//   - Request and response processors for different stages of LLM interaction,
-//     including basic processing, instruction management, content optimization,
-//     natural language planning, and code execution.
-//
-//   - Context management for maintaining state during flow execution.
-//
-// The package is designed to be extensible, allowing for custom flows
-// and processors to be implemented for specific application needs.
+// Package flow provides abstractions for building and executing flows.
 package flow

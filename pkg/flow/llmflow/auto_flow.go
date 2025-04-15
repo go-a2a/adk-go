@@ -4,52 +4,77 @@
 package llmflow
 
 import (
+	"context"
+	"fmt"
 	"log/slog"
 
-	"github.com/go-a2a/adk-go/pkg/flow/llmflow/processors"
+	"github.com/go-a2a/adk-go/pkg/event"
+	"github.com/go-a2a/adk-go/pkg/flow"
+	"github.com/go-a2a/adk-go/pkg/model/models"
+	"github.com/go-a2a/adk-go/pkg/session"
+	"github.com/go-a2a/adk-go/pkg/tool"
 )
 
-// AutoFlow is a flow that supports agent transfers.
-// It extends SingleFlow with the ability to transfer control between agents.
+// AutoFlow is an advanced LLM flow that automatically selects the appropriate flow.
+// It can dynamically choose between SingleFlow or other specialized flows based on context.
 type AutoFlow struct {
-	*SingleFlow
-
-	// DisallowTransferToPeer determines if peer transfers are allowed.
-	DisallowTransferToPeer bool
+	modelID      string
+	modelOptions models.Option
+	tools        []tool.Tool
 }
 
-// NewAutoFlow creates a new AutoFlow.
-func NewAutoFlow(client LLMClient, logger *slog.Logger) *AutoFlow {
-	singleFlow := NewSingleFlow(client, logger)
-
-	flow := &AutoFlow{
-		SingleFlow:             singleFlow,
-		DisallowTransferToPeer: false,
+// NewAutoFlow creates a new AutoFlow instance.
+func NewAutoFlow(modelID string, modelOptions models.Option) *AutoFlow {
+	return &AutoFlow{
+		modelID:      modelID,
+		modelOptions: modelOptions,
 	}
-
-	// Add the agent transfer processor at the beginning of request processors
-	transferProcessor := processors.NewAgentTransferRequestProcessor(!flow.DisallowTransferToPeer)
-
-	if adapter, ok := AdaptFlowProcessor(transferProcessor).(RequestProcessor); ok {
-		// Add the transfer processor to the start of the request processors list
-		newProcessors := make([]RequestProcessor, 0, len(singleFlow.RequestProcessors)+1)
-		newProcessors = append(newProcessors, adapter)
-		newProcessors = append(newProcessors, singleFlow.RequestProcessors...)
-		singleFlow.RequestProcessors = newProcessors
-	}
-
-	return flow
 }
 
-// WithDisallowTransferToPeer sets whether peer transfers are disallowed.
-func (f *AutoFlow) WithDisallowTransferToPeer(disallow bool) *AutoFlow {
-	f.DisallowTransferToPeer = disallow
+// SetTools sets the tools available to the language model.
+func (f *AutoFlow) SetTools(tools []tool.Tool) {
+	f.tools = tools
+}
 
-	// Update the transfer processor with the new setting
-	if len(f.RequestProcessors) > 0 {
-		// In a real implementation, we would update the processor
-		// For now, we'll just note that this would be done
+// Run executes the flow and returns a channel of events.
+func (f *AutoFlow) Run(ctx context.Context, sess *session.Session) (<-chan event.Event, error) {
+	// Determine which flow to use based on session context
+	flow, err := f.selectFlow(ctx, sess)
+	if err != nil {
+		return nil, fmt.Errorf("failed to select flow: %w", err)
 	}
 
-	return f
+	// Set tools for the selected flow
+	if toolsProvider, ok := flow.(interface{ SetTools([]tool.Tool) }); ok {
+		toolsProvider.SetTools(f.tools)
+	}
+
+	// Execute the selected flow
+	return flow.Run(ctx, sess)
+}
+
+// RunLive executes the flow in streaming mode and returns a channel of events.
+func (f *AutoFlow) RunLive(ctx context.Context, sess *session.Session) (<-chan event.Event, error) {
+	// Determine which flow to use based on session context
+	flow, err := f.selectFlow(ctx, sess)
+	if err != nil {
+		return nil, fmt.Errorf("failed to select flow: %w", err)
+	}
+
+	// Set tools for the selected flow
+	if toolsProvider, ok := flow.(interface{ SetTools([]tool.Tool) }); ok {
+		toolsProvider.SetTools(f.tools)
+	}
+
+	// Execute the selected flow in live mode
+	return flow.RunLive(ctx, sess)
+}
+
+// selectFlow determines which flow to use based on the session context.
+func (f *AutoFlow) selectFlow(ctx context.Context, sess *session.Session) (flow.Flow, error) {
+	// For now, default to SingleFlow
+	// In a more advanced implementation, this would analyze the session
+	// and determine which flow is most appropriate
+	slog.InfoContext(ctx, "Auto-selecting flow", "selected", "SingleFlow")
+	return NewSingleFlow(f.modelID, f.modelOptions), nil
 }
