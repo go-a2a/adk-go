@@ -6,7 +6,13 @@ package flow
 import (
 	"context"
 
+	"google.golang.org/genai"
+
+	"github.com/go-a2a/adk-go/pkg/agent"
+	"github.com/go-a2a/adk-go/pkg/artifacts"
 	"github.com/go-a2a/adk-go/pkg/event"
+	"github.com/go-a2a/adk-go/pkg/memory"
+	"github.com/go-a2a/adk-go/pkg/model"
 	"github.com/go-a2a/adk-go/pkg/session"
 )
 
@@ -21,8 +27,16 @@ type Flow interface {
 
 // InvocationContext contains necessary context for processing events and invoking tools.
 type InvocationContext struct {
-	Context context.Context
-	Session *session.Session
+	Context         context.Context
+	ArtifactService artifacts.ArtifactService
+	SessionService  session.SessionService
+	MemoryService   memory.MemoryService
+	ID              string
+	Branch          string
+	Agent           *agent.BaseAgent
+	UserContent     *genai.Content
+	Session         *session.Session
+	EndInvocation   bool
 }
 
 // NewInvocationContext creates a new InvocationContext with the provided context and session.
@@ -37,13 +51,14 @@ func NewInvocationContext(ctx context.Context, sess *session.Session) *Invocatio
 type LlmFlowContext struct {
 	*InvocationContext
 
-	Provider model.Provider
+	Models   *genai.Models
+	Provider model.ModelProvider
 }
 
 // NewLlmFlowContext creates a new LlmFlowContext.
-func NewLlmFlowContext(ctx context.Context, sess *session.Session, provider model.Provider) *LlmFlowContext {
+func NewLlmFlowContext(ctx context.Context, sess *session.Session, models *genai.Models) *LlmFlowContext {
 	return &LlmFlowContext{
 		InvocationContext: NewInvocationContext(ctx, sess),
-		Provider:          provider,
+		Models:            models,
 	}
 }

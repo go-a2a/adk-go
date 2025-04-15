@@ -4,8 +4,9 @@
 package llmflow
 
 import (
+	"github.com/go-a2a/adk-go/pkg/flow"
 	"github.com/go-a2a/adk-go/pkg/flow/llmflow/processor"
-	"github.com/go-a2a/adk-go/pkg/model"
+	"github.com/go-a2a/adk-go/pkg/model/models"
 )
 
 // SingleFlow is an LLM flow that handles tool calls.
@@ -14,8 +15,10 @@ type SingleFlow struct {
 	*BaseLlmFlow
 }
 
+var _ flow.Flow = (*SingleFlow)(nil)
+
 // NewSingleFlow creates a new SingleFlow with the specified model ID and options.
-func NewSingleFlow(modelID string, modelOptions model.Options) *SingleFlow {
+func NewSingleFlow(modelID string, modelOptions models.Option) *SingleFlow {
 	flow := &SingleFlow{
 		BaseLlmFlow: NewBaseLlmFlow(modelID, modelOptions),
 	}

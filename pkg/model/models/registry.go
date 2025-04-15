@@ -93,17 +93,17 @@ func (r *Registry) GetModel(modelID string) (model.Model, error) {
 	return m, nil
 }
 
-// defaultRegistry is the default model registry.
-var defaultRegistry = NewRegistry()
+// DefaultRegistry is the default model registry.
+var DefaultRegistry = NewRegistry()
 
 // Register registers a model factory with the default registry.
 func Register(pattern string, factory ModelFactory) error {
-	return defaultRegistry.Register(pattern, factory)
+	return DefaultRegistry.Register(pattern, factory)
 }
 
 // GetModel returns a model instance from the default registry.
 func GetModel(modelID string) (model.Model, error) {
-	return defaultRegistry.GetModel(modelID)
+	return DefaultRegistry.GetModel(modelID)
 }
 
 // RegisterWithCapabilities is a helper function to create a model factory with specific capabilities.

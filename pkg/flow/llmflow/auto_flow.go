@@ -8,11 +8,12 @@ import (
 	"fmt"
 	"log/slog"
 
+	"google.golang.org/genai"
+
 	"github.com/go-a2a/adk-go/pkg/event"
 	"github.com/go-a2a/adk-go/pkg/flow"
 	"github.com/go-a2a/adk-go/pkg/model/models"
 	"github.com/go-a2a/adk-go/pkg/session"
-	"github.com/go-a2a/adk-go/pkg/tool"
 )
 
 // AutoFlow is an advanced LLM flow that automatically selects the appropriate flow.
@@ -20,8 +21,10 @@ import (
 type AutoFlow struct {
 	modelID      string
 	modelOptions models.Option
-	tools        []tool.Tool
+	tools        []*genai.Tool
 }
+
+var _ flow.Flow = (*AutoFlow)(nil)
 
 // NewAutoFlow creates a new AutoFlow instance.
 func NewAutoFlow(modelID string, modelOptions models.Option) *AutoFlow {
@@ -32,7 +35,7 @@ func NewAutoFlow(modelID string, modelOptions models.Option) *AutoFlow {
 }
 
 // SetTools sets the tools available to the language model.
-func (f *AutoFlow) SetTools(tools []tool.Tool) {
+func (f *AutoFlow) SetTools(tools ...*genai.Tool) {
 	f.tools = tools
 }
 
@@ -45,8 +48,8 @@ func (f *AutoFlow) Run(ctx context.Context, sess *session.Session) (<-chan event
 	}
 
 	// Set tools for the selected flow
-	if toolsProvider, ok := flow.(interface{ SetTools([]tool.Tool) }); ok {
-		toolsProvider.SetTools(f.tools)
+	if toolsProvider, ok := flow.(interface{ SetTools(...*genai.Tool) }); ok {
+		toolsProvider.SetTools(f.tools...)
 	}
 
 	// Execute the selected flow
@@ -62,8 +65,8 @@ func (f *AutoFlow) RunLive(ctx context.Context, sess *session.Session) (<-chan e
 	}
 
 	// Set tools for the selected flow
-	if toolsProvider, ok := flow.(interface{ SetTools([]tool.Tool) }); ok {
-		toolsProvider.SetTools(f.tools)
+	if toolsProvider, ok := flow.(interface{ SetTools(...*genai.Tool) }); ok {
+		toolsProvider.SetTools(f.tools...)
 	}
 
 	// Execute the selected flow in live mode

@@ -7,9 +7,9 @@ package models
 import (
 	"fmt"
 
-	"github.com/go-a2a/adk-go/pkg/model"
-	"github.com/go-a2a/adk-go/pkg/tool"
 	"google.golang.org/genai"
+
+	"github.com/go-a2a/adk-go/pkg/model"
 )
 
 type Option struct {
@@ -20,16 +20,16 @@ type Option struct {
 // LlmRequest represents a request to a language model.
 type LlmRequest struct {
 	ModelID      string
-	ModelOptions Option
-	Contents     []genai.Content
-	Tools        []tool.Tool
+	ModelOptions *genai.GenerateContentConfig
+	Contents     []*genai.Content
+	Tools        []*genai.Tool
 }
 
 // LlmResponse represents a response from a language model.
 type LlmResponse struct {
 	Request       *LlmRequest
-	Contents      []genai.Content
-	FunctionCalls []genai.FunctionCall
+	Contents      []*genai.Content
+	FunctionCalls []*genai.FunctionCall
 }
 
 // NewModelFromID creates a new model instance from a model ID.

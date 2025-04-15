@@ -49,12 +49,7 @@ type BaseTool struct {
 }
 
 // NewBaseTool creates a new base tool with the provided configuration.
-func NewBaseTool(
-	name string,
-	description string,
-	paramSchema model.ToolParameterSpec,
-	executeFn func(ctx context.Context, args json.RawMessage) (string, error),
-) *BaseTool {
+func NewBaseTool(name string, description string, paramSchema model.ToolParameterSpec, executeFn func(ctx context.Context, args json.RawMessage) (string, error)) *BaseTool {
 	return &BaseTool{
 		name:                    name,
 		description:             description,

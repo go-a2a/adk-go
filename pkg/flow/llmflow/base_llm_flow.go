@@ -12,10 +12,8 @@ import (
 
 	"github.com/go-a2a/adk-go/pkg/event"
 	"github.com/go-a2a/adk-go/pkg/flow"
-	"github.com/go-a2a/adk-go/pkg/model"
 	"github.com/go-a2a/adk-go/pkg/model/models"
 	"github.com/go-a2a/adk-go/pkg/session"
-	"github.com/go-a2a/adk-go/pkg/tool"
 )
 
 // BaseLlmFlow is a base implementation for LLM flows.
@@ -23,8 +21,8 @@ type BaseLlmFlow struct {
 	requestProcessors  []LlmRequestProcessor
 	responseProcessors []LlmResponseProcessor
 	modelID            string
-	modelOptions       models.Option
-	tools              []tool.Tool
+	modelOptions       *genai.GenerateContentConfig
+	tools              []*genai.Tool
 }
 
 var _ flow.Flow = (*BaseLlmFlow)(nil)
@@ -35,8 +33,8 @@ func NewBaseLlmFlow(modelID string, modelOptions models.Option) *BaseLlmFlow {
 		requestProcessors:  []LlmRequestProcessor{},
 		responseProcessors: []LlmResponseProcessor{},
 		modelID:            modelID,
-		modelOptions:       modelOptions,
-		tools:              []tool.Tool{},
+		modelOptions:       &genai.GenerateContentConfig{},
+		tools:              []*genai.Tool{},
 	}
 }
 
@@ -51,13 +49,13 @@ func (f *BaseLlmFlow) AddResponseProcessor(processor LlmResponseProcessor) {
 }
 
 // SetTools sets the tools available to the language model.
-func (f *BaseLlmFlow) SetTools(tools []tool.Tool) {
+func (f *BaseLlmFlow) SetTools(tools ...*genai.Tool) {
 	f.tools = tools
 }
 
 // Run executes the flow and returns a channel of events.
 func (f *BaseLlmFlow) Run(ctx context.Context, sess *session.Session) (<-chan event.Event, error) {
-	modelProvider, err := model.GetProvider(f.modelID)
+	modelProvider, err := models.DefaultRegistry.GetModel(f.modelID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get model provider: %w", err)
 	}
@@ -102,7 +100,7 @@ func (f *BaseLlmFlow) Run(ctx context.Context, sess *session.Session) (<-chan ev
 
 // RunLive executes the flow in streaming mode and returns a channel of events.
 func (f *BaseLlmFlow) RunLive(ctx context.Context, sess *session.Session) (<-chan event.Event, error) {
-	modelProvider, err := model.GetProvider(f.modelID)
+	modelProvider, err := models.DefaultRegistry.GetModel(f.modelID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get model provider: %w", err)
 	}
@@ -172,67 +170,69 @@ func (f *BaseLlmFlow) processResponse(ctx *flow.LlmFlowContext, response *models
 
 // callLLM calls the language model and returns the response.
 func (f *BaseLlmFlow) callLLM(ctx *flow.LlmFlowContext, request *models.LlmRequest) (*models.LlmResponse, error) {
-	modelClient, err := ctx.Provider.GetModelClient(ctx.Context, request.ModelID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get model client: %w", err)
-	}
+	// modelClient, err := ctx.Model.GetModelClient(ctx.Context, request.ModelID)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to get model client: %w", err)
+	// }
 
-	contentObjs := make([]genai.Content, len(request.Contents))
+	contentObjs := make([]*genai.Content, len(request.Contents))
 	copy(contentObjs, request.Contents)
 
 	// Convert tools to model-specific format
-	toolObjs := make([]tool.Tool, len(request.Tools))
-	copy(toolObjs, request.Tools)
+	request.ModelOptions.Tools = make([]*genai.Tool, len(request.Tools))
+	copy(request.ModelOptions.Tools, request.Tools)
 
 	// Call the model
-	resp, err := modelClient.GenerateContent(ctx.Context, contentObjs, toolObjs, request.ModelOptions)
+	resp, err := ctx.Models.GenerateContent(ctx.Context, string(ctx.Provider), contentObjs, request.ModelOptions)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate content: %w", err)
 	}
 
 	// Extract function calls from response
-	var functionCalls []genai.FunctionCall
+	var functionCalls []*genai.FunctionCall
 	// This would depend on the specific implementation of model.Response
 	// For simplicity, we're assuming a method like GetFunctionCalls() exists
 
+	contens := make([]*genai.Content, len(resp.Candidates))
+	for i, candidate := range resp.Candidates {
+		contens[i] = candidate.Content
+	}
+
 	return &models.LlmResponse{
 		Request:       request,
-		Contents:      resp.Contents(),
+		Contents:      contens,
 		FunctionCalls: functionCalls,
 	}, nil
 }
 
 // callLLMLive calls the language model in streaming mode and sends events to the output channel.
 func (f *BaseLlmFlow) callLLMLive(ctx *flow.LlmFlowContext, request *models.LlmRequest, out chan<- event.Event) error {
-	modelClient, err := ctx.Provider.GetModelClient(ctx.Context, request.ModelID)
-	if err != nil {
-		return fmt.Errorf("failed to get model client: %w", err)
-	}
+	// modelClient := ctx.Models
+	// if err != nil {
+	// 	return fmt.Errorf("failed to get model client: %w", err)
+	// }
 
-	contentObjs := make([]genai.Content, len(request.Contents))
+	contentObjs := make([]*genai.Content, len(request.Contents))
 	copy(contentObjs, request.Contents)
 
 	// Convert tools to model-specific format
-	toolObjs := make([]tool.Tool, len(request.Tools))
-	copy(toolObjs, request.Tools)
+	request.ModelOptions.Tools = make([]*genai.Tool, len(request.Tools))
+	copy(request.ModelOptions.Tools, request.Tools)
 
 	// Call the model with streaming
-	respCh, err := modelClient.GenerateContentStream(ctx.Context, contentObjs, toolObjs, request.ModelOptions)
-	if err != nil {
-		return fmt.Errorf("failed to generate content stream: %w", err)
-	}
+	respCh := ctx.Models.GenerateContentStream(ctx.Context, string(ctx.Provider), contentObjs, request.ModelOptions)
 
 	var streamResponse models.LlmResponse
 	streamResponse.Request = request
 
 	// Process streaming response
 	for resp := range respCh {
-		streamResponse.Contents = append(streamResponse.Contents, resp.Contents()...)
+		streamResponse.Contents = append(streamResponse.Contents, resp.Text())
 
 		// Convert model response to events and send to output channel
 		// For now, just emit a simple message event
-		for _, content := range resp.Contents() {
-			ev, err := event.NewEvent("user", content)
+		for _, candidate := range resp.Candidates {
+			ev, err := event.NewEvent(candidate.Content.Role, candidate.Content)
 			if err != nil {
 				return fmt.Errorf("failed to new event: %w", err)
 			}
