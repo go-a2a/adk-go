@@ -7,7 +7,6 @@ import (
 	"context"
 	"sync"
 
-	"github.com/go-a2a/adk-go/flow"
 	"github.com/go-a2a/adk-go/session"
 )
 
@@ -15,8 +14,10 @@ import (
 // It allows read-only access to the current invocation state without
 // allowing modifications.
 type ReadOnlyContext struct {
+	ctx context.Context
+
 	// invocationContext is the underlying invocation context
-	invocationContext *flow.InvocationContext
+	invocationContext *InvocationContext
 
 	// mu protects access to the state map
 	mu sync.RWMutex
@@ -26,16 +27,17 @@ type ReadOnlyContext struct {
 }
 
 // NewReadOnlyContext creates a new ReadOnlyContext instance.
-func NewReadOnlyContext(invocationContext *flow.InvocationContext) *ReadOnlyContext {
+func NewReadOnlyContext(ctx context.Context, invocationContext *InvocationContext) *ReadOnlyContext {
 	// Create a snapshot of the state to ensure it's immutable
 	stateSnapshot := make(map[string]any)
-	if invocationContext.Session != nil && invocationContext.Session.State != nil {
-		for k, v := range invocationContext.Session.State.ToMap() {
+	if invocationContext.Session != nil && invocationContext.Session().State != nil {
+		for k, v := range invocationContext.Session().State.ToMap() {
 			stateSnapshot[k] = v
 		}
 	}
 
 	return &ReadOnlyContext{
+		ctx:               ctx,
 		invocationContext: invocationContext,
 		immutableState:    stateSnapshot,
 	}
@@ -43,14 +45,12 @@ func NewReadOnlyContext(invocationContext *flow.InvocationContext) *ReadOnlyCont
 
 // InvocationID returns the ID of the current invocation.
 func (r *ReadOnlyContext) InvocationID() string {
-	return r.invocationContext.Session.ID
+	return r.invocationContext.Session().ID
 }
 
-// AgentName returns the name of the currently running agent.
+// AgentName returns the name of the agent that is currently running.
 func (r *ReadOnlyContext) AgentName() string {
-	// In our implementation, we don't store the agent name in the InvocationContext
-	// This would be extended when agent name tracking is added to the runner package
-	return ""
+	return r.invocationContext.agent.name
 }
 
 // Context returns the underlying context.Context.
@@ -60,17 +60,17 @@ func (r *ReadOnlyContext) Context() context.Context {
 
 // SessionID returns the current session ID.
 func (r *ReadOnlyContext) SessionID() string {
-	return r.invocationContext.Session.ID
+	return r.invocationContext.Session().ID
 }
 
 // UserID returns the current user ID.
 func (r *ReadOnlyContext) UserID() string {
-	return r.invocationContext.UserID
+	return r.invocationContext.UserID()
 }
 
 // AppName returns the current application name.
 func (r *ReadOnlyContext) AppName() string {
-	return r.invocationContext.AppName
+	return r.invocationContext.AppName()
 }
 
 // State returns a read-only view of the session state.
@@ -99,5 +99,5 @@ func (r *ReadOnlyContext) GetState(key string) (any, bool) {
 // Session returns the underlying session.
 // Note: The returned session should be treated as read-only.
 func (r *ReadOnlyContext) Session() *session.Session {
-	return r.invocationContext.Session
+	return r.invocationContext.Session()
 }

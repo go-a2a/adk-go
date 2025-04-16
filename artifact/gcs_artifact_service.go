@@ -12,6 +12,8 @@ import (
 	"strconv"
 	"strings"
 
+	"google.golang.org/genai"
+
 	"cloud.google.com/go/storage"
 	"google.golang.org/api/iterator"
 )
@@ -22,6 +24,8 @@ type GcsArtifactService struct {
 	bucketName string
 	bucket     *storage.BucketHandle
 }
+
+var _ ArtifactService = (*GcsArtifactService)(nil)
 
 // NewGcsArtifactService creates a new GCS artifact service.
 func NewGcsArtifactService(ctx context.Context, bucketName string) (*GcsArtifactService, error) {
@@ -45,12 +49,8 @@ func (s *GcsArtifactService) getBlobName(appName, userID, sessionID, filename st
 	return fmt.Sprintf("%s/%s/%s/%s/%d", appName, userID, sessionID, filename, version)
 }
 
-// SaveArtifact implements ArtifactService.SaveArtifact.
-func (s *GcsArtifactService) SaveArtifact(
-	ctx context.Context,
-	appName, userID, sessionID, filename string,
-	artifact *Part,
-) (int, error) {
+// SaveArtifact implements [ArtifactService].
+func (s *GcsArtifactService) SaveArtifact(ctx context.Context, appName, userID, sessionID, filename string, artifact *genai.Part) (int, error) {
 	versions, err := s.ListVersions(ctx, appName, userID, sessionID, filename)
 	if err != nil {
 		return 0, fmt.Errorf("failed to list versions: %w", err)
@@ -65,9 +65,9 @@ func (s *GcsArtifactService) SaveArtifact(
 	obj := s.bucket.Object(blobName)
 
 	w := obj.NewWriter(ctx)
-	w.ContentType = artifact.MimeType
+	w.ContentType = artifact.FileData.MIMEType
 
-	if _, err := w.Write(artifact.Data); err != nil {
+	if _, err := w.Write(artifact.InlineData.Data); err != nil {
 		w.Close()
 		return 0, fmt.Errorf("failed to write data: %w", err)
 	}
@@ -79,12 +79,8 @@ func (s *GcsArtifactService) SaveArtifact(
 	return version, nil
 }
 
-// LoadArtifact implements ArtifactService.LoadArtifact.
-func (s *GcsArtifactService) LoadArtifact(
-	ctx context.Context,
-	appName, userID, sessionID, filename string,
-	version *int,
-) (*Part, error) {
+// LoadArtifact implements [ArtifactService].
+func (s *GcsArtifactService) LoadArtifact(ctx context.Context, appName, userID, sessionID, filename string, version *int) (*genai.Part, error) {
 	var v int
 	if version == nil {
 		versions, err := s.ListVersions(ctx, appName, userID, sessionID, filename)
@@ -123,18 +119,16 @@ func (s *GcsArtifactService) LoadArtifact(
 		return nil, fmt.Errorf("failed to read data: %w", err)
 	}
 
-	return &Part{
-		Data:     data,
-		MimeType: attrs.ContentType,
-		Filename: filename,
+	return &genai.Part{
+		InlineData: &genai.Blob{
+			Data:     data,
+			MIMEType: attrs.ContentType,
+		},
 	}, nil
 }
 
 // ListArtifactKeys implements ArtifactService.ListArtifactKeys.
-func (s *GcsArtifactService) ListArtifactKeys(
-	ctx context.Context,
-	appName, userID, sessionID string,
-) ([]string, error) {
+func (s *GcsArtifactService) ListArtifactKeys(ctx context.Context, appName, userID, sessionID string) ([]string, error) {
 	filenames := make(map[string]struct{})
 
 	// List objects in session namespace
@@ -185,10 +179,7 @@ func (s *GcsArtifactService) ListArtifactKeys(
 }
 
 // DeleteArtifact implements ArtifactService.DeleteArtifact.
-func (s *GcsArtifactService) DeleteArtifact(
-	ctx context.Context,
-	appName, userID, sessionID, filename string,
-) error {
+func (s *GcsArtifactService) DeleteArtifact(ctx context.Context, appName, userID, sessionID, filename string) error {
 	versions, err := s.ListVersions(ctx, appName, userID, sessionID, filename)
 	if err != nil {
 		return fmt.Errorf("failed to list versions: %w", err)
@@ -207,10 +198,7 @@ func (s *GcsArtifactService) DeleteArtifact(
 }
 
 // ListVersions implements ArtifactService.ListVersions.
-func (s *GcsArtifactService) ListVersions(
-	ctx context.Context,
-	appName, userID, sessionID, filename string,
-) ([]int, error) {
+func (s *GcsArtifactService) ListVersions(ctx context.Context, appName, userID, sessionID, filename string) ([]int, error) {
 	prefix := path.Dir(s.getBlobName(appName, userID, sessionID, filename, 0)) + "/"
 	it := s.bucket.Objects(ctx, &storage.Query{Prefix: prefix})
 

@@ -6,15 +6,18 @@ package artifact
 import (
 	"context"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
+
+	"google.golang.org/genai"
 )
 
 // InMemoryArtifactService is an in-memory implementation of the ArtifactService.
 type InMemoryArtifactService struct {
 	mu        sync.RWMutex
-	artifacts map[string][]*Part
+	artifacts map[string][]*genai.Part
 }
 
 var _ ArtifactService = (*InMemoryArtifactService)(nil)
@@ -22,7 +25,7 @@ var _ ArtifactService = (*InMemoryArtifactService)(nil)
 // NewInMemoryArtifactService creates a new in-memory artifact service.
 func NewInMemoryArtifactService() *InMemoryArtifactService {
 	return &InMemoryArtifactService{
-		artifacts: make(map[string][]*Part),
+		artifacts: make(map[string][]*genai.Part),
 	}
 }
 
@@ -40,11 +43,7 @@ func artifactPath(appName, userID, sessionID, filename string) string {
 }
 
 // SaveArtifact implements ArtifactService.SaveArtifact.
-func (s *InMemoryArtifactService) SaveArtifact(
-	ctx context.Context,
-	appName, userID, sessionID, filename string,
-	artifact *Part,
-) (int, error) {
+func (s *InMemoryArtifactService) SaveArtifact(ctx context.Context, appName, userID, sessionID, filename string, artifact *genai.Part) (int, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -52,7 +51,7 @@ func (s *InMemoryArtifactService) SaveArtifact(
 
 	versions, ok := s.artifacts[path]
 	if !ok {
-		s.artifacts[path] = []*Part{artifact}
+		s.artifacts[path] = []*genai.Part{artifact}
 		return 0, nil
 	}
 
@@ -62,11 +61,7 @@ func (s *InMemoryArtifactService) SaveArtifact(
 }
 
 // LoadArtifact implements ArtifactService.LoadArtifact.
-func (s *InMemoryArtifactService) LoadArtifact(
-	ctx context.Context,
-	appName, userID, sessionID, filename string,
-	version *int,
-) (*Part, error) {
+func (s *InMemoryArtifactService) LoadArtifact(ctx context.Context, appName, userID, sessionID, filename string, version *int) (*genai.Part, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -90,10 +85,7 @@ func (s *InMemoryArtifactService) LoadArtifact(
 }
 
 // ListArtifactKeys implements ArtifactService.ListArtifactKeys.
-func (s *InMemoryArtifactService) ListArtifactKeys(
-	ctx context.Context,
-	appName, userID, sessionID string,
-) ([]string, error) {
+func (s *InMemoryArtifactService) ListArtifactKeys(ctx context.Context, appName, userID, sessionID string) ([]string, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -103,12 +95,11 @@ func (s *InMemoryArtifactService) ListArtifactKeys(
 	filenames := make(map[string]struct{})
 
 	for path := range s.artifacts {
-		if strings.HasPrefix(path, sessionPrefix) {
-			filename := strings.TrimPrefix(path, sessionPrefix)
-			filenames[filename] = struct{}{}
-		} else if strings.HasPrefix(path, userNamespacePrefix) {
-			filename := strings.TrimPrefix(path, userNamespacePrefix)
-			filenames[filename] = struct{}{}
+		if after, found := strings.CutPrefix(path, sessionPrefix); found {
+			filenames[after] = struct{}{}
+		}
+		if after, found := strings.CutPrefix(path, userNamespacePrefix); found {
+			filenames[after] = struct{}{}
 		}
 	}
 
@@ -122,10 +113,7 @@ func (s *InMemoryArtifactService) ListArtifactKeys(
 }
 
 // DeleteArtifact implements ArtifactService.DeleteArtifact.
-func (s *InMemoryArtifactService) DeleteArtifact(
-	ctx context.Context,
-	appName, userID, sessionID, filename string,
-) error {
+func (s *InMemoryArtifactService) DeleteArtifact(ctx context.Context, appName, userID, sessionID, filename string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -141,10 +129,7 @@ func (s *InMemoryArtifactService) DeleteArtifact(
 }
 
 // ListVersions implements ArtifactService.ListVersions.
-func (s *InMemoryArtifactService) ListVersions(
-	ctx context.Context,
-	appName, userID, sessionID, filename string,
-) ([]int, error) {
+func (s *InMemoryArtifactService) ListVersions(ctx context.Context, appName, userID, sessionID, filename string) ([]int, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -175,7 +160,7 @@ func (s *InMemoryArtifactService) GetArtifact(ctx context.Context, key string) (
 
 	// Return the latest version
 	latestVersion := versions[len(versions)-1]
-	return string(latestVersion.Data), nil
+	return string(latestVersion.InlineData.Data), nil
 }
 
 // SaveArtifactByKey implements ArtifactService.SaveArtifactByKey.
@@ -183,15 +168,16 @@ func (s *InMemoryArtifactService) SaveArtifactByKey(ctx context.Context, key str
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	part := &Part{
-		Data:     []byte(value),
-		MimeType: "text/plain",
-		Filename: key,
+	part := &genai.Part{
+		InlineData: &genai.Blob{
+			Data:     []byte(value),
+			MIMEType: "text/plain",
+		},
 	}
 
 	versions, ok := s.artifacts[key]
 	if !ok {
-		s.artifacts[key] = []*Part{part}
+		s.artifacts[key] = []*genai.Part{part}
 		return nil
 	}
 
@@ -206,11 +192,9 @@ func (s *InMemoryArtifactService) ListArtifacts(ctx context.Context, path string
 
 	var result []string
 	for key := range s.artifacts {
-		if strings.HasPrefix(key, path) {
-			// If non-recursive, check if this is a direct child
+		if before, found := strings.CutPrefix(key, path); found {
 			if !recursive {
-				suffix := strings.TrimPrefix(key, path)
-				if strings.Contains(suffix, "/") {
+				if strings.Contains(before, "/") {
 					continue
 				}
 			}
@@ -218,6 +202,6 @@ func (s *InMemoryArtifactService) ListArtifacts(ctx context.Context, path string
 		}
 	}
 
-	sort.Strings(result)
+	slices.Sort(result)
 	return result, nil
 }

@@ -8,6 +8,8 @@ import (
 	"bytes"
 	"context"
 	"io"
+
+	"google.golang.org/genai"
 )
 
 // Part represents an artifact content with its metadata.
@@ -23,12 +25,12 @@ type ArtifactService interface {
 	// The artifact is identified by app name, user ID, session ID, and filename.
 	// Returns the revision ID to identify the artifact version.
 	// The first version of the artifact has a revision ID of 0.
-	SaveArtifact(ctx context.Context, appName, userID, sessionID, filename string, artifact *Part) (int, error)
+	SaveArtifact(ctx context.Context, appName, userID, sessionID, filename string, artifact *genai.Part) (int, error)
 
 	// LoadArtifact gets an artifact from the artifact service storage.
 	// The artifact is identified by app name, user ID, session ID, and filename.
 	// If version is nil, the latest version will be returned.
-	LoadArtifact(ctx context.Context, appName, userID, sessionID, filename string, version *int) (*Part, error)
+	LoadArtifact(ctx context.Context, appName, userID, sessionID, filename string, version *int) (*genai.Part, error)
 
 	// ListArtifactKeys lists all the artifact filenames within a session.
 	ListArtifactKeys(ctx context.Context, appName, userID, sessionID string) ([]string, error)
@@ -52,16 +54,17 @@ type ArtifactService interface {
 }
 
 // FromReader creates a Part from an [io.Reader].
-func FromReader(r io.Reader, mimeType, filename string) (*Part, error) {
+func FromReader(r io.Reader, mimeType, filename string) (*genai.Part, error) {
 	data, err := io.ReadAll(r)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Part{
-		Data:     data,
-		MimeType: mimeType,
-		Filename: filename,
+	return &genai.Part{
+		InlineData: &genai.Blob{
+			Data:     data,
+			MIMEType: mimeType,
+		},
 	}, nil
 }
 

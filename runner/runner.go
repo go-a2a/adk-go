@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"time"
 
 	"github.com/google/uuid"
 
@@ -234,27 +233,4 @@ func (r *Runner) appendNewMessageToSession(ctx context.Context, invCtx *Invocati
 
 	// Append the event to the session
 	return r.SessionService.AppendEvent(ctx, r.AppName, invCtx.UserID, invCtx.SessionID, msgEvent)
-}
-
-// InvocationContext contains contextual information for a single agent invocation.
-type InvocationContext struct {
-	AppName         string
-	UserID          string
-	SessionID       string
-	Session         *session.Session
-	ArtifactService artifact.ArtifactService
-	MemoryService   memory.MemoryService
-	Logger          *slog.Logger
-	StartTime       time.Time
-}
-
-// NewInMemoryRunner creates a new runner with in-memory services.
-func NewInMemoryRunner(appName string, rootAgent *agent.Agent) *Runner {
-	return NewRunner(rootAgent, RunnerConfig{
-		AppName:         appName,
-		ArtifactService: artifact.NewInMemoryArtifactService(),
-		SessionService:  session.NewInMemorySessionService(),
-		MemoryService:   memory.NewInMemoryMemoryService(),
-		Logger:          slog.Default(),
-	})
 }

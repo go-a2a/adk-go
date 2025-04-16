@@ -6,6 +6,8 @@ package codeexecutor
 import (
 	"context"
 	"time"
+
+	"github.com/go-a2a/adk-go/flow"
 )
 
 // CodeBlockDelimiter defines how to identify code blocks in generated content.
@@ -42,16 +44,10 @@ type CodeExecutionResult struct {
 	Timestamp   time.Time    // When the code was executed
 }
 
-// InvocationContext contains context information for a code execution invocation.
-type InvocationContext struct {
-	ExecutionID string    // Unique identifier for the execution
-	StartTime   time.Time // When the execution started
-}
-
 // CodeExecutor defines the interface for executing code.
 type CodeExecutor interface {
 	// ExecuteCode executes code and returns the execution result.
-	ExecuteCode(ctx context.Context, invocationCtx InvocationContext, input CodeExecutionInput) (CodeExecutionResult, error)
+	ExecuteCode(ctx context.Context, invocationCtx flow.InvocationContext, input CodeExecutionInput) (CodeExecutionResult, error)
 
 	// IsStateful returns whether the executor maintains state between executions.
 	IsStateful() bool
