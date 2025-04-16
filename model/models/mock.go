@@ -8,13 +8,16 @@ import (
 	"fmt"
 	"strings"
 
+	"google.golang.org/genai"
+
 	"github.com/go-a2a/adk-go/message"
 	"github.com/go-a2a/adk-go/model"
 )
 
 // MockModel is a mock implementation of the Model interface for testing.
 type MockModel struct {
-	*Model
+	*genai.Model
+
 	Responses      map[string]string
 	ToolResponses  map[string][]message.ToolCall
 	StreamResponse []string
@@ -22,7 +25,7 @@ type MockModel struct {
 }
 
 // NewMockModel creates a new mock model.
-func NewMockModel(modelID string) *MockModel {
+func NewMockModel(modelID string) *genai.Model {
 	capabilities := []model.ModelCapability{
 		model.ModelCapabilityToolCalling,
 		model.ModelCapabilityJSON,
@@ -38,7 +41,7 @@ func NewMockModel(modelID string) *MockModel {
 
 	m.Model = NewBaseModel(modelID, model.ModelProviderMock, capabilities, m.generateContent)
 
-	return m
+	return m.Model
 }
 
 // generateContent is the generator function for the mock model.
@@ -158,7 +161,7 @@ func (m *MockModel) SetError(err error) {
 
 func init() {
 	// Register the mock model with the registry
-	Register("mock.*", func(modelID string) (model.Model, error) {
+	Register("mock.*", func(modelID string) (*genai.Model, error) {
 		return NewMockModel(modelID), nil
 	})
 }

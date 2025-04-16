@@ -8,9 +8,10 @@ import (
 	"fmt"
 	"sync"
 
+	"google.golang.org/genai"
+
 	"github.com/go-a2a/adk-go/message"
 	"github.com/go-a2a/adk-go/model"
-	"google.golang.org/genai"
 )
 
 // GeneratorFunc represents a function that generates a message based on the model ID, input messages, and generation options.

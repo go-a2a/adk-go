@@ -4,9 +4,10 @@
 package llmflow
 
 import (
+	"google.golang.org/genai"
+
 	"github.com/go-a2a/adk-go/flow"
 	"github.com/go-a2a/adk-go/flow/llmflow/processor"
-	"github.com/go-a2a/adk-go/model/models"
 )
 
 // SingleFlow is an LLM flow that handles tool calls.
@@ -18,9 +19,9 @@ type SingleFlow struct {
 var _ flow.Flow = (*SingleFlow)(nil)
 
 // NewSingleFlow creates a new SingleFlow with the specified model ID and options.
-func NewSingleFlow(modelID string, modelOptions models.Option) *SingleFlow {
+func NewSingleFlow(modelID string, config *genai.GenerateContentConfig) *SingleFlow {
 	flow := &SingleFlow{
-		BaseLlmFlow: NewBaseLlmFlow(modelID, modelOptions),
+		BaseLlmFlow: NewBaseLlmFlow(modelID, config),
 	}
 
 	// Add request processors in specific order

@@ -28,12 +28,12 @@ type BaseLlmFlow struct {
 var _ flow.Flow = (*BaseLlmFlow)(nil)
 
 // NewBaseLlmFlow creates a new BaseLlmFlow.
-func NewBaseLlmFlow(modelID string, modelOptions models.Option) *BaseLlmFlow {
+func NewBaseLlmFlow(modelID string, config *genai.GenerateContentConfig) *BaseLlmFlow {
 	return &BaseLlmFlow{
 		requestProcessors:  []LlmRequestProcessor{},
 		responseProcessors: []LlmResponseProcessor{},
 		modelID:            modelID,
-		modelOptions:       &genai.GenerateContentConfig{},
+		modelOptions:       config,
 		tools:              []*genai.Tool{},
 	}
 }
@@ -68,9 +68,9 @@ func (f *BaseLlmFlow) Run(ctx context.Context, sess *session.Session) (<-chan ev
 
 		// Create initial LLM request
 		request := &models.LlmRequest{
-			ModelID:      f.modelID,
-			ModelOptions: f.modelOptions,
-			Tools:        f.tools,
+			Model:  f.modelID,
+			Config: f.modelOptions,
+			Tools:  f.tools,
 		}
 
 		// Process request
@@ -113,9 +113,9 @@ func (f *BaseLlmFlow) RunLive(ctx context.Context, sess *session.Session) (<-cha
 
 		// Create initial LLM request
 		request := &models.LlmRequest{
-			ModelID:      f.modelID,
-			ModelOptions: f.modelOptions,
-			Tools:        f.tools,
+			Model:  f.modelID,
+			Config: f.modelOptions,
+			Tools:  f.tools,
 		}
 
 		// Process request
@@ -179,11 +179,11 @@ func (f *BaseLlmFlow) callLLM(ctx *flow.LlmFlowContext, request *models.LlmReque
 	copy(contentObjs, request.Contents)
 
 	// Convert tools to model-specific format
-	request.ModelOptions.Tools = make([]*genai.Tool, len(request.Tools))
-	copy(request.ModelOptions.Tools, request.Tools)
+	request.Config.Tools = make([]*genai.Tool, len(request.Tools))
+	copy(request.Config.Tools, request.Tools)
 
 	// Call the model
-	resp, err := ctx.Models.GenerateContent(ctx.Context, string(ctx.Provider), contentObjs, request.ModelOptions)
+	resp, err := ctx.Models.GenerateContent(ctx.Context, string(ctx.Provider), contentObjs, request.Config)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate content: %w", err)
 	}
@@ -200,7 +200,7 @@ func (f *BaseLlmFlow) callLLM(ctx *flow.LlmFlowContext, request *models.LlmReque
 
 	return &models.LlmResponse{
 		Request:       request,
-		Contents:      contens,
+		Content:       contens,
 		FunctionCalls: functionCalls,
 	}, nil
 }
@@ -216,18 +216,18 @@ func (f *BaseLlmFlow) callLLMLive(ctx *flow.LlmFlowContext, request *models.LlmR
 	copy(contentObjs, request.Contents)
 
 	// Convert tools to model-specific format
-	request.ModelOptions.Tools = make([]*genai.Tool, len(request.Tools))
-	copy(request.ModelOptions.Tools, request.Tools)
+	request.Config.Tools = make([]*genai.Tool, len(request.Tools))
+	copy(request.Config.Tools, request.Tools)
 
 	// Call the model with streaming
-	respCh := ctx.Models.GenerateContentStream(ctx.Context, string(ctx.Provider), contentObjs, request.ModelOptions)
+	respCh := ctx.Models.GenerateContentStream(ctx.Context, string(ctx.Provider), contentObjs, request.Config)
 
 	var streamResponse models.LlmResponse
 	streamResponse.Request = request
 
 	// Process streaming response
 	for resp := range respCh {
-		streamResponse.Contents = append(streamResponse.Contents, resp.Text())
+		streamResponse.Content = append(streamResponse.Content, resp.Text())
 
 		// Convert model response to events and send to output channel
 		// For now, just emit a simple message event

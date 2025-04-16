@@ -6,10 +6,12 @@ package models
 
 import (
 	"fmt"
+	"strings"
 
 	"google.golang.org/genai"
 
 	"github.com/go-a2a/adk-go/model"
+	"github.com/go-a2a/adk-go/tool"
 )
 
 type Option struct {
@@ -17,23 +19,120 @@ type Option struct {
 	Title string
 }
 
-// LlmRequest represents a request to a language model.
+// LlmRequest represents a LLM request class that allows passing in tools, output schema and system
 type LlmRequest struct {
-	ModelID      string
-	ModelOptions *genai.GenerateContentConfig
-	Contents     []*genai.Content
-	Tools        []*genai.Tool
+	Model    string
+	Contents []*genai.Content
+	Config   *genai.GenerateContentConfig
+	Tools    map[string]tool.Tool
+}
+
+// AppendInstructions appends instructions to the system instruction.
+func (r *LlmRequest) AppendInstructions(instructions []string) {
+	if r.Config == nil {
+		return
+	}
+	if r.Config.SystemInstruction == nil {
+		r.Config.SystemInstruction = &genai.Content{}
+	}
+	r.Config.SystemInstruction.Parts = append(
+		r.Config.SystemInstruction.Parts,
+		&genai.Part{
+			Text: "\n\n" + strings.Join(instructions, "\n\n"),
+		},
+	)
+}
+
+// AppendTools appends tools to the request.
+func (r *LlmRequest) AppendTools(tools []tool.Tool) {
+	if len(tools) == 0 || r.Config == nil {
+		return
+	}
+
+	declarations := make([]*genai.FunctionDeclaration, len(tools))
+	for i, t := range tools {
+		declarations[i] = t.FunctionDeclaration()
+		r.Tools[t.Name()] = t
+	}
+	r.Config.Tools = append(r.Config.Tools, &genai.Tool{
+		FunctionDeclarations: declarations,
+	})
+}
+
+// SetOutputSchema sets the output schema for the request.
+func (r *LlmRequest) SetOutputSchema(schema *genai.Schema) {
+	if r.Config == nil {
+		return
+	}
+
+	r.Config.ResponseSchema = schema
+	r.Config.ResponseMIMEType = "application/json"
 }
 
 // LlmResponse represents a response from a language model.
 type LlmResponse struct {
+	// The content of the response.
+	Content *genai.Content
+
+	// The grounding metadata of the response.
+	GroundingMetadata *genai.GroundingMetadata
+
+	// Partial indicates whether the text content is part of a unfinished text stream.
+	// Only used for streaming mode and when the content is plain text.
+	Partial bool
+
+	// TurnComplete indicates whether the response from the model is complete.
+	//
+	// Only used for streaming mode.
+	TurnComplete bool
+
+	// ErrorCode if the response is an error. Code varies by model.
+	ErrorCode string
+
+	// ErrorMessage if the response is an error.
+	ErrorMessage string
+
+	// Interrupted flag indicating that LLM was interrupted when generating the content.
+	//
+	// Usually it's due to user interruption during a bidi streaming.
+	Interrupted bool
+
 	Request       *LlmRequest
-	Contents      []*genai.Content
 	FunctionCalls []*genai.FunctionCall
 }
 
+// NewLlmResponse creates an [LlmResponse] from a [genai.GenerateContentResponse].
+func NewLlmResponse(genCtxResp *genai.GenerateContentResponse) *LlmResponse {
+	if len(genCtxResp.Candidates) > 0 {
+		candidate := genCtxResp.Candidates[0]
+		if candidate.Content != nil && len(candidate.Content.Parts) > 0 {
+			return &LlmResponse{
+				Content:           candidate.Content,
+				GroundingMetadata: candidate.GroundingMetadata,
+			}
+		}
+		return &LlmResponse{
+			ErrorCode:    string(candidate.FinishReason),
+			ErrorMessage: candidate.FinishMessage,
+		}
+	}
+
+	if genCtxResp.PromptFeedback != nil {
+		promptFeedback := genCtxResp.PromptFeedback
+		return &LlmResponse{
+			ErrorCode:    string(promptFeedback.BlockReason),
+			ErrorMessage: promptFeedback.BlockReasonMessage,
+		}
+	}
+
+	return &LlmResponse{
+		ErrorCode:    "UNKNOWN_ERROR",
+		ErrorMessage: "Unknown error",
+	}
+}
+
 // NewModelFromID creates a new model instance from a model ID.
-func NewModelFromID(modelID string) (model.Model, error) {
+func NewModelFromID(modelID string) (*genai.Model, error) {
 	return GetModel(modelID)
 }
 
@@ -64,7 +163,7 @@ func GetDefaultModelID(provider model.ModelProvider) (string, error) {
 }
 
 // NewModelFromProvider creates a new model instance for the given provider using the default model ID.
-func NewModelFromProvider(provider model.ModelProvider) (model.Model, error) {
+func NewModelFromProvider(provider model.ModelProvider) (*genai.Model, error) {
 	modelID, err := GetDefaultModelID(provider)
 	if err != nil {
 		return nil, err

@@ -5,7 +5,6 @@ package models
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 
 	"google.golang.org/genai"
@@ -37,7 +36,7 @@ type AnthropicModel struct {
 }
 
 // NewAnthropicModel creates a new Claude model instance.
-func NewAnthropicModel(modelID string, apiKey string, apiEndpoint string) (*AnthropicModel, error) {
+func NewAnthropicModel(modelID string, apiKey string, apiEndpoint string) (*genai.Model, error) {
 	if modelID == "" {
 		modelID = DefaultClaudeModel
 	}
@@ -58,7 +57,7 @@ func NewAnthropicModel(modelID string, apiKey string, apiEndpoint string) (*Anth
 	// Create the base model with a generator function
 	m.Model = NewBaseModel(modelID, model.ModelProviderAnthropic, capabilities, m.generateContent)
 
-	return m, nil
+	return m.Model, nil
 }
 
 // generateContent is the generator function for the Claude model.
@@ -77,60 +76,60 @@ func (m *AnthropicModel) generateContent(ctx context.Context, modelID string, me
 }
 
 // GenerateWithTools overrides the base implementation to handle tools.
-func (m *AnthropicModel) GenerateWithTools(ctx context.Context, messages []message.Message, tools []model.ToolDefinition) (message.Message, error) {
-	if !m.HasCapability(model.ModelCapabilityToolCalling) && !m.HasCapability(model.ModelCapabilityFunctionCalling) {
-		return message.Message{}, fmt.Errorf("tool calling not supported by model %s", m.ModelID())
-	}
-
-	logger := observability.Logger(ctx)
-	logger.Debug("Generating content with tools using Claude model",
-		slog.String("model", m.ModelID()),
-		slog.Int("numMessages", len(messages)),
-		slog.Int("numTools", len(tools)),
-	)
-
-	// In a real implementation, this would make API calls to the Claude API with tool definitions
-	// For now, we'll return a placeholder response with a tool call
-	toolCalls := []message.ToolCall{
-		{
-			ID:   "tool_call_1",
-			Name: "search",
-			Args: []byte(`{"query": "example search"}`),
-		},
-	}
-
-	return message.NewAssistantToolCallMessage(toolCalls), nil
-}
+// func (m *AnthropicModel) GenerateWithTools(ctx context.Context, messages []message.Message, tools []model.ToolDefinition) (message.Message, error) {
+// 	if !m.HasCapability(model.ModelCapabilityToolCalling) && !m.HasCapability(model.ModelCapabilityFunctionCalling) {
+// 		return message.Message{}, fmt.Errorf("tool calling not supported by model %s", m.ModelID())
+// 	}
+//
+// 	logger := observability.Logger(ctx)
+// 	logger.Debug("Generating content with tools using Claude model",
+// 		slog.String("model", m.ModelID()),
+// 		slog.Int("numMessages", len(messages)),
+// 		slog.Int("numTools", len(tools)),
+// 	)
+//
+// 	// In a real implementation, this would make API calls to the Claude API with tool definitions
+// 	// For now, we'll return a placeholder response with a tool call
+// 	toolCalls := []message.ToolCall{
+// 		{
+// 			ID:   "tool_call_1",
+// 			Name: "search",
+// 			Args: []byte(`{"query": "example search"}`),
+// 		},
+// 	}
+//
+// 	return message.NewAssistantToolCallMessage(toolCalls), nil
+// }
 
 // GenerateStream overrides the base implementation to handle streaming.
-func (m *AnthropicModel) GenerateStream(ctx context.Context, messages []message.Message, handler model.ResponseHandler) error {
-	if !m.HasCapability(model.ModelCapabilityStreaming) {
-		return fmt.Errorf("streaming not supported by model %s", m.ModelID())
-	}
-
-	logger := observability.Logger(ctx)
-	logger.Debug("Streaming content from Claude model",
-		slog.String("model", m.ModelID()),
-		slog.Int("numMessages", len(messages)),
-	)
-
-	// Simulate streaming with a few chunks
-	chunks := []string{
-		"This is the first chunk of the streaming response.",
-		" This is the second chunk.",
-		" And this is the final chunk from the Claude model.",
-	}
-
-	for _, chunk := range chunks {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
-			// Continue processing
-		}
-
-		handler(message.NewAssistantMessage(chunk))
-	}
-
-	return nil
-}
+// func (m *AnthropicModel) GenerateStream(ctx context.Context, messages []message.Message, handler model.ResponseHandler) error {
+// 	if !m.HasCapability(model.ModelCapabilityStreaming) {
+// 		return fmt.Errorf("streaming not supported by model %s", m.ModelID())
+// 	}
+//
+// 	logger := observability.Logger(ctx)
+// 	logger.Debug("Streaming content from Claude model",
+// 		slog.String("model", m.ModelID()),
+// 		slog.Int("numMessages", len(messages)),
+// 	)
+//
+// 	// Simulate streaming with a few chunks
+// 	chunks := []string{
+// 		"This is the first chunk of the streaming response.",
+// 		" This is the second chunk.",
+// 		" And this is the final chunk from the Claude model.",
+// 	}
+//
+// 	for _, chunk := range chunks {
+// 		select {
+// 		case <-ctx.Done():
+// 			return ctx.Err()
+// 		default:
+// 			// Continue processing
+// 		}
+//
+// 		handler(message.NewAssistantMessage(chunk))
+// 	}
+//
+// 	return nil
+// }

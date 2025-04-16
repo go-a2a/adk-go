@@ -5,8 +5,9 @@ package models
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
+
+	"google.golang.org/genai"
 
 	"github.com/go-a2a/adk-go/message"
 	"github.com/go-a2a/adk-go/model"
@@ -15,7 +16,7 @@ import (
 
 func init() {
 	// Register OpenAI model patterns with the registry
-	Register("gpt-.*", func(modelID string) (model.Model, error) {
+	Register("gpt-.*", func(modelID string) (*genai.Model, error) {
 		// In a real implementation, API key and endpoint would be configured properly
 		return NewOpenAIModel(modelID, "", "")
 	})
@@ -28,14 +29,14 @@ const (
 
 // OpenAIModel represents the GPT language model from OpenAI.
 type OpenAIModel struct {
-	*Model
+	*genai.Model
 
 	apiKey      string
 	apiEndpoint string
 }
 
 // NewOpenAIModel creates a new OpenAI model instance.
-func NewOpenAIModel(modelID string, apiKey string, apiEndpoint string) (*OpenAIModel, error) {
+func NewOpenAIModel(modelID string, apiKey string, apiEndpoint string) (*genai.Model, error) {
 	if modelID == "" {
 		modelID = DefaultOpenAIModel
 	}
@@ -56,7 +57,7 @@ func NewOpenAIModel(modelID string, apiKey string, apiEndpoint string) (*OpenAIM
 	// Create the base model with a generator function
 	m.Model = NewBaseModel(modelID, model.ModelProviderOpenAI, capabilities, m.generateContent)
 
-	return m, nil
+	return m.Model, nil
 }
 
 // generateContent is the generator function for the OpenAI model.
@@ -75,60 +76,60 @@ func (m *OpenAIModel) generateContent(ctx context.Context, modelID string, messa
 }
 
 // GenerateWithTools overrides the base implementation to handle tools.
-func (m *OpenAIModel) GenerateWithTools(ctx context.Context, messages []message.Message, tools []model.ToolDefinition) (message.Message, error) {
-	if !m.HasCapability(model.ModelCapabilityToolCalling) && !m.HasCapability(model.ModelCapabilityFunctionCalling) {
-		return message.Message{}, fmt.Errorf("tool calling not supported by model %s", m.ModelID())
-	}
-
-	logger := observability.Logger(ctx)
-	logger.Debug("Generating content with tools using OpenAI model",
-		slog.String("model", m.ModelID()),
-		slog.Int("numMessages", len(messages)),
-		slog.Int("numTools", len(tools)),
-	)
-
-	// In a real implementation, this would make API calls to the OpenAI API with tool definitions
-	// For now, we'll return a placeholder response with a tool call
-	toolCalls := []message.ToolCall{
-		{
-			ID:   "tool_call_1",
-			Name: "search",
-			Args: []byte(`{"query": "example search"}`),
-		},
-	}
-
-	return message.NewAssistantToolCallMessage(toolCalls), nil
-}
+// func (m *OpenAIModel) GenerateWithTools(ctx context.Context, messages []message.Message, tools []model.ToolDefinition) (message.Message, error) {
+// 	if !m.HasCapability(model.ModelCapabilityToolCalling) && !m.HasCapability(model.ModelCapabilityFunctionCalling) {
+// 		return message.Message{}, fmt.Errorf("tool calling not supported by model %s", m.ModelID())
+// 	}
+//
+// 	logger := observability.Logger(ctx)
+// 	logger.Debug("Generating content with tools using OpenAI model",
+// 		slog.String("model", m.ModelID()),
+// 		slog.Int("numMessages", len(messages)),
+// 		slog.Int("numTools", len(tools)),
+// 	)
+//
+// 	// In a real implementation, this would make API calls to the OpenAI API with tool definitions
+// 	// For now, we'll return a placeholder response with a tool call
+// 	toolCalls := []message.ToolCall{
+// 		{
+// 			ID:   "tool_call_1",
+// 			Name: "search",
+// 			Args: []byte(`{"query": "example search"}`),
+// 		},
+// 	}
+//
+// 	return message.NewAssistantToolCallMessage(toolCalls), nil
+// }
 
 // GenerateStream overrides the base implementation to handle streaming.
-func (m *OpenAIModel) GenerateStream(ctx context.Context, messages []message.Message, handler model.ResponseHandler) error {
-	if !m.HasCapability(model.ModelCapabilityStreaming) {
-		return fmt.Errorf("streaming not supported by model %s", m.ModelID())
-	}
-
-	logger := observability.Logger(ctx)
-	logger.Debug("Streaming content from OpenAI model",
-		slog.String("model", m.ModelID()),
-		slog.Int("numMessages", len(messages)),
-	)
-
-	// Simulate streaming with a few chunks
-	chunks := []string{
-		"This is the first chunk of the streaming response.",
-		" This is the second chunk.",
-		" And this is the final chunk from the OpenAI model.",
-	}
-
-	for _, chunk := range chunks {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
-			// Continue processing
-		}
-
-		handler(message.NewAssistantMessage(chunk))
-	}
-
-	return nil
-}
+// func (m *OpenAIModel) GenerateStream(ctx context.Context, messages []message.Message, handler model.ResponseHandler) error {
+// 	if !m.HasCapability(model.ModelCapabilityStreaming) {
+// 		return fmt.Errorf("streaming not supported by model %s", m.ModelID())
+// 	}
+//
+// 	logger := observability.Logger(ctx)
+// 	logger.Debug("Streaming content from OpenAI model",
+// 		slog.String("model", m.ModelID()),
+// 		slog.Int("numMessages", len(messages)),
+// 	)
+//
+// 	// Simulate streaming with a few chunks
+// 	chunks := []string{
+// 		"This is the first chunk of the streaming response.",
+// 		" This is the second chunk.",
+// 		" And this is the final chunk from the OpenAI model.",
+// 	}
+//
+// 	for _, chunk := range chunks {
+// 		select {
+// 		case <-ctx.Done():
+// 			return ctx.Err()
+// 		default:
+// 			// Continue processing
+// 		}
+//
+// 		handler(message.NewAssistantMessage(chunk))
+// 	}
+//
+// 	return nil
+// }

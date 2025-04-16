@@ -12,25 +12,24 @@ import (
 
 	"github.com/go-a2a/adk-go/event"
 	"github.com/go-a2a/adk-go/flow"
-	"github.com/go-a2a/adk-go/model/models"
 	"github.com/go-a2a/adk-go/session"
 )
 
 // AutoFlow is an advanced LLM flow that automatically selects the appropriate flow.
 // It can dynamically choose between SingleFlow or other specialized flows based on context.
 type AutoFlow struct {
-	modelID      string
-	modelOptions models.Option
-	tools        []*genai.Tool
+	model  string
+	config *genai.GenerateContentConfig
+	tools  []*genai.Tool
 }
 
 var _ flow.Flow = (*AutoFlow)(nil)
 
 // NewAutoFlow creates a new AutoFlow instance.
-func NewAutoFlow(modelID string, modelOptions models.Option) *AutoFlow {
+func NewAutoFlow(model string, config *genai.GenerateContentConfig) *AutoFlow {
 	return &AutoFlow{
-		modelID:      modelID,
-		modelOptions: modelOptions,
+		model:  model,
+		config: config,
 	}
 }
 
@@ -79,5 +78,5 @@ func (f *AutoFlow) selectFlow(ctx context.Context, sess *session.Session) (flow.
 	// In a more advanced implementation, this would analyze the session
 	// and determine which flow is most appropriate
 	slog.InfoContext(ctx, "Auto-selecting flow", "selected", "SingleFlow")
-	return NewSingleFlow(f.modelID, f.modelOptions), nil
+	return NewSingleFlow(f.model, f.config), nil
 }
