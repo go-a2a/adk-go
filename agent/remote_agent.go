@@ -228,4 +228,3 @@ func (ra *RemoteAgent) ProcessAsync(ctx context.Context, msg message.Message) (<
 
 	return resultCh, nil
 }
-
