@@ -295,20 +295,20 @@ response, err := runner.NewRunner(companyAnalyzer).Run(
 
 ## Project Structure
 
-- `pkg/agent`: Core agent implementations (BaseAgent, Agent, LLMAgent, LoopAgent, SequentialAgent, ParallelAgent)
-- `pkg/message`: Message types and utilities for agent communication
-- `pkg/model`: Model interfaces and definitions for LLM integration
-- `pkg/tool`: Tool interfaces and implementations for extending agent capabilities
-- `pkg/runner`: Agent execution utilities for orchestrating agent interactions
-- `pkg/flow`: Flow-based processing architecture with processors
-- `pkg/flow/llmflow`: Specialized flows for LLM-based interactions
-- `pkg/session`: Session management for persistent conversations
-- `pkg/memory`: Memory systems (in-memory, vector, knowledge graph)
-- `pkg/artifacts`: Artifact storage for files and binary data
-- `pkg/event`: Event system for tracking agent interactions
-- `pkg/observability`: Tracing, metrics, and logging utilities
-- `pkg/models`: Model implementations for various LLM providers
-- `pkg/tools`: Common tool implementations
+- `agent`: Core agent implementations (BaseAgent, Agent, LLMAgent, LoopAgent, SequentialAgent, ParallelAgent)
+- `message`: Message types and utilities for agent communication
+- `model`: Model interfaces and definitions for LLM integration
+- `tool`: Tool interfaces and implementations for extending agent capabilities
+- `runner`: Agent execution utilities for orchestrating agent interactions
+- `flow`: Flow-based processing architecture with processors
+- `flow/llmflow`: Specialized flows for LLM-based interactions
+- `session`: Session management for persistent conversations
+- `memory`: Memory systems (in-memory, vector, knowledge graph)
+- `artifacts`: Artifact storage for files and binary data
+- `event`: Event system for tracking agent interactions
+- `observability`: Tracing, metrics, and logging utilities
+- `models`: Model implementations for various LLM providers
+- `tools`: Common tool implementations
 - `examples`: Example applications using ADK-Go
 
 ## Tools
@@ -345,4 +345,4 @@ ADK-Go supports multiple model providers:
 
 ## License
 
-Apache 2.0
+This project is licensed under the Apache 2.0 License - see the [LICENSE](./LICENSE) file for details.
