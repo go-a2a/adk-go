@@ -13,6 +13,7 @@ import (
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/genai"
 
 	"github.com/go-a2a/adk-go/model"
 	"github.com/go-a2a/adk-go/observability"
@@ -28,6 +29,9 @@ type Tool interface {
 
 	// ParameterSchema returns the JSON schema for the tool's parameters.
 	ParameterSchema() model.ToolParameterSpec
+
+	// FunctionDeclaration returns the [*genai.FunctionDeclaration] for the tool.
+	FunctionDeclaration() *genai.FunctionDeclaration
 
 	// Execute runs the tool with the given arguments.
 	Execute(ctx context.Context, args json.RawMessage) (string, error)
@@ -45,8 +49,11 @@ type BaseTool struct {
 	description             string
 	paramSchema             model.ToolParameterSpec
 	executeFn               func(ctx context.Context, args json.RawMessage) (string, error)
+	functionDeclaration     *genai.FunctionDeclaration
 	asyncExecutionSupported bool
 }
+
+var _ Tool = (*BaseTool)(nil)
 
 // NewBaseTool creates a new base tool with the provided configuration.
 func NewBaseTool(name string, description string, paramSchema model.ToolParameterSpec, executeFn func(ctx context.Context, args json.RawMessage) (string, error)) *BaseTool {
@@ -78,6 +85,11 @@ func (t *BaseTool) Description() string {
 // ParameterSchema returns the JSON schema for the tool's parameters.
 func (t *BaseTool) ParameterSchema() model.ToolParameterSpec {
 	return t.paramSchema
+}
+
+// FunctionDeclaration returns the [*genai.FunctionDeclaration] for the tool.
+func (t *BaseTool) FunctionDeclaration() *genai.FunctionDeclaration {
+	return t.functionDeclaration
 }
 
 // Execute runs the tool with the given arguments.
