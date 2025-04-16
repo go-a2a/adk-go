@@ -1,9 +1,9 @@
 # ADK-Go: Agent Development Kit for Go
 
 > [!IMPORTANT]
-> This project is alpha stage.
+> This project is in the alpha stage.
 >
-> Flags, configuration, behavior and design may change significantly.
+> Flags, configuration, behavior, and design may change significantly.
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/go-a2a/adk-go.svg)](https://pkg.go.dev/github.com/go-a2a/adk-go)
 [![Go](https://github.com/go-a2a/adk-go/actions/workflows/go.yml/badge.svg)](https://github.com/go-a2a/adk-go/actions/workflows/test.yml)
@@ -31,7 +31,7 @@ This is a Go implementation of the [Agent Development Kit (ADK)](https://github.
 ## Installation
 
 ```bash
-go get github.com/go-a2a/adk-go
+go get github.com/go-a2a/adk-go@latest
 ```
 
 ## Key Design Principles
@@ -68,19 +68,22 @@ go get github.com/go-a2a/adk-go
 
 - `agent`: Core agent implementations (BaseAgent, Agent, LLMAgent, LoopAgent, SequentialAgent, ParallelAgent)
 - `artifacts`: Artifact storage for files and binary data
+- `auth`: Authentication and authorization mechanisms
+- `codeexecutor`: Code execution environments and utilities
+- `evaluation`: Agent evaluation and benchmarking tools
 - `event`: Event system for tracking agent interactions
 - `flow`: Flow-based processing architecture with processors
-- `flow/llmflow`: Specialized flows for LLM-based interactions
+    - `flow/llmflow`: Specialized flows for LLM-based interactions
 - `memory`: Memory systems (in-memory, vector, knowledge graph)
 - `message`: Message types and utilities for agent communication
 - `model`: Model interfaces and definitions for LLM integration
-    - `models`: Model implementations for various LLM providers
+    - `model/models`: Model implementations for various LLM providers
 - `observability`: Tracing, metrics, and logging utilities
+- `planner`: Planning components for agent task execution
 - `runner`: Agent execution utilities for orchestrating agent interactions
 - `session`: Session management for persistent conversations
 - `tool`: Tool interfaces and implementations for extending agent capabilities
-    - `tools`: Common tool implementations
-- `examples`: Example applications using ADK-Go
+    - `tool/tools`: Common tool implementations
 
 ## Tools
 
@@ -115,6 +118,9 @@ ADK-Go supports multiple model providers:
 - Custom model support via `model.Model` interface
 
 ## Usage Examples
+
+> [!NOTE]
+> See [examples](./examples) for detailed and fully working example codes.
 
 ### Single Agent
 
