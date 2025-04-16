@@ -120,6 +120,8 @@ func (p *PlanReActPlanner) handleNonFunctionCallParts(part message.Message) (mes
 }
 
 // buildNLPlannerInstruction creates the natural language planning instruction.
+//
+// TODO(zchee): fix logic to same as adk-python.
 func (p *PlanReActPlanner) buildNLPlannerInstruction() string {
 	prompt := `To effectively solve the user's query, follow this systematic approach:
 
