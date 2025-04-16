@@ -8,65 +8,53 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
+
+	"google.golang.org/genai"
+
+	"github.com/go-a2a/adk-go/model/models"
 )
 
-// Some constants and error definitions
+// DefaultIDLength is the default length of generated IDs.
+const DefaultIDLength = 8
+
+// Some constants and error definitions.
 var (
 	// ErrInvalidEventID indicates an invalid event ID.
 	ErrInvalidEventID = errors.New("invalid event ID")
 
 	// ErrEmptyAuthor indicates an empty author field.
 	ErrEmptyAuthor = errors.New("author cannot be empty")
-
-	// DefaultIDLength is the default length of generated IDs.
-	DefaultIDLength = 8
 )
-
-// FunctionCall represents a function call made by an agent.
-type FunctionCall struct {
-	// ID is the unique identifier for this function call.
-	ID string `json:"id,omitempty"`
-
-	// Name is the name of the function.
-	Name string `json:"name"`
-
-	// Parameters contains the parameters passed to the function.
-	Parameters map[string]any `json:"parameters"`
-
-	// Response contains the response from the function call.
-	Response map[string]any `json:"response,omitempty"`
-
-	// IsLongRunning indicates if this is a long-running function call.
-	IsLongRunning bool `json:"is_long_running,omitempty"`
-}
 
 // Event represents an event in a conversation between agents and users.
 type Event struct {
-	// InvocationID is a unique identifier for this event.
-	InvocationID string `json:"invocation_id"`
+	*models.LlmResponse
+
+	// InvocationID is the invocation ID of the event.
+	InvocationID string
 
 	// Author is who created the event ("user" or agent name).
-	Author string `json:"author"`
-
-	// Content is the text content of the event.
-	Content string `json:"content"`
+	Author string
 
 	// Actions contains actions taken by the agent.
-	Actions *EventActions `json:"actions,omitempty"`
-
-	// FunctionCalls contains the function calls in this event.
-	FunctionCalls []FunctionCall `json:"function_calls,omitempty"`
+	Actions *EventActions
 
 	// LongRunningToolIDs contains IDs of long-running function calls.
-	LongRunningToolIDs []string `json:"long_running_tool_ids,omitempty"`
+	//
+	// Set of ids of the long running function calls.
+	// Agent client will know from this field about which function call is long running.
+	// Only valid for function call event
+	LongRunningToolIDs []string
 
 	// Branch tracks the agent conversation hierarchy.
-	Branch string `json:"branch,omitempty"`
+	Branch string
+
+	// ID is the unique identifier of the event.
+	ID string
 
 	// Timestamp is when the event was created.
-	Timestamp time.Time `json:"timestamp"`
+	Timestamp time.Time
 }
 
 // NewEvent creates a new Event instance.
@@ -80,15 +68,19 @@ func NewEvent(author, content string) (*Event, error) {
 		return nil, fmt.Errorf("failed to generate ID: %w", err)
 	}
 
-	return &Event{
-		InvocationID:       id,
-		Author:             author,
-		Content:            content,
-		Actions:            NewEventActions(),
-		FunctionCalls:      []FunctionCall{},
-		LongRunningToolIDs: []string{},
-		Timestamp:          time.Now(),
-	}, nil
+	ev := &Event{
+		LlmResponse: &models.LlmResponse{
+			Content: genai.NewContentFromText(content, genai.RoleUser),
+		},
+		ID:        id,
+		Author:    author,
+		Timestamp: time.Now(),
+	}
+	if author != "assistant" {
+		ev.Actions = NewEventActions()
+	}
+
+	return ev, nil
 }
 
 // NewUserEvent creates a new event from a user.
@@ -97,8 +89,8 @@ func NewUserEvent(content string) (*Event, error) {
 }
 
 // NewAgentEvent creates a new event from an agent.
-func NewAgentEvent(agentName, content string) (*Event, error) {
-	return NewEvent(agentName, content)
+func NewAgentEvent(author, content string) (*Event, error) {
+	return NewEvent(author, content)
 }
 
 // WithBranch sets the branch field.
@@ -107,116 +99,162 @@ func (e *Event) WithBranch(branch string) *Event {
 	return e
 }
 
+// IsFinalResponse returns whether the event is the final response of the agent.
+func (e *Event) IsFinalResponse() bool {
+	if e.Actions == nil {
+		return false
+	}
+	// Returns whether the event is the final response of the agent
+	if e.Actions.SkipSummarization || len(e.LongRunningToolIDs) > 0 {
+		return true
+	}
+
+	return len(e.FunctionCalls()) != 0 && len(e.FunctionResponses()) != 0 && !e.Partial && e.HasTrailingCodeExecutionResult()
+}
+
+// FunctionCalls returns the function calls in the event.
+func (e *Event) FunctionCalls() []genai.FunctionCall {
+	if e.Content == nil {
+		e.Content = &genai.Content{
+			Parts: []*genai.Part{},
+		}
+	}
+
+	// return a copy to prevent modification
+	calls := make([]genai.FunctionCall, 0, len(e.Content.Parts))
+	for _, part := range e.Content.Parts {
+		if fncall := part.FunctionCall; fncall != nil {
+			calls = append(calls, *fncall)
+		}
+	}
+
+	return calls
+}
+
 // AddFunctionCall adds a function call to the event.
-func (e *Event) AddFunctionCall(name string, parameters map[string]any) (*FunctionCall, error) {
+func (e *Event) AddFunctionCall(name string, args map[string]any) (*genai.FunctionCall, error) {
 	id, err := NewID()
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate function call ID: %w", err)
 	}
 
-	fc := FunctionCall{
-		ID:         id,
-		Name:       name,
-		Parameters: parameters,
+	fc := genai.FunctionCall{
+		ID:   id,
+		Args: args,
+		Name: name,
+	}
+	if e.Content == nil {
+		e.Content = &genai.Content{
+			Parts: []*genai.Part{},
+		}
 	}
 
-	e.FunctionCalls = append(e.FunctionCalls, fc)
+	e.Content.Parts = append(e.Content.Parts, &genai.Part{FunctionCall: &fc})
+
 	return &fc, nil
 }
 
 // AddLongRunningFunctionCall adds a long-running function call to the event.
-func (e *Event) AddLongRunningFunctionCall(name string, parameters map[string]any) (*FunctionCall, error) {
+func (e *Event) AddLongRunningFunctionCall(name string, args map[string]any) (*genai.FunctionCall, error) {
 	id, err := NewID()
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate function call ID: %w", err)
 	}
 
-	fc := FunctionCall{
-		ID:            id,
-		Name:          name,
-		Parameters:    parameters,
-		IsLongRunning: true,
+	fc := genai.FunctionCall{
+		ID:   id,
+		Name: name,
+		Args: args,
+	}
+	if e.Content == nil {
+		e.Content = &genai.Content{
+			Parts: []*genai.Part{},
+		}
+		e.LongRunningToolIDs = append(e.LongRunningToolIDs, id)
+		return &fc, nil
 	}
 
-	e.FunctionCalls = append(e.FunctionCalls, fc)
+	// for i, part := range e.Content.Parts {
+	// 	if part.FunctionResponse == nil {
+	// 		part.FunctionCall = &fc
+	// 		break
+	// 	}
+	// 	// if id == part.FunctionResponse.ID {
+	// 	e.Content.Parts[i].FunctionCall = &fc
+	// 	// }
+	// }
+
+	e.Content.Parts = append(e.Content.Parts, &genai.Part{FunctionCall: &fc})
+	// for i, part := range e.Content.Parts {
+	// 	if part.FunctionCall == nil {
+	// 		e.Content.Parts[i].FunctionCall = &fc
+	// 	}
+	// }
 	e.LongRunningToolIDs = append(e.LongRunningToolIDs, id)
 
 	return &fc, nil
 }
 
-// SetFunctionResponse sets the response for a function call.
-func (e *Event) SetFunctionResponse(id string, response map[string]any) error {
-	for i, fc := range e.FunctionCalls {
-		if fc.ID == id {
-			e.FunctionCalls[i].Response = response
-			return nil
+// FunctionResponses returns the function responses in the event.
+func (e *Event) FunctionResponses() []*genai.FunctionResponse {
+	if e.Content == nil {
+		e.Content = &genai.Content{
+			Parts: []*genai.Part{},
 		}
 	}
 
-	return fmt.Errorf("function call with ID %s not found", id)
-}
-
-// IsFinalResponse determines if this is the final agent response.
-func (e *Event) IsFinalResponse() bool {
-	// If it's a user event, it's not a final response
-	if e.Author == "user" {
-		return false
-	}
-
-	// If there are long-running tools, it's not final
-	if len(e.LongRunningToolIDs) > 0 {
-		return false
-	}
-
-	// Check if all function calls have responses
-	for _, fc := range e.FunctionCalls {
-		if fc.Response == nil {
-			return false
-		}
-	}
-
-	return true
-}
-
-// GetFunctionCalls retrieves function calls in the event.
-func (e *Event) GetFunctionCalls() []FunctionCall {
-	// Return a copy to prevent modification
-	calls := make([]FunctionCall, len(e.FunctionCalls))
-	copy(calls, e.FunctionCalls)
-	return calls
-}
-
-// GetFunctionResponses retrieves function responses.
-func (e *Event) GetFunctionResponses() map[string]map[string]any {
-	responses := make(map[string]map[string]any)
-
-	for _, fc := range e.FunctionCalls {
-		if fc.Response != nil {
-			responses[fc.Name] = fc.Response
+	responses := make([]*genai.FunctionResponse, 0, len(e.Content.Parts))
+	for _, part := range e.Content.Parts {
+		if fncresp := part.FunctionResponse; fncresp != nil {
+			responses = append(responses, fncresp)
 		}
 	}
 
 	return responses
 }
 
+// AddFunctionResponse sets the response for a function call.
+func (e *Event) AddFunctionResponse(id string, response *genai.FunctionResponse) error {
+	if e.Content == nil {
+		e.Content = &genai.Content{
+			Parts: []*genai.Part{},
+		}
+	}
+
+	found := false
+	for i, part := range e.Content.Parts {
+		if part.FunctionCall == nil {
+			continue
+		}
+		if id == part.FunctionCall.ID {
+			e.Content.Parts[i].FunctionResponse = response
+			e.Content.Parts[i].FunctionResponse.ID = id
+			e.Content.Parts[i].FunctionResponse.Name = part.FunctionCall.Name
+			found = true
+		}
+	}
+
+	if !found {
+		return ErrInvalidEventID
+	}
+
+	return nil
+}
+
 // HasTrailingCodeExecutionResult checks for code execution results.
 func (e *Event) HasTrailingCodeExecutionResult() bool {
-	return strings.Contains(e.Content, "<code_execution_result>") &&
-		strings.HasSuffix(strings.TrimSpace(e.Content), "</code_execution_result>")
+	if e.Content == nil || len(e.Content.Parts) == 0 {
+		return false
+	}
+
+	parts := e.Content.Parts
+	return parts[len(parts)-1].CodeExecutionResult != nil
 }
 
 // NewID generates a random ID with the default length.
 func NewID() (string, error) {
-	return GenerateRandomID(DefaultIDLength)
-}
-
-// GenerateRandomID generates a random ID with the specified length.
-func GenerateRandomID(length int) (string, error) {
-	bytes := make([]byte, length/2)
-	_, err := rand.Read(bytes)
-	if err != nil {
-		return "", err
-	}
+	bytes := make([]byte, DefaultIDLength/2)
+	rand.Read(bytes)
 
 	return hex.EncodeToString(bytes), nil
 }
