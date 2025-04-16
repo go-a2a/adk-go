@@ -64,6 +64,56 @@ go get github.com/go-a2a/adk-go
 - Multiple model provider support
 - Custom agent support
 
+## Project Structure
+
+- `agent`: Core agent implementations (BaseAgent, Agent, LLMAgent, LoopAgent, SequentialAgent, ParallelAgent)
+- `artifacts`: Artifact storage for files and binary data
+- `event`: Event system for tracking agent interactions
+- `flow`: Flow-based processing architecture with processors
+- `flow/llmflow`: Specialized flows for LLM-based interactions
+- `memory`: Memory systems (in-memory, vector, knowledge graph)
+- `message`: Message types and utilities for agent communication
+- `model`: Model interfaces and definitions for LLM integration
+    - `models`: Model implementations for various LLM providers
+- `observability`: Tracing, metrics, and logging utilities
+- `runner`: Agent execution utilities for orchestrating agent interactions
+- `session`: Session management for persistent conversations
+- `tool`: Tool interfaces and implementations for extending agent capabilities
+    - `tools`: Common tool implementations
+- `examples`: Example applications using ADK-Go
+
+## Tools
+
+The library includes various tool implementations:
+
+- `agent_tool`: Tool for delegating to sub-agents
+- `function_tool`: Tool for executing custom functions
+- `google_search`: Web search tool
+- `load_web_page`: Web page loading tool
+- `memory_tool`: Tool for accessing memory systems
+- `openapi_tool`: Tool for integrating OpenAPI services
+- `user_choice_tool`: Tool for interactive decision making
+- Custom tool support via `tool.BaseTool`
+- Async tool support via `tool.AsyncTool`
+- Tool registry for dynamic tool loading
+
+## Memory Systems
+
+ADK-Go provides multiple memory systems:
+
+- `in_memory_service`: Simple in-memory storage
+- `vector_memory_service`: Vector-based memory for semantic retrieval
+- `knowledge_graph_service`: Graph-based memory for structured knowledge
+
+## Model Providers
+
+ADK-Go supports multiple model providers:
+
+- Google Gemini (via official Google Generative AI SDK)
+- Anthropic (Claude models)
+- OpenAI (GPT models)
+- Custom model support via `model.Model` interface
+
 ## Usage Examples
 
 ### Single Agent
@@ -295,56 +345,6 @@ response, err := runner.NewRunner(companyAnalyzer).Run(
     "Analyze Apple Inc. as a company in 2024",
 )
 ```
-
-## Project Structure
-
-- `agent`: Core agent implementations (BaseAgent, Agent, LLMAgent, LoopAgent, SequentialAgent, ParallelAgent)
-- `message`: Message types and utilities for agent communication
-- `model`: Model interfaces and definitions for LLM integration
-- `tool`: Tool interfaces and implementations for extending agent capabilities
-- `runner`: Agent execution utilities for orchestrating agent interactions
-- `flow`: Flow-based processing architecture with processors
-- `flow/llmflow`: Specialized flows for LLM-based interactions
-- `session`: Session management for persistent conversations
-- `memory`: Memory systems (in-memory, vector, knowledge graph)
-- `artifacts`: Artifact storage for files and binary data
-- `event`: Event system for tracking agent interactions
-- `observability`: Tracing, metrics, and logging utilities
-- `models`: Model implementations for various LLM providers
-- `tools`: Common tool implementations
-- `examples`: Example applications using ADK-Go
-
-## Tools
-
-The library includes various tool implementations:
-
-- `google_search`: Web search tool
-- `load_web_page`: Web page loading tool
-- `agent_tool`: Tool for delegating to sub-agents
-- `function_tool`: Tool for executing custom functions
-- `openapi_tool`: Tool for integrating OpenAPI services
-- `memory_tool`: Tool for accessing memory systems
-- `user_choice_tool`: Tool for interactive decision making
-- Custom tool support via `tool.BaseTool`
-- Async tool support via `tool.AsyncTool`
-- Tool registry for dynamic tool loading
-
-## Memory Systems
-
-ADK-Go provides multiple memory systems:
-
-- `in_memory_service`: Simple in-memory storage
-- `vector_memory_service`: Vector-based memory for semantic retrieval
-- `knowledge_graph_service`: Graph-based memory for structured knowledge
-
-## Model Providers
-
-ADK-Go supports multiple model providers:
-
-- Google Gemini (via official Google Generative AI SDK)
-- OpenAI (GPT models)
-- Anthropic (Claude models)
-- Custom model support via `model.Model` interface
 
 ## License
 
