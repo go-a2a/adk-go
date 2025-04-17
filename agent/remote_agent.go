@@ -130,7 +130,7 @@ func (ra *RemoteAgent) Process(ctx context.Context, msg message.Message) (messag
 	}
 
 	// Serialize payload
-	jsonPayload, err := sonic.Marshal(payload)
+	jsonPayload, err := sonic.ConfigFastest.Marshal(payload)
 	if err != nil {
 		observability.Error(ctx, err, "Failed to marshal payload")
 		return message.Message{}, fmt.Errorf("failed to marshal payload: %w", err)
@@ -191,7 +191,7 @@ func (ra *RemoteAgent) Process(ctx context.Context, msg message.Message) (messag
 		toolCalls := make([]message.ToolCall, 0, len(lastEvent.FunctionCalls))
 		for _, fc := range lastEvent.FunctionCalls {
 			// Convert parameters to JSON
-			argsJSON, err := sonic.Marshal(fc.Parameters)
+			argsJSON, err := sonic.ConfigFastest.Marshal(fc.Parameters)
 			if err != nil {
 				logger.WarnContext(ctx, "Failed to marshal function parameters",
 					slog.String("function", fc.Name),

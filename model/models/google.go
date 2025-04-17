@@ -198,7 +198,7 @@ func (m *GoogleModel) generateContent(ctx context.Context, modelID string, messa
 //
 // 		// For debugging
 // 		if logger.Enabled(ctx, slog.LevelDebug) {
-// 			jsonText, _ := sonic.MarshalString(deltaMsg)
+// 			jsonText, _ := sonic.ConfigFastest.MarshalString(deltaMsg)
 // 			logger.Debug("Streaming chunk", slog.String("chunk", jsonText))
 // 		}
 //

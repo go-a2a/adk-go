@@ -103,11 +103,11 @@ type ToolParameterSpec map[string]any
 // ToolDefinitionFromJSON parses a JSON string into a ToolDefinition.
 func ToolDefinitionFromJSON(data []byte) (ToolDefinition, error) {
 	var toolDef ToolDefinition
-	err := sonic.Unmarshal(data, &toolDef)
+	err := sonic.ConfigFastest.Unmarshal(data, &toolDef)
 	return toolDef, err
 }
 
 // ToJSON serializes the tool definition to JSON.
 func (t ToolDefinition) ToJSON() ([]byte, error) {
-	return sonic.Marshal(t)
+	return sonic.ConfigFastest.Marshal(t)
 }

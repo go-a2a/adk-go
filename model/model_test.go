@@ -94,13 +94,13 @@ func TestToolDefinitionFromJSON(t *testing.T) {
 
 	paramSchema := toolDef.Parameters
 	// Use sonic to convert to JSON and back for comparison of nested maps
-	paramJSON, err := sonic.Marshal(paramSchema)
+	paramJSON, err := sonic.ConfigFastest.Marshal(paramSchema)
 	if err != nil {
 		t.Fatalf("Failed to marshal parameters: %v", err)
 	}
 
 	var expectedParams model.ToolParameterSpec
-	err = sonic.Unmarshal([]byte(`{
+	err = sonic.ConfigFastest.Unmarshal([]byte(`{
 		"type": "object",
 		"properties": {
 			"query": {
@@ -114,17 +114,17 @@ func TestToolDefinitionFromJSON(t *testing.T) {
 		t.Fatalf("Failed to unmarshal expected parameters: %v", err)
 	}
 
-	expectedJSON, err := sonic.Marshal(expectedParams)
+	expectedJSON, err := sonic.ConfigFastest.Marshal(expectedParams)
 	if err != nil {
 		t.Fatalf("Failed to marshal expected parameters: %v", err)
 	}
 
 	// Compare JSON representations
 	var gotMap, expectedMap map[string]any
-	if err := sonic.Unmarshal(paramJSON, &gotMap); err != nil {
+	if err := sonic.ConfigFastest.Unmarshal(paramJSON, &gotMap); err != nil {
 		t.Fatalf("Failed to unmarshal paramJSON: %v", err)
 	}
-	if err := sonic.Unmarshal(expectedJSON, &expectedMap); err != nil {
+	if err := sonic.ConfigFastest.Unmarshal(expectedJSON, &expectedMap); err != nil {
 		t.Fatalf("Failed to unmarshal expectedJSON: %v", err)
 	}
 
@@ -168,22 +168,22 @@ func TestToolDefinition_ToJSON(t *testing.T) {
 	}
 
 	// Compare parameters (need to convert to JSON for deep comparison of maps)
-	toolDefParamsJSON, err := sonic.Marshal(toolDef.Parameters)
+	toolDefParamsJSON, err := sonic.ConfigFastest.Marshal(toolDef.Parameters)
 	if err != nil {
 		t.Fatalf("Failed to marshal toolDef parameters: %v", err)
 	}
 
-	parsedDefParamsJSON, err := sonic.Marshal(parsedDef.Parameters)
+	parsedDefParamsJSON, err := sonic.ConfigFastest.Marshal(parsedDef.Parameters)
 	if err != nil {
 		t.Fatalf("Failed to marshal parsedDef parameters: %v", err)
 	}
 
 	// Compare JSON representations
 	var origMap, parsedMap map[string]any
-	if err := sonic.Unmarshal(toolDefParamsJSON, &origMap); err != nil {
+	if err := sonic.ConfigFastest.Unmarshal(toolDefParamsJSON, &origMap); err != nil {
 		t.Fatalf("Failed to unmarshal toolDefParamsJSON: %v", err)
 	}
-	if err := sonic.Unmarshal(parsedDefParamsJSON, &parsedMap); err != nil {
+	if err := sonic.ConfigFastest.Unmarshal(parsedDefParamsJSON, &parsedMap); err != nil {
 		t.Fatalf("Failed to unmarshal parsedDefParamsJSON: %v", err)
 	}
 

@@ -206,7 +206,7 @@ func NewLoadWebPageTool() *tool.BaseTool {
 
 		// Parse the arguments
 		var params WebPageParams
-		if err := sonic.Unmarshal(args, &params); err != nil {
+		if err := sonic.ConfigFastest.Unmarshal(args, &params); err != nil {
 			observability.Error(ctx, err, "Failed to parse web page parameters")
 			return "", fmt.Errorf("failed to parse web page parameters: %w", err)
 		}

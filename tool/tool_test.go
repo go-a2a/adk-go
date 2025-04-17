@@ -35,7 +35,7 @@ func TestNewBaseTool(t *testing.T) {
 		var params struct {
 			Query string `json:"query"`
 		}
-		if err := sonic.Unmarshal(args, &params); err != nil {
+		if err := sonic.ConfigFastest.Unmarshal(args, &params); err != nil {
 			return "", err
 		}
 		return fmt.Sprintf("Results for: %s", params.Query), nil
@@ -103,7 +103,7 @@ func TestBaseTool_Execute(t *testing.T) {
 		var params struct {
 			Input string `json:"input"`
 		}
-		err := sonic.Unmarshal(args, &params)
+		err := sonic.ConfigFastest.Unmarshal(args, &params)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -118,7 +118,7 @@ func TestBaseTool_Execute(t *testing.T) {
 	)
 
 	// Create arguments
-	args, err := sonic.Marshal(map[string]string{
+	args, err := sonic.ConfigFastest.Marshal(map[string]string{
 		"input": "test data",
 	})
 	if err != nil {
@@ -160,7 +160,7 @@ func TestBaseTool_ExecuteError(t *testing.T) {
 	)
 
 	// Create arguments
-	args, err := sonic.Marshal(map[string]string{
+	args, err := sonic.ConfigFastest.Marshal(map[string]string{
 		"input": "test data",
 	})
 	if err != nil {

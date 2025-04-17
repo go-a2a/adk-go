@@ -101,13 +101,13 @@ func NewAssistantToolCallMessage(toolCalls []ToolCall) Message {
 
 // ToJSON serializes the message to JSON.
 func (m Message) ToJSON() ([]byte, error) {
-	return sonic.Marshal(m)
+	return sonic.ConfigFastest.Marshal(m)
 }
 
 // MessageFromJSON deserializes a JSON string into a Message.
 func MessageFromJSON(data []byte) (Message, error) {
 	var msg Message
-	err := sonic.Unmarshal(data, &msg)
+	err := sonic.ConfigFastest.Unmarshal(data, &msg)
 	return msg, err
 }
 

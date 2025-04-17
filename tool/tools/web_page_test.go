@@ -31,9 +31,9 @@ func TestNewLoadWebPageTool(t *testing.T) {
 
 	// Check parameter schema
 	paramSchema := tool.ParameterSchema()
-	paramJSON, err := sonic.Marshal(paramSchema)
+	paramJSON, err := sonic.ConfigFastest.Marshal(paramSchema)
 	if err != nil {
-		t.Fatalf("sonic.Marshal failed: %v", err)
+		t.Fatalf("sonic.ConfigFastest.Marshal failed: %v", err)
 	}
 
 	if !strings.Contains(string(paramJSON), "url") {
@@ -66,11 +66,11 @@ func TestLoadWebPageTool_Execute(t *testing.T) {
 	tool := tools.NewLoadWebPageTool()
 
 	// Create the arguments
-	args, err := sonic.Marshal(map[string]string{
+	args, err := sonic.ConfigFastest.Marshal(map[string]string{
 		"url": server.URL,
 	})
 	if err != nil {
-		t.Fatalf("sonic.Marshal failed: %v", err)
+		t.Fatalf("sonic.ConfigFastest.Marshal failed: %v", err)
 	}
 
 	// Execute the tool
@@ -91,11 +91,11 @@ func TestLoadWebPageTool_Execute_InvalidURL(t *testing.T) {
 	tool := tools.NewLoadWebPageTool()
 
 	// Test with invalid URL
-	args, err := sonic.Marshal(map[string]string{
+	args, err := sonic.ConfigFastest.Marshal(map[string]string{
 		"url": "not-a-valid-url",
 	})
 	if err != nil {
-		t.Fatalf("sonic.Marshal failed: %v", err)
+		t.Fatalf("sonic.ConfigFastest.Marshal failed: %v", err)
 	}
 
 	// Execute the tool
@@ -114,11 +114,11 @@ func TestLoadWebPageTool_Execute_NonExistentURL(t *testing.T) {
 	tool := tools.NewLoadWebPageTool()
 
 	// Test with non-existent server
-	args, err := sonic.Marshal(map[string]string{
+	args, err := sonic.ConfigFastest.Marshal(map[string]string{
 		"url": "http://non-existent-server.invalid",
 	})
 	if err != nil {
-		t.Fatalf("sonic.Marshal failed: %v", err)
+		t.Fatalf("sonic.ConfigFastest.Marshal failed: %v", err)
 	}
 
 	// Execute the tool
