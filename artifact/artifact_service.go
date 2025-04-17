@@ -47,7 +47,7 @@ type ArtifactService interface {
 
 	// SaveArtifactByKey saves an artifact by key.
 	// This is a simplified version of SaveArtifact for use with memory tools.
-	SaveArtifactByKey(ctx context.Context, key string, value string) error
+	SaveArtifactByKey(ctx context.Context, key, value string) error
 
 	// ListArtifacts lists artifacts at a path, optionally recursively.
 	ListArtifacts(ctx context.Context, path string, recursive bool) ([]string, error)

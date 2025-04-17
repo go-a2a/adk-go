@@ -57,5 +57,5 @@ type MemoryService interface {
 
 	// SearchMemory searches for sessions that match the query.
 	// Returns sessions that are relevant to the search terms, filtered by app and user.
-	SearchMemory(ctx context.Context, appName string, userID string, query string) (*SearchMemoryResponse, error)
+	SearchMemory(ctx context.Context, appName, userID, query string) (*SearchMemoryResponse, error)
 }

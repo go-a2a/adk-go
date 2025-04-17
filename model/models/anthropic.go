@@ -36,7 +36,7 @@ type AnthropicModel struct {
 }
 
 // NewAnthropicModel creates a new Claude model instance.
-func NewAnthropicModel(modelID string, apiKey string, apiEndpoint string) (*genai.Model, error) {
+func NewAnthropicModel(modelID, apiKey, apiEndpoint string) (*genai.Model, error) {
 	if modelID == "" {
 		modelID = DefaultClaudeModel
 	}

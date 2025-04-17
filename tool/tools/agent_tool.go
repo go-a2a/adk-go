@@ -23,7 +23,7 @@ type TransferToAgentParams struct {
 // AgentTransferRegistry provides an interface to transfer questions to other agents.
 type AgentTransferRegistry interface {
 	// TransferQuestion sends a question to another agent and returns the response.
-	TransferQuestion(ctx context.Context, agentID string, question string, context string, returnToMe bool) (string, error)
+	TransferQuestion(ctx context.Context, agentID, question, context string, returnToMe bool) (string, error)
 
 	// ListAgents returns a list of available agents.
 	ListAgents(ctx context.Context) ([]AgentInfo, error)

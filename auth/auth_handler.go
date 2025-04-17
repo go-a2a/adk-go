@@ -114,7 +114,7 @@ func (h *AuthHandler) generateOpenIDConnectURI(scheme *OpenIDConnectScheme, stat
 }
 
 // ExchangeAuthToken exchanges an authorization code for an access token.
-func (h *AuthHandler) ExchangeAuthToken(ctx context.Context, code string, tokenEndpoint string) (*OAuth2Auth, error) {
+func (h *AuthHandler) ExchangeAuthToken(ctx context.Context, code, tokenEndpoint string) (*OAuth2Auth, error) {
 	// Prepare the form data
 	data := url.Values{}
 	data.Set("grant_type", "authorization_code")

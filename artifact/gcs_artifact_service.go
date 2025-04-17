@@ -289,7 +289,7 @@ func (s *GcsArtifactService) GetArtifact(ctx context.Context, key string) (strin
 }
 
 // SaveArtifactByKey implements the simplified version of artifact saving.
-func (s *GcsArtifactService) SaveArtifactByKey(ctx context.Context, key string, value string) error {
+func (s *GcsArtifactService) SaveArtifactByKey(ctx context.Context, key, value string) error {
 	// Split the key by ":" to determine if it's a memory key
 	parts := strings.SplitN(key, ":", 2)
 	if len(parts) < 2 || parts[0] != "memory" {

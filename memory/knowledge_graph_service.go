@@ -202,7 +202,7 @@ func (s *KnowledgeGraphMemoryService) AddSessionToMemory(ctx context.Context, se
 }
 
 // SearchMemory searches for sessions that match the query.
-func (s *KnowledgeGraphMemoryService) SearchMemory(ctx context.Context, appName string, userID string, query string) (*SearchMemoryResponse, error) {
+func (s *KnowledgeGraphMemoryService) SearchMemory(ctx context.Context, appName, userID, query string) (*SearchMemoryResponse, error) {
 	if query == "" {
 		return nil, fmt.Errorf("query cannot be empty")
 	}

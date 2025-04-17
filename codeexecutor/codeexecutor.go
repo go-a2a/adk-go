@@ -89,7 +89,7 @@ func NewCodeExecutor(config ExecutorConfig) (CodeExecutor, error) {
 }
 
 // FormatCodeBlock formats code with appropriate delimiters.
-func FormatCodeBlock(code string, language string) string {
+func FormatCodeBlock(code, language string) string {
 	var sb strings.Builder
 
 	// If no language is specified, use a generic code block

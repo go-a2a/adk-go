@@ -46,7 +46,7 @@ type GoogleModel struct {
 }
 
 // NewGoogleModel creates a new Gemini model instance.
-func NewGoogleModel(ctx context.Context, modelID string, apiKey string, apiEndpoint string) (*genai.Model, error) {
+func NewGoogleModel(ctx context.Context, modelID, apiKey, apiEndpoint string) (*genai.Model, error) {
 	if modelID == "" {
 		modelID = DefaultGeminiModel
 	}

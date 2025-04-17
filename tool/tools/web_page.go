@@ -46,7 +46,7 @@ type webPageCache struct {
 }
 
 // newWebPageCache creates a new web page cache.
-func newWebPageCache(ttl time.Duration, maxSize int, capacity int) *webPageCache {
+func newWebPageCache(ttl time.Duration, maxSize, capacity int) *webPageCache {
 	return &webPageCache{
 		entries:  make(map[string]cacheEntry),
 		ttl:      ttl,

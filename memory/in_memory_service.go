@@ -58,7 +58,7 @@ func (s *InMemoryMemoryService) AddSessionToMemory(ctx context.Context, session 
 }
 
 // SearchMemory searches for sessions that match the query.
-func (s *InMemoryMemoryService) SearchMemory(ctx context.Context, appName string, userID string, query string) (*SearchMemoryResponse, error) {
+func (s *InMemoryMemoryService) SearchMemory(ctx context.Context, appName, userID, query string) (*SearchMemoryResponse, error) {
 	if appName == "" {
 		return nil, fmt.Errorf("app name cannot be empty")
 	}

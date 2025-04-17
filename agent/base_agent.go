@@ -37,7 +37,7 @@ type BaseAgent struct {
 }
 
 // NewBaseAgent creates a new BaseAgent with the provided configuration.
-func NewBaseAgent(name string, description string, tools []tool.Tool, processFn ProcessFunc) *BaseAgent {
+func NewBaseAgent(name, description string, tools []tool.Tool, processFn ProcessFunc) *BaseAgent {
 	return &BaseAgent{
 		name:        name,
 		description: description,

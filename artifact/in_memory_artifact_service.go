@@ -164,7 +164,7 @@ func (s *InMemoryArtifactService) GetArtifact(ctx context.Context, key string) (
 }
 
 // SaveArtifactByKey implements ArtifactService.SaveArtifactByKey.
-func (s *InMemoryArtifactService) SaveArtifactByKey(ctx context.Context, key string, value string) error {
+func (s *InMemoryArtifactService) SaveArtifactByKey(ctx context.Context, key, value string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

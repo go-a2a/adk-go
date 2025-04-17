@@ -28,7 +28,7 @@ type ImageProcessor struct {
 }
 
 // NewImageProcessor creates a new image processor using Gemini's multimodal capabilities.
-func NewImageProcessor(ctx context.Context, modelID string, apiKey string) (*ImageProcessor, error) {
+func NewImageProcessor(ctx context.Context, modelID, apiKey string) (*ImageProcessor, error) {
 	if modelID == "" {
 		// Use a vision-capable model
 		modelID = "gemini-1.5-pro"

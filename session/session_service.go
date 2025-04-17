@@ -13,7 +13,7 @@ import (
 // SessionService is an interface for managing sessions and their events.
 type SessionService interface {
 	// CreateSession creates a new session with the given parameters.
-	CreateSession(ctx context.Context, appName, userID string, sessionID string) (*Session, error)
+	CreateSession(ctx context.Context, appName, userID, sessionID string) (*Session, error)
 
 	// GetSession retrieves a specific session.
 	// If maxEvents is > 0, only return the last maxEvents events.

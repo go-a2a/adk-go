@@ -36,7 +36,7 @@ type OpenAIModel struct {
 }
 
 // NewOpenAIModel creates a new OpenAI model instance.
-func NewOpenAIModel(modelID string, apiKey string, apiEndpoint string) (*genai.Model, error) {
+func NewOpenAIModel(modelID, apiKey, apiEndpoint string) (*genai.Model, error) {
 	if modelID == "" {
 		modelID = DefaultOpenAIModel
 	}

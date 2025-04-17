@@ -132,7 +132,7 @@ func (s *VectorMemoryService) AddSessionToMemory(ctx context.Context, session *S
 }
 
 // SearchMemory searches for sessions that match the query.
-func (s *VectorMemoryService) SearchMemory(ctx context.Context, appName string, userID string, query string) (*SearchMemoryResponse, error) {
+func (s *VectorMemoryService) SearchMemory(ctx context.Context, appName, userID, query string) (*SearchMemoryResponse, error) {
 	if appName == "" {
 		return nil, fmt.Errorf("app name cannot be empty")
 	}
