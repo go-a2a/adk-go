@@ -14,7 +14,7 @@ import (
 func TestGemini_Generate(t *testing.T) {
 	t.Skip()
 
-	gemini, err := model.NewGemini(t.Context(), os.Getenv(model.EnvGoogleAPIKey), "gemini-2.0-flash-lite")
+	gemini, err := model.NewGemini(t.Context(), os.Getenv(model.EnvGoogleAPIKey), "gemini-2.0-flash")
 	if err != nil {
 		t.Fatalf("NewGemini: %v", err)
 	}
@@ -34,9 +34,9 @@ func TestGemini_Generate(t *testing.T) {
 }
 
 func TestGemini_StreamGenerate_UnarySuccess(t *testing.T) {
-	t.Skip()
+	// t.Skip()
 
-	gemini, err := model.NewGemini(t.Context(), os.Getenv(model.EnvGoogleAPIKey), "gemini-2.0-flash-lite")
+	gemini, err := model.NewGemini(t.Context(), os.Getenv(model.EnvGoogleAPIKey), "gemini-2.0-flash")
 	if err != nil {
 		t.Fatalf("NewGemini: %v", err)
 	}
@@ -67,7 +67,7 @@ func TestGemini_StreamGenerate_UnarySuccess(t *testing.T) {
 func TestGemini_StreamGenerate_StreamAggregation(t *testing.T) {
 	t.Skip()
 
-	gemini, err := model.NewGemini(t.Context(), os.Getenv(model.EnvGoogleAPIKey), "gemini-2.0-flash-lite")
+	gemini, err := model.NewGemini(t.Context(), os.Getenv(model.EnvGoogleAPIKey), "gemini-2.0-flash")
 	if err != nil {
 		t.Fatalf("NewGemini: %v", err)
 	}

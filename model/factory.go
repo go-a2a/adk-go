@@ -15,8 +15,12 @@ type ModelType = string
 const (
 	// ModelTypeGemini represents Gemini models.
 	ModelTypeGemini ModelType = "gemini"
+
 	// ModelTypeClaude represents Claude models.
 	ModelTypeClaude ModelType = "claude"
+
+	// ModelTypeClaudeVertex represents Claude Vertex AI models.
+	ModelTypeClaudeVertexAI ModelType = "claude-vertex-ai"
 )
 
 // ModelFactory creates models.
@@ -54,7 +58,9 @@ func (f *DefaultModelFactory) CreateModel(ctx context.Context, modelName string)
 	case ModelTypeGemini:
 		return NewGemini(ctx, f.apiKey, modelName)
 	case ModelTypeClaude:
-		return NewClaude(ctx, f.apiKey, modelName)
+		return NewClaude(ctx, modelName, ClaudeModeAnthropic)
+	case ModelTypeClaudeVertexAI:
+		return NewClaude(ctx, modelName, ClaudeModeVertexAI)
 	default:
 		return nil, fmt.Errorf("unsupported model: %s", modelName)
 	}
