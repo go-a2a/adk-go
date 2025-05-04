@@ -5,6 +5,8 @@ go 1.24
 require (
 	github.com/anthropics/anthropic-sdk-go v0.2.0-beta.3
 	github.com/bytedance/sonic v1.13.2
+	github.com/google/go-cmp v0.7.0
+	github.com/google/uuid v1.6.0
 	google.golang.org/genai v1.3.0
 )
 
@@ -29,15 +31,16 @@ require (
 	github.com/aws/smithy-go v1.20.3 // indirect
 	github.com/bytedance/sonic/loader v0.2.4 // indirect
 	github.com/cloudwego/base64x v0.1.5 // indirect
+	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.6 // indirect
 	github.com/googleapis/gax-go/v2 v2.14.1 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/klauspost/cpuid/v2 v2.0.9 // indirect
+	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/tidwall/gjson v1.14.4 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
