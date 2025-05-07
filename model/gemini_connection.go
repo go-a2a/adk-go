@@ -10,6 +10,8 @@ import (
 	"sync"
 
 	"google.golang.org/genai"
+
+	"github.com/go-a2a/adk-go/types"
 )
 
 // GeminiConnection implements [BaseConnection] for Google [Gemini] models.
@@ -17,7 +19,7 @@ type GeminiConnection struct {
 	model      string
 	client     *genai.Client
 	history    []*genai.Content
-	responseCh chan *LLMResponse
+	responseCh chan *types.LLMResponse
 	mu         sync.Mutex
 	closed     bool
 }
@@ -30,7 +32,7 @@ func newGeminiConnection(model string, client *genai.Client) *GeminiConnection {
 		model:      model,
 		client:     client,
 		history:    []*genai.Content{},
-		responseCh: make(chan *LLMResponse, 10), // Buffer for responses
+		responseCh: make(chan *types.LLMResponse, 10), // Buffer for responses
 	}
 }
 
@@ -86,7 +88,7 @@ func (c *GeminiConnection) SendRealtime(ctx context.Context, blob []byte, mimeTy
 }
 
 // Receive returns a channel that yields model responses.
-func (c *GeminiConnection) Receive(ctx context.Context) (<-chan *LLMResponse, error) {
+func (c *GeminiConnection) Receive(ctx context.Context) (<-chan *types.LLMResponse, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -139,7 +141,7 @@ func (c *GeminiConnection) processStream(_ context.Context, stream iter.Seq2[*ge
 		}
 
 		// Convert genai response to LLMResponse
-		llmResp := CreateLLMResponse(resp)
+		llmResp := types.CreateLLMResponse(resp)
 
 		// Mark as partial (not the end of the stream)
 		llmResp.WithPartial(true)
@@ -153,7 +155,7 @@ func (c *GeminiConnection) processStream(_ context.Context, stream iter.Seq2[*ge
 	}
 
 	// Send a final response with TurnComplete set to true
-	finalResp := &LLMResponse{}
+	finalResp := &types.LLMResponse{}
 	finalResp.WithTurnComplete(true)
 	finalResp.WithPartial(false)
 
@@ -166,7 +168,7 @@ func (c *GeminiConnection) processStream(_ context.Context, stream iter.Seq2[*ge
 
 // sendErrorResponse sends an error response through the channel.
 func (c *GeminiConnection) sendErrorResponse(err error) {
-	resp := &LLMResponse{}
+	resp := &types.LLMResponse{}
 	resp.ErrorCode = "GENERATION_ERROR"
 	resp.ErrorMessage = err.Error()
 

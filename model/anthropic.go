@@ -22,6 +22,8 @@ import (
 	anthropic_vertex "github.com/anthropics/anthropic-sdk-go/vertex"
 	"github.com/bytedance/sonic"
 	"google.golang.org/genai"
+
+	"github.com/go-a2a/adk-go/types"
 )
 
 // ClaudeMode represents the mode of the Claude model.
@@ -161,7 +163,7 @@ func (m *Claude) Connect() (BaseConnection, error) {
 }
 
 // GenerateContent generates content from the model.
-func (m *Claude) GenerateContent(ctx context.Context, request *LLMRequest) (*LLMResponse, error) {
+func (m *Claude) GenerateContent(ctx context.Context, request *types.LLMRequest) (*types.LLMResponse, error) {
 	// Convert messages to Anthropic format
 	messages := make([]anthropic.MessageParam, len(request.Contents))
 	for i, content := range request.Contents {
@@ -236,8 +238,8 @@ func (m *Claude) GenerateContent(ctx context.Context, request *LLMRequest) (*LLM
 }
 
 // StreamGenerateContent streams generated content from the model.
-func (m *Claude) StreamGenerateContent(ctx context.Context, request *LLMRequest) iter.Seq2[*LLMResponse, error] {
-	return func(yield func(*LLMResponse, error) bool) {
+func (m *Claude) StreamGenerateContent(ctx context.Context, request *types.LLMRequest) iter.Seq2[*types.LLMResponse, error] {
+	return func(yield func(*types.LLMResponse, error) bool) {
 		// Convert to Anthropic format
 		messages := make([]anthropic.MessageParam, len(request.Contents))
 		for i, content := range request.Contents {
@@ -371,7 +373,7 @@ func (m *Claude) StreamGenerateContent(ctx context.Context, request *LLMRequest)
 						},
 					},
 				}
-				resp := CreateLLMResponse(response)
+				resp := types.CreateLLMResponse(response)
 				if partial {
 					resp.WithPartial(true)
 				}
@@ -498,7 +500,7 @@ func (m *Claude) contentBlockToPart(contentBlock anthropic.ContentBlockUnion) (*
 }
 
 // messageToLLMResponse converts [*anthropic.Message] to [*LLMResponse].
-func (m *Claude) messageToLLMResponse(message *anthropic.Message) *LLMResponse {
+func (m *Claude) messageToLLMResponse(message *anthropic.Message) *types.LLMResponse {
 	parts := make([]*genai.Part, 0, len(message.Content))
 	for _, mcontent := range message.Content {
 		part, err := m.contentBlockToPart(mcontent)
@@ -514,7 +516,7 @@ func (m *Claude) messageToLLMResponse(message *anthropic.Message) *LLMResponse {
 		TotalTokenCount:      int32(message.Usage.InputTokens + message.Usage.OutputTokens),
 	}
 
-	return &LLMResponse{
+	return &types.LLMResponse{
 		Content: &genai.Content{
 			Role:  RoleModel,
 			Parts: parts,

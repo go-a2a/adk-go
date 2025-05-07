@@ -1,7 +1,7 @@
 // Copyright 2025 The Go A2A Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package model
+package types
 
 import (
 	"google.golang.org/genai"
@@ -13,6 +13,10 @@ import (
 type LLMResponse struct {
 	// Content is the content of the response.
 	Content *genai.Content
+
+	Action EventActions
+
+	ToolCalls []*ToolCall
 
 	// GroundingMetadata is the grounding metadata of the response.
 	GroundingMetadata *genai.GroundingMetadata
@@ -73,7 +77,7 @@ func CreateLLMResponse(resp *genai.GenerateContentResponse) *LLMResponse {
 		blockReason := "UNKNOWN_BLOCK"
 		blockMessage := "Content was blocked. Check prompt feedback for details."
 
-		if safety := promptFeedback.SafetyRatings; safety != nil && len(safety) > 0 {
+		if safety := promptFeedback.SafetyRatings; len(safety) > 0 {
 			for _, rating := range safety {
 				if rating.Blocked {
 					blockReason = string(rating.Category)

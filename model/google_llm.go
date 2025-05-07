@@ -8,14 +8,19 @@ import (
 	"fmt"
 	"iter"
 	"log/slog"
+	"net/http"
 	"os"
+	"runtime"
 	"strings"
 
 	"google.golang.org/genai"
+
+	adk "github.com/go-a2a/adk-go"
+	"github.com/go-a2a/adk-go/types"
 )
 
 const (
-	// GeminiLLMDefaultModel is the default model name for [GeminiLLM].
+	// GeminiLLMDefaultModel is the default model name for [Gemini].
 	GeminiLLMDefaultModel = "gemini-1.5-pro"
 
 	// EnvGoogleAPIKey is the environment variable name for the Google AI API key.
@@ -24,16 +29,15 @@ const (
 
 // Gemini represents a Google Gemini Large Language Model.
 type Gemini struct {
-	*Base
+	*Config
 
-	genAIClient     *genai.Client
-	trackingHeaders map[string]string
+	genAIClient *genai.Client
 }
 
-var _ GenerativeModel = (*Gemini)(nil)
+var _ Model = (*Gemini)(nil)
 
 // NewGemini creates a new [Gemini] instance.
-func NewGemini(ctx context.Context, apiKey string, modelName string) (*Gemini, error) {
+func NewGemini(ctx context.Context, apiKey string, modelName string, opts ...Option) (*Gemini, error) {
 	// Use default model if none provided
 	if modelName == "" {
 		modelName = GeminiLLMDefaultModel
@@ -48,19 +52,41 @@ func NewGemini(ctx context.Context, apiKey string, modelName string) (*Gemini, e
 		apiKey = envApiKey
 	}
 
-	// Create GenAI client for BaseLLM
-	genAIClient, err := genai.NewClient(ctx, &genai.ClientConfig{
+	clintConfig := &genai.ClientConfig{
 		APIKey: apiKey,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create genai client: %w", err)
+		HTTPOptions: genai.HTTPOptions{
+			Headers: make(http.Header),
+		},
 	}
 
-	return &Gemini{
-		Base:            NewBase(modelName),
-		genAIClient:     genAIClient,
-		trackingHeaders: make(map[string]string),
-	}, nil
+	frameworkLabel := fmt.Sprintf("go-a2a/adk-go/%s", adk.Version)
+	languageLabel := fmt.Sprintf("go/%s", runtime.Version())
+	versionHeaderValue := frameworkLabel + " " + languageLabel
+	clintConfig.HTTPOptions.Headers.Set(`x-goog-api-client`, versionHeaderValue)
+	clintConfig.HTTPOptions.Headers.Set(`user-agent`, versionHeaderValue)
+
+	// Create GenAI client
+	genAIClient, err := genai.NewClient(ctx, clintConfig)
+	if err != nil {
+		return nil, fmt.Errorf("create genai client: %w", err)
+	}
+
+	gemini := &Gemini{
+		Config: &Config{
+			model: modelName,
+		},
+		genAIClient: genAIClient,
+	}
+	for _, opt := range opts {
+		gemini.Config = opt.apply(gemini.Config)
+	}
+
+	return gemini, nil
+}
+
+// Name returns the name of the model.
+func (m *Gemini) Name() string {
+	return m.model
 }
 
 // SupportedModels returns a list of supported Gemini models.
@@ -80,7 +106,6 @@ func (m *Gemini) SupportedModels() []string {
 
 // Connect creates a live connection to the Gemini LLM.
 func (m *Gemini) Connect() (BaseConnection, error) {
-	// Ensure we have an API client
 	// Create and return a new connection
 	return newGeminiConnection(m.model, m.genAIClient), nil
 }
@@ -110,70 +135,28 @@ func (m *Gemini) appendUserContent(contents []*genai.Content) []*genai.Content {
 }
 
 // GenerateContent generates content from the model.
-func (m *Gemini) GenerateContent(ctx context.Context, request *LLMRequest) (*LLMResponse, error) {
+func (m *Gemini) GenerateContent(ctx context.Context, request *types.LLMRequest) (*types.LLMResponse, error) {
 	// Ensure the last message is from the user
 	request.Contents = m.appendUserContent(request.Contents)
 
-	// Create config for generate content
-	config := &genai.GenerateContentConfig{}
-
-	// Apply generation config if provided
-	if request.Config != nil {
-		config.Temperature = request.Config.Temperature
-		config.MaxOutputTokens = request.Config.MaxOutputTokens
-		config.TopP = request.Config.TopP
-		config.TopK = request.Config.TopK
-	}
-
-	// Apply safety settings if provided
-	if len(request.SafetySettings) > 0 {
-		config.SafetySettings = request.SafetySettings
-	}
-
-	// Apply tool if provided
-	if len(request.Tools) > 0 {
-		config.Tools = request.Tools
-	}
-
 	// Generate content
-	response, err := m.genAIClient.Models.GenerateContent(ctx, m.model, request.Contents, config)
+	response, err := m.genAIClient.Models.GenerateContent(ctx, m.model, request.Contents, request.Config)
 	if err != nil {
 		return nil, fmt.Errorf("gemini API error: %w", err)
 	}
 	m.logger.DebugContext(ctx, "response", buildResponseLog(response))
 
-	return CreateLLMResponse(response), nil
+	return types.CreateLLMResponse(response), nil
 }
 
 // StreamGenerateContent streams generated content from the model.
-func (m *Gemini) StreamGenerateContent(ctx context.Context, request *LLMRequest) iter.Seq2[*LLMResponse, error] {
-	return func(yield func(*LLMResponse, error) bool) {
-		// Create config for generate content
-		config := &genai.GenerateContentConfig{}
-
-		// Apply generation config if provided
-		if request.Config != nil {
-			config.Temperature = request.Config.Temperature
-			config.MaxOutputTokens = request.Config.MaxOutputTokens
-			config.TopP = request.Config.TopP
-			config.TopK = request.Config.TopK
-		}
-
-		// Apply safety settings if provided
-		if len(request.SafetySettings) > 0 {
-			config.SafetySettings = request.SafetySettings
-		}
-
-		// Apply tool if provided
-		if len(request.Tools) > 0 {
-			config.Tools = request.Tools
-		}
-
+func (m *Gemini) StreamGenerateContent(ctx context.Context, request *types.LLMRequest) iter.Seq2[*types.LLMResponse, error] {
+	return func(yield func(*types.LLMResponse, error) bool) {
 		// Ensure the last message is from the user
 		contents := m.appendUserContent(request.Contents)
 
 		// Stream generate content
-		stream := m.genAIClient.Models.GenerateContentStream(ctx, m.model, contents, config)
+		stream := m.genAIClient.Models.GenerateContentStream(ctx, m.model, contents, request.Config)
 
 		var (
 			buf      strings.Builder
@@ -192,7 +175,7 @@ func (m *Gemini) StreamGenerateContent(ctx context.Context, request *LLMRequest)
 			}
 
 			lastResp = resp
-			llmResp := CreateLLMResponse(resp)
+			llmResp := types.CreateLLMResponse(resp)
 
 			switch {
 			case containsText(llmResp):
@@ -217,63 +200,8 @@ func (m *Gemini) StreamGenerateContent(ctx context.Context, request *LLMRequest)
 	}
 }
 
-// geminiStreamResponse implements [StreamGenerateResponse] for [Gemini].
-type geminiStreamResponse struct {
-	stream iter.Seq2[*genai.GenerateContentResponse, error]
-}
-
-var _ StreamGenerateResponse = (*geminiStreamResponse)(nil)
-
-// Next returns the next response in the stream.
-func (s *geminiStreamResponse) Next(ctx context.Context) iter.Seq2[*LLMResponse, error] {
-	// With [iter.Seq2], we need to use a for loop with a single iteration
-	// to get the next value and error
-	return func(yield func(*LLMResponse, error) bool) {
-		var (
-			buf      strings.Builder
-			lastResp *genai.GenerateContentResponse
-		)
-		for resp, err := range s.stream {
-			// catch error first
-			if err != nil {
-				if !yield(nil, err) {
-					return
-				}
-				continue
-			}
-
-			if ctx.Err() != nil || resp == nil {
-				return
-			}
-
-			lastResp = resp
-			llmResp := CreateLLMResponse(resp)
-
-			switch {
-			case containsText(llmResp):
-				buf.WriteString(llmResp.Content.Parts[0].Text)
-				llmResp.Partial = true
-
-			case buf.Len() > 0 && !isAudio(llmResp):
-				if !yield(newAggregateText(buf.String()), nil) {
-					return
-				}
-				buf.Reset()
-			}
-
-			if !yield(llmResp, nil) {
-				return
-			}
-		}
-
-		if buf.Len() > 0 && lastResp != nil && finishStop(lastResp) {
-			yield(newAggregateText(buf.String()), nil)
-		}
-	}
-}
-
-func newAggregateText(s string) *LLMResponse {
-	return &LLMResponse{
+func newAggregateText(s string) *types.LLMResponse {
+	return &types.LLMResponse{
 		Content: &genai.Content{
 			Role:  RoleModel,
 			Parts: []*genai.Part{genai.NewPartFromText(s)},
@@ -282,12 +210,12 @@ func newAggregateText(s string) *LLMResponse {
 }
 
 // containsText returns true when the first part has a non-empty Text field.
-func containsText(r *LLMResponse) bool {
+func containsText(r *types.LLMResponse) bool {
 	return r.Content != nil && len(r.Content.Parts) > 0 && r.Content.Parts[0].Text != ""
 }
 
 // isAudio returns true when InlineData is present (optionally mime-typed audio/*).
-func isAudio(r *LLMResponse) bool {
+func isAudio(r *types.LLMResponse) bool {
 	if r.Content == nil || len(r.Content.Parts) == 0 {
 		return false
 	}

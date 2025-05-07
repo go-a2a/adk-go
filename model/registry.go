@@ -18,7 +18,7 @@ func init() {
 			`claude-.*`, // General pattern for Claude models
 		},
 		func(ctx context.Context, apiKey string, modelName string) (Model, error) {
-			return NewClaude(ctx, apiKey, modelName)
+			return NewClaude(ctx, modelName, ClaudeModeAnthropic)
 		},
 	)
 

@@ -8,6 +8,8 @@ import (
 	"iter"
 
 	"google.golang.org/genai"
+
+	"github.com/go-a2a/adk-go/types"
 )
 
 // Role represents the role of a participant in a conversation.
@@ -27,6 +29,30 @@ const (
 	RoleModel Role = genai.RoleModel
 )
 
+// UserContent creates a new user content.
+func UserContent(texts ...string) *genai.Content {
+	contentParts := make([]*genai.Part, len(texts))
+	for i, part := range texts {
+		contentParts[i] = &genai.Part{Text: part}
+	}
+	return &genai.Content{
+		Role:  RoleUser,
+		Parts: contentParts,
+	}
+}
+
+// ModelContent creates a new model content.
+func ModelContent(texts ...string) *genai.Content {
+	contentParts := make([]*genai.Part, len(texts))
+	for i, part := range texts {
+		contentParts[i] = &genai.Part{Text: part}
+	}
+	return &genai.Content{
+		Role:  RoleModel,
+		Parts: contentParts,
+	}
+}
+
 // BaseConnection defines the interface for a live model connection.
 type BaseConnection interface {
 	// SendHistory sends the conversation history to the model.
@@ -44,7 +70,7 @@ type BaseConnection interface {
 
 	// Receive returns a channel that yields model responses.
 	// It should be called after SendHistory, SendContent, or SendRealtime.
-	Receive(ctx context.Context) (<-chan *LLMResponse, error)
+	Receive(ctx context.Context) (<-chan *types.LLMResponse, error)
 
 	// Close terminates the connection to the model.
 	// The connection object should not be used after this call.
@@ -60,8 +86,8 @@ type Model interface {
 	Connect() (BaseConnection, error)
 
 	// GenerateContent generates content from the model.
-	GenerateContent(ctx context.Context, request *LLMRequest) (*LLMResponse, error)
+	GenerateContent(ctx context.Context, request *types.LLMRequest) (*types.LLMResponse, error)
 
 	// StreamGenerateContent streams generated content from the model.
-	StreamGenerateContent(ctx context.Context, request *LLMRequest) iter.Seq2[*LLMResponse, error]
+	StreamGenerateContent(ctx context.Context, request *types.LLMRequest) iter.Seq2[*types.LLMResponse, error]
 }
