@@ -46,7 +46,7 @@ func NewModelFactory(apiKey string) ModelFactory {
 // CreateModel creates a model with the specified name.
 func (f *DefaultModelFactory) CreateModel(ctx context.Context, modelName string) (Model, error) {
 	// First try using the registry for more flexible pattern matching
-	model, err := NewLLM(ctx, f.apiKey, modelName)
+	model, err := NewLLM(ctx, modelName)
 	if err == nil {
 		return model, nil
 	}

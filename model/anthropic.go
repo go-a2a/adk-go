@@ -220,7 +220,7 @@ func (m *Claude) GenerateContent(ctx context.Context, request *types.LLMRequest)
 
 	if len(request.ToolMap) > 0 {
 		toolchoice := anthropic.ToolChoiceUnionParam{
-			OfToolChoiceAuto: &anthropic.ToolChoiceAutoParam{
+			OfAuto: &anthropic.ToolChoiceAutoParam{
 				Type:                   constant.ValueOf[constant.Auto]().Default(),
 				DisableParallelToolUse: anthropic.Bool(false),
 			},
@@ -298,7 +298,7 @@ func (m *Claude) StreamGenerateContent(ctx context.Context, request *types.LLMRe
 
 		if len(request.ToolMap) > 0 {
 			toolchoice := anthropic.ToolChoiceUnionParam{
-				OfToolChoiceAuto: &anthropic.ToolChoiceAutoParam{
+				OfAuto: &anthropic.ToolChoiceAutoParam{
 					Type:                   constant.ValueOf[constant.Auto]().Default(),
 					DisableParallelToolUse: anthropic.Bool(false),
 				},
@@ -324,7 +324,7 @@ func (m *Claude) StreamGenerateContent(ctx context.Context, request *types.LLMRe
 				}
 			}
 
-			if message.StopReason == anthropic.MessageStopReasonEndTurn {
+			if message.StopReason == anthropic.StopReasonEndTurn {
 				return
 			}
 
@@ -403,19 +403,19 @@ func (m *Claude) asClaudeRole(role string) anthropic.MessageParamRole {
 	return anthropic.MessageParamRoleUser
 }
 
-var claudeStopReasons = []anthropic.MessageStopReason{
-	anthropic.MessageStopReasonEndTurn,
-	anthropic.MessageStopReasonStopSequence,
-	anthropic.MessageStopReasonToolUse,
+var claudeStopReasons = []anthropic.StopReason{
+	anthropic.StopReasonEndTurn,
+	anthropic.StopReasonStopSequence,
+	anthropic.StopReasonToolUse,
 }
 
 // asGenAIFinishReason converts [anthropic.StopReason] to [genai.FinishReason].
-func (m *Claude) asGenAIFinishReason(stopReason anthropic.MessageStopReason) genai.FinishReason {
+func (m *Claude) asGenAIFinishReason(stopReason anthropic.StopReason) genai.FinishReason {
 	if slices.Contains(claudeStopReasons, stopReason) {
 		return genai.FinishReasonStop
 	}
 
-	if stopReason == anthropic.MessageStopReasonMaxTokens {
+	if stopReason == anthropic.StopReasonMaxTokens {
 		return genai.FinishReasonMaxTokens
 	}
 
@@ -426,7 +426,7 @@ func (m *Claude) asGenAIFinishReason(stopReason anthropic.MessageStopReason) gen
 func (m *Claude) partToMessageBlock(part *genai.Part) (anthropic.ContentBlockParamUnion, error) {
 	if part.Text != "" {
 		params := anthropic.NewTextBlock(part.Text)
-		params.OfRequestTextBlock.Type = constant.ValueOf[constant.Text]().Default()
+		params.OfText.Type = constant.ValueOf[constant.Text]().Default()
 		return params, nil
 	}
 
@@ -437,8 +437,8 @@ func (m *Claude) partToMessageBlock(part *genai.Part) (anthropic.ContentBlockPar
 			return anthropic.ContentBlockParamUnion{}, errors.New("FunctionCall name is empty")
 		}
 
-		params := anthropic.ContentBlockParamOfRequestToolUseBlock(funcCall.ID, funcCall.Args, funcCall.Name)
-		params.OfRequestToolUseBlock.Type = constant.ValueOf[constant.ToolUse]().Default()
+		params := anthropic.ContentBlockParamOfToolUse(funcCall.ID, funcCall.Args, funcCall.Name)
+		params.OfToolUse.Type = constant.ValueOf[constant.ToolUse]().Default()
 		return params, nil
 	}
 
@@ -446,7 +446,7 @@ func (m *Claude) partToMessageBlock(part *genai.Part) (anthropic.ContentBlockPar
 		funcResp := part.FunctionResponse
 		if result, ok := funcResp.Response["result"]; ok {
 			params := anthropic.NewToolResultBlock(funcResp.ID, fmt.Sprintf("%s", result), false)
-			params.OfRequestToolResultBlock.Type = constant.ValueOf[constant.ToolResult]().Default()
+			params.OfToolResult.Type = constant.ValueOf[constant.ToolResult]().Default()
 			return params, nil
 		}
 	}

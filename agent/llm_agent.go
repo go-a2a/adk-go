@@ -7,12 +7,14 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"iter"
 	"log/slog"
 	"maps"
 
 	"github.com/bytedance/sonic"
 	"google.golang.org/genai"
 
+	"github.com/go-a2a/adk-go/flow"
 	"github.com/go-a2a/adk-go/model"
 	"github.com/go-a2a/adk-go/planner"
 	"github.com/go-a2a/adk-go/types"
@@ -25,7 +27,7 @@ type InstructionProvider func(*types.ReadOnlyContext) string
 type BeforeModelCallback func(*types.CallbackContext, *types.LLMRequest) (*types.LLMResponse, error)
 
 // AfterModelCallback is called after receiving a response from the model.
-type AfterModelCallback func(*types.CallbackContext, *types.LLMResponse) (*types.LLMResponse, error)
+type AfterModelCallback func(*types.CallbackContext, *types.LLMRequest) (*types.LLMResponse, error)
 
 // BeforeToolCallback is called before executing a tool.
 type BeforeToolCallback func(types.Tool, map[string]any, *types.ToolContext) (map[string]any, error)
@@ -46,13 +48,16 @@ type LLMAgent struct {
 	*Config
 
 	// model represents the LLM to use (string or Model).
-	model model.Model
+	model any // model.Model
 
-	// instruction provides guidance to the LLM (string or InstructionProvider).
+	// instruction provides guidance to the LLM (string or [InstructionProvider]).
 	instruction any
 
-	// globalInstruction provides guidance to all agents in the tree (string or InstructionProvider).
+	// globalInstruction provides guidance to all agents in the tree (string or [InstructionProvider]).
 	globalInstruction any
+
+	// Tools available to this agent.
+	tools []any // func(), [types.Tool] or [types.Toolset]
 
 	// generateContentConfig is the additional content generation configurations.
 	//
@@ -63,10 +68,10 @@ type LLMAgent struct {
 	// settings, etc.
 	generateContentConfig *genai.GenerateContentConfig
 
-	// disallowTransferToParent prevents transferring control to parent.
+	// DisallowTransferToParent prevents transferring control to parent.
 	disallowTransferToParent bool
 
-	// disallowTransferToPeers prevents transferring control to peers.
+	// DisallowTransferToPeers prevents transferring control to peers.
 	disallowTransferToPeers bool
 
 	// includeContents whether to include contents in the model request.
@@ -93,7 +98,7 @@ type LLMAgent struct {
 	// codeExecutor allow agent to execute code blocks from model responses using the provided
 	// CodeExecutor.
 	//
-	// Check out available code executions in `google.adk.code_executor` package.
+	// Check out available code executions in `codeexecutor` package.
 	//
 	// NOTE: to use model's built-in code executor, don't set this field, add
 	// `google.adk.tools.built_in_code_execution` to tools instead.
@@ -237,6 +242,156 @@ func NewLLMAgent(name string, opts ...LLMAgentOption) (*LLMAgent, error) {
 // Name implements [types.Agent].
 func (a *LLMAgent) Name() string {
 	return a.name
+}
+
+// Description implements [types.Agent].
+func (a *LLMAgent) Description() string {
+	return a.description
+}
+
+func (a *LLMAgent) DisallowTransferToParent() bool {
+	return a.disallowTransferToParent
+}
+
+func (a *LLMAgent) DisallowTransferToPeers() bool {
+	return a.disallowTransferToPeers
+}
+
+func (a *LLMAgent) ParentAgent() types.Agent {
+	return nil
+}
+
+func (a *LLMAgent) FindAgent(name string) types.Agent {
+	return nil
+}
+
+func (a *LLMAgent) SubAgents() []types.Agent {
+	return nil
+}
+
+// Run entry method to run an agent via text-based conversation.
+func (a *LLMAgent) Run(ctx context.Context, parentContext *types.InvocationContext) iter.Seq2[*types.Event, error] {
+	return nil
+}
+
+// RunLive entry method to run an agent via video/audio-based conversation.
+func (a *LLMAgent) RunLive(ctx context.Context, parentContext *types.InvocationContext) iter.Seq2[*types.Event, error] {
+	return nil
+}
+
+func convertTools(tool any, rctx *types.ReadOnlyContext) []types.Tool {
+	switch tool := tool.(type) {
+	case types.Tool:
+		return []types.Tool{tool}
+	case func():
+		// TODO(zchee): implemnts correctly
+		// return [FunctionTool(func=tool_union)]
+	case types.Toolset:
+		// TODO(zchee): implements GetTools method
+		// return tool.GetTools(rctx)
+	}
+	return nil
+}
+
+// CanonicalModel returns the resolved model field as [model.Model].
+//
+// This method is only for use by Agent Development Kit.
+func (a *LLMAgent) CanonicalModel(ctx context.Context) (model.Model, error) {
+	switch m := a.model.(type) {
+	case model.Model:
+		return m, nil
+	case string:
+		model.GetRegistry().NewLLM(ctx, m)
+	}
+
+	ancestorAgent := a.parentAgent
+	for {
+		if llmAgent, ok := ancestorAgent.(*LLMAgent); ok {
+			return llmAgent.CanonicalModel(ctx)
+		}
+		ancestorAgent = ancestorAgent.ParentAgent()
+		if ancestorAgent == nil {
+			break
+		}
+	}
+
+	return nil, fmt.Errorf("no model found for %s", a.model)
+}
+
+// CanonicalInstructions returns the resolved self.instruction field to construct instruction for this agent.
+//
+// This method is only for use by Agent Development Kit.
+func (a *LLMAgent) CanonicalInstructions(rctx *types.ReadOnlyContext) string {
+	switch inst := a.instruction.(type) {
+	case string:
+		return inst
+	case InstructionProvider:
+		return inst(rctx)
+	default:
+		return ""
+	}
+}
+
+// CanonicalGlobalInstruction returns the resolved self.instruction field to construct global instruction.
+//
+// This method is only for use by Agent Development Kit.
+func (a *LLMAgent) CanonicalGlobalInstruction(rctx *types.ReadOnlyContext) string {
+	switch ginst := a.globalInstruction.(type) {
+	case string:
+		return ginst
+	case InstructionProvider:
+		return ginst(rctx)
+	default:
+		return ""
+	}
+}
+
+// CanonicalTool returns the resolved self.tools field as a list of BaseTool based on the context.
+//
+// This method is only for use by Agent Development Kit.
+func (a *LLMAgent) CanonicalTool(rctx *types.ReadOnlyContext) []types.Tool {
+	resolvedTools := []types.Tool{}
+	for _, tool := range a.tools {
+		resolvedTools = append(resolvedTools, convertTools(tool, rctx)...)
+	}
+	return resolvedTools
+}
+
+// CanonicalBeforeModelCallbacks returns the resolved self.before_model_callback field as a list of _SingleBeforeModelCallback.
+//
+// This method is only for use by Agent Development Kit.
+func (a *LLMAgent) CanonicalBeforeModelCallbacks() []BeforeModelCallback {
+	return a.beforeModelCallbacks
+}
+
+// CanonicalAfterModelCallbacks returns the resolved self.before_tool_callback field as a list of BeforeToolCallback.
+//
+// This method is only for use by Agent Development Kit.
+func (a *LLMAgent) CanonicalAfterModelCallbacks() []AfterModelCallback {
+	return a.afterModelCallbacks
+}
+
+// CanonicalBeforeToolCallbacks returns the resolved self.before_tool_callback field as a list of BeforeToolCallback.
+//
+// This method is only for use by Agent Development Kit.
+func (a *LLMAgent) CanonicalBeforeToolCallbacks() []BeforeToolCallback {
+	return a.beforeToolCallbacks
+}
+
+// CanonicalAfterToolCallbacks returns the resolved self.after_tool_callback field as a list of AfterToolCallback.
+//
+// This method is only for use by Agent Development Kit.
+func (a *LLMAgent) CanonicalAfterToolCallbacks() []AfterToolCallback {
+	return a.afterToolCallbacks
+}
+
+func (a *LLMAgent) llmFlow() flow.Flow {
+	if a.disallowTransferToParent && a.disallowTransferToPeers && len(a.subAgents) == 0 {
+		return &flow.SingleFlow{}
+	}
+	// TODO(zchee): implements [flow.AutoFlow].
+	// return &flow.AutoFlow{}
+	return nil
 }
 
 // Execute runs the agent with the given input and context.

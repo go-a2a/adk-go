@@ -35,11 +35,11 @@ type Config struct {
 	// The sub-agents of this agent.
 	subAgents []types.Agent
 
-	// Callback signature that is invoked before the agent run.
-	beforeAgentCallback types.BeforeAgentCallback
+	// callback signature that is invoked before the agent run.
+	beforeAgentCallbacks []types.AgentCallback
 
-	// Callback signature that is invoked after the agent run.
-	afterAgentCallback types.AfterAgentCallback
+	// callback signature that is invoked after the agent run.
+	afterAgentCallbacks []types.AgentCallback
 
 	logger *slog.Logger
 }
@@ -64,6 +64,18 @@ func WithParentAgent(parentAgent types.Agent) Option {
 func WithSubAgents(agents ...types.Agent) Option {
 	return optionFunc(func(c *Config) {
 		c.subAgents = append(c.subAgents, agents...)
+	})
+}
+
+func WithBeforeAgentCallbacks(callbacks ...types.AgentCallback) Option {
+	return optionFunc(func(c *Config) {
+		c.beforeAgentCallbacks = append(c.beforeAgentCallbacks, callbacks...)
+	})
+}
+
+func WithAfterAgentCallbacks(callbacks ...types.AgentCallback) Option {
+	return optionFunc(func(c *Config) {
+		c.afterAgentCallbacks = append(c.afterAgentCallbacks, callbacks...)
 	})
 }
 

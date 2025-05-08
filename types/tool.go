@@ -74,23 +74,36 @@ func (t *tool) FunctionDeclarations() []*genai.FunctionDeclaration {
 	}
 }
 
+// TODO(zchee): implements methods.
+type Toolset interface{}
+
 // ToolContext holds the context for executing a tool.
 type ToolContext struct {
 	*CallbackContext
 
 	InvocationContext *InvocationContext
-	FunctionCallID    string
-	EventActions      *EventActions
+	functionCallID    string
+	eventActions      *EventActions
+}
+
+func (tc *ToolContext) WithFunctionCallID(funcCallID string) *ToolContext {
+	tc.functionCallID = funcCallID
+	return tc
+}
+
+func (tc *ToolContext) WithEventActions(eventActions *EventActions) *ToolContext {
+	tc.eventActions = eventActions
+	return tc
 }
 
 // NewToolContext creates a new ToolContext with the given function call ID.
-func NewToolContext(functionCallID string) *ToolContext {
+func NewToolContext(ic *InvocationContext) *ToolContext {
 	return &ToolContext{
-		FunctionCallID: functionCallID,
+		InvocationContext: ic,
 	}
 }
 
-// Action returns the event actions for the tool context.
-func (tc *ToolContext) Action() *EventActions {
-	return tc.EventActions
+// Actions returns the event actions for the tool context.
+func (tc *ToolContext) Actions() *EventActions {
+	return tc.eventActions
 }

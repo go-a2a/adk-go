@@ -5,23 +5,27 @@ package types
 
 // ReadOnlyContext provides read-only access to agent context.
 type ReadOnlyContext struct {
-	InvocationContext *InvocationContext
-
-	// Agent is the agent being invoked.
-	Agent Agent
-
-	// Input is the input provided to the agent.
-	Input map[string]any
-
-	// Metadata contains additional information.
-	Metadata map[string]any
+	invocationContext *InvocationContext
 }
 
 // NewReadOnlyContext creates a new read-only context.
-func NewReadOnlyContext(agent Agent, input map[string]any) *ReadOnlyContext {
+func NewReadOnlyContext(invocationContext *InvocationContext) *ReadOnlyContext {
 	return &ReadOnlyContext{
-		Agent:    agent,
-		Input:    input,
-		Metadata: make(map[string]any),
+		invocationContext: invocationContext,
 	}
+}
+
+// InvocationContextID returns the current invocation id.
+func (rc *ReadOnlyContext) InvocationContextID() string {
+	return rc.invocationContext.InvocationID
+}
+
+// AgentName returns the name of the agent that is currently running.
+func (rc *ReadOnlyContext) AgentName() string {
+	return rc.invocationContext.Agent.Name()
+}
+
+// State returns the state of the current session. READONLY field.
+func (rc *ReadOnlyContext) State() map[string]any {
+	return rc.invocationContext.Session.State()
 }

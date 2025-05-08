@@ -10,10 +10,23 @@ import (
 	"slices"
 	"sync"
 	"time"
+
+	"google.golang.org/genai"
 )
 
-// LiveRequest represents a request to an agent.
+// LiveRequest represents a request send to live agents.
 type LiveRequest struct {
+	Context context.Context
+
+	// Send the content to the model in turn-by-turn mode if set.
+	Content *genai.Content
+
+	// Send the blob to the model in realtime mode if set.
+	Blob *genai.Blob
+
+	// Whether the closes the queue.
+	Close bool
+
 	// ID is the request ID.
 	ID string
 
@@ -25,9 +38,6 @@ type LiveRequest struct {
 
 	// ErrorChan is the channel to send errors to.
 	ErrorChan chan<- error
-
-	// Context is the context for the request.
-	Context context.Context
 
 	// RunOpts are the options for running the agent.
 	RunOpts []RunOption
@@ -43,13 +53,12 @@ func NewLiveRequest(ctx context.Context, id string, input map[string]any, respon
 		Input:        input,
 		ResponseChan: responseChan,
 		ErrorChan:    errorChan,
-		Context:      ctx,
 		RunOpts:      opts,
 		Timestamp:    time.Now(),
 	}
 }
 
-// LiveRequestQueue manages a queue of live requests.
+// LiveRequestQueue queue used to send [LiveRequest] in a live(bidirectional streaming) way.
 type LiveRequestQueue struct {
 	queue      []*LiveRequest
 	agent      Agent
@@ -98,12 +107,33 @@ func WithQueueLogger(logger *slog.Logger) LiveRequestQueueOption {
 	}
 }
 
-// Add adds a request to the queue.
-func (q *LiveRequestQueue) Add(request *LiveRequest) {
+func (q *LiveRequestQueue) Close() {
+	req := &LiveRequest{
+		Close: true,
+	}
+	q.Send(req)
+}
+
+func (q *LiveRequestQueue) SendContent(content *genai.Content) {
+	req := &LiveRequest{
+		Content: content,
+	}
+	q.Send(req)
+}
+
+func (q *LiveRequestQueue) SendRealtime(blob *genai.Blob) {
+	req := &LiveRequest{
+		Blob: blob,
+	}
+	q.Send(req)
+}
+
+// Send adds a request to the queue.
+func (q *LiveRequestQueue) Send(req *LiveRequest) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
-	q.queue = append(q.queue, request)
+	q.queue = append(q.queue, req)
 
 	// Start processing if not already
 	if !q.processing && q.workers < q.maxWorkers {
@@ -111,6 +141,16 @@ func (q *LiveRequestQueue) Add(request *LiveRequest) {
 		q.workers++
 		go q.process()
 	}
+}
+
+func (q *LiveRequestQueue) Get() *LiveRequest {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+
+	req := q.queue[0]
+	q.queue = slices.Delete(q.queue, 0, 1)
+
+	return req
 }
 
 // process processes requests in the queue.
@@ -183,8 +223,8 @@ func (q *LiveRequestQueue) Cancel(id string) error {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
-	for i, request := range q.queue {
-		if request.ID == id {
+	for i, req := range q.queue {
+		if req.ID == id {
 			// Remove from queue
 			q.queue = slices.Delete(q.queue, i, i+1)
 			return nil
@@ -199,5 +239,5 @@ func (q *LiveRequestQueue) Clear() {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
-	q.queue = make([]*LiveRequest, 0)
+	clear(q.queue)
 }

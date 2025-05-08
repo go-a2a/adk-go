@@ -143,13 +143,14 @@ func (r *LLMRegistry) ResolveLLM(modelName string) (ModelCreatorFunc, error) {
 
 // NewLLM creates a new LLM instance for the given model name.
 // It resolves the appropriate model implementation and creates an instance.
-func (r *LLMRegistry) NewLLM(ctx context.Context, apiKey string, modelName string) (Model, error) {
+func (r *LLMRegistry) NewLLM(ctx context.Context, modelName string) (Model, error) {
 	creator, err := r.ResolveLLM(modelName)
 	if err != nil {
 		return nil, err
 	}
 
-	return creator(ctx, apiKey, modelName)
+	// TODO(zchee): fill arg
+	return creator(ctx, "", modelName)
 }
 
 // RegisterLLM is a convenience function to register a model pattern.
@@ -166,6 +167,7 @@ func RegisterLLMType(patterns []string, creator ModelCreatorFunc) {
 }
 
 // NewLLM is a convenience function to create a new LLM instance.
-func NewLLM(ctx context.Context, apiKey string, modelName string) (Model, error) {
-	return GetRegistry().NewLLM(ctx, apiKey, modelName)
+func NewLLM(ctx context.Context, modelName string) (Model, error) {
+	// TODO(zchee): fill arg
+	return GetRegistry().NewLLM(ctx, modelName)
 }

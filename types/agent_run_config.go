@@ -4,100 +4,86 @@
 package types
 
 import (
-	"time"
+	"google.golang.org/genai"
 )
+
+// DefaultMaxLLMCalls is the default limit on the total number of llm calls.
+const DefaultMaxLLMCalls = 500
+
+// StreamingMode is the streaming mode.
+type StreamingMode int
+
+const (
+	StreamingModeNone StreamingMode = iota
+	StreamingModeSSE
+	StreamingModeBidi
+)
+
+// String returns a string representation of the StreamingMode.
+func (mode StreamingMode) String() string {
+	switch mode {
+	case StreamingModeNone:
+		return "None"
+	case StreamingModeSSE:
+		return "sse"
+	case StreamingModeBidi:
+		return "bidi"
+	}
+	return ""
+}
 
 // RunConfig contains settings for agent execution.
 type RunConfig struct {
-	// Timeout is the maximum time the agent can run for.
-	Timeout time.Duration
+	// Speech configuration for the live agent.
+	SpeechConfig *genai.SpeechConfig
 
-	// MaxTokens is the maximum number of tokens the agent can generate.
-	MaxTokens int
+	// The output modalities. If not set, it's default to AUDIO.
+	ResponseModalities []string
 
-	// Temperature controls randomness in generation (0.0 to 1.0).
-	Temperature float64
+	// Whether or not to save the input blobs as artifacts.
+	SaveInputBlobsAsArtifacts bool
 
-	// MemoryEnabled controls whether the agent uses memory.
-	MemoryEnabled bool
+	// Whether to support CFC (Compositional Function Calling). Only applicable for
+	// StreamingMode.SSE. If it's true. the LIVE API will be invoked. Since only LIVE
+	// API supports CFC
+	SupportCFC bool
 
-	// StreamingEnabled controls whether the agent streams responses.
-	StreamingEnabled bool
+	// Streaming mode.
+	StreamingMode StreamingMode
 
-	// Callbacks for various events.
-	Callbacks map[string][]CallbackFunc
+	// Output transcription for live agents with audio response.
+	OutputAudioTranscription *genai.AudioTranscriptionConfig
 
-	// Custom metadata for the run.
-	Metadata map[string]any
+	// Input transcription for live agents with audio input from user.
+	InputAudioTranscription *genai.AudioTranscriptionConfig
+
+	// A limit on the total number of llm calls for a given run.
+	MaxLLMCalls int
 }
 
 // RunOption configures a RunConfig.
 type RunOption func(*RunConfig)
 
-// WithTimeout sets the timeout for agent execution.
-func WithTimeout(timeout time.Duration) RunOption {
+func WithSpeechConfig(speechConfig *genai.SpeechConfig) RunOption {
 	return func(c *RunConfig) {
-		c.Timeout = timeout
+		c.SpeechConfig = speechConfig
 	}
 }
 
-// WithMaxTokens sets the maximum number of tokens for generation.
-func WithMaxTokens(maxTokens int) RunOption {
+func WithResponseModalities(responseModalities []string) RunOption {
 	return func(c *RunConfig) {
-		c.MaxTokens = maxTokens
+		c.ResponseModalities = responseModalities
 	}
 }
 
-// WithTemperature sets the temperature for generation.
-func WithTemperature(temperature float64) RunOption {
+func WithOutputAudioTranscription(config *genai.AudioTranscriptionConfig) RunOption {
 	return func(c *RunConfig) {
-		c.Temperature = temperature
+		c.OutputAudioTranscription = config
 	}
 }
 
-// WithMemoryEnabled enables or disables memory.
-func WithMemoryEnabled(enabled bool) RunOption {
+func WithInputAudioTranscription(config *genai.AudioTranscriptionConfig) RunOption {
 	return func(c *RunConfig) {
-		c.MemoryEnabled = enabled
-	}
-}
-
-// WithStreamingEnabled enables or disables streaming.
-func WithStreamingEnabled(enabled bool) RunOption {
-	return func(c *RunConfig) {
-		c.StreamingEnabled = enabled
-	}
-}
-
-// WithRunCallback adds a callback for an event.
-func WithRunCallback(event string, callback CallbackFunc) RunOption {
-	return func(c *RunConfig) {
-		if c.Callbacks == nil {
-			c.Callbacks = make(map[string][]CallbackFunc)
-		}
-		c.Callbacks[event] = append(c.Callbacks[event], callback)
-	}
-}
-
-// WithMetadata adds metadata to the run configuration.
-func WithMetadata(key string, value any) RunOption {
-	return func(c *RunConfig) {
-		if c.Metadata == nil {
-			c.Metadata = make(map[string]any)
-		}
-		c.Metadata[key] = value
-	}
-}
-
-// DefaultRunConfig returns a RunConfig with default values.
-func DefaultRunConfig() *RunConfig {
-	return &RunConfig{
-		Timeout:          30 * time.Second,
-		MaxTokens:        2048,
-		Temperature:      0.7,
-		MemoryEnabled:    true,
-		StreamingEnabled: false,
-		Callbacks:        make(map[string][]CallbackFunc),
-		Metadata:         make(map[string]any),
+		c.InputAudioTranscription = config
 	}
 }

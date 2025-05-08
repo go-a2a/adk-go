@@ -4,11 +4,11 @@ go 1.24
 
 require (
 	cloud.google.com/go/aiplatform v1.86.0
-	github.com/anthropics/anthropic-sdk-go v0.2.0-beta.3
+	github.com/anthropics/anthropic-sdk-go v0.2.0-beta.3.0.20250510050458-7fffb2810e3d // v0.2.0-beta.4
 	github.com/bytedance/sonic v1.13.2
 	github.com/google/uuid v1.6.0
 	golang.org/x/oauth2 v0.30.0
-	google.golang.org/genai v1.3.0
+	google.golang.org/genai v1.4.0
 )
 
 require (

@@ -135,7 +135,7 @@ func (s *InMemoryService) SearchMemory(ctx context.Context, appName, userID, que
 	// Simple keyword matching implementation
 	queryTerms := strings.Fields(strings.ToLower(query))
 	results := &types.MemorySearchResponse{
-		Results: make([]*types.MemoryResult, 0),
+		Memories: make([]*types.MemoryResult, 0),
 	}
 
 	// Search through memory items
@@ -160,27 +160,24 @@ func (s *InMemoryService) SearchMemory(ctx context.Context, appName, userID, que
 
 		// Add to results if relevant
 		if relevanceScore > 0 {
-			results.Results = append(results.Results, &types.MemoryResult{
-				SessionID:      item.SessionID,
-				UserID:         item.UserID,
-				Timestamp:      item.Timestamp,
-				Events:         item.Events,
-				RelevanceScore: relevanceScore,
+			results.Memories = append(results.Memories, &types.MemoryResult{
+				SessionID: item.SessionID,
+				Events:    item.Events,
 			})
 		}
 	}
 
 	// Sort results by relevance score (descending)
-	for i := 0; i < len(results.Results); i++ {
-		for j := i + 1; j < len(results.Results); j++ {
-			if results.Results[i].RelevanceScore < results.Results[j].RelevanceScore {
-				results.Results[i], results.Results[j] = results.Results[j], results.Results[i]
+	for i := 0; i < len(results.Memories); i++ {
+		for j := i + 1; j < len(results.Memories); j++ {
+			if results.Memories[i].RelevanceScore < results.Memories[j].RelevanceScore {
+				results.Memories[i], results.Memories[j] = results.Memories[j], results.Memories[i]
 			}
 		}
 	}
 
 	s.logger.InfoContext(ctx, "Memory search results",
-		slog.Int("result_count", len(results.Results)),
+		slog.Int("result_count", len(results.Memories)),
 	)
 
 	return results, nil

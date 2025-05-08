@@ -18,7 +18,7 @@ type GetSessionConfig struct {
 //
 // The events and states are not set within each Session object.
 type ListSessionsResponse struct {
-	Sessions []*Session
+	Sessions []Session
 }
 
 // ListEventsResponse is the response of listing events in a session.
@@ -30,15 +30,15 @@ type ListEventsResponse struct {
 // SessionService is an interface for managing sessions and their events.
 type SessionService interface {
 	// CreateSession creates a new session with the given parameters.
-	CreateSession(ctx context.Context, appName, userID, sessionID string) (*Session, error)
+	CreateSession(ctx context.Context, appName, userID, sessionID string) (Session, error)
 
 	// GetSession retrieves a specific session.
 	// If maxEvents is > 0, only return the last maxEvents events.
 	// If since is not nil, only return events after the given time.
-	GetSession(ctx context.Context, appName, userID, sessionID string, maxEvents int, since *time.Time) (*Session, error)
+	GetSession(ctx context.Context, appName, userID, sessionID string, maxEvents int, since *time.Time) (Session, error)
 
 	// ListSessions lists all sessions for a user/app.
-	ListSessions(ctx context.Context, appName, userID string) ([]*Session, error)
+	ListSessions(ctx context.Context, appName, userID string) ([]Session, error)
 
 	// DeleteSession removes a specific session.
 	DeleteSession(ctx context.Context, appName, userID, sessionID string) error

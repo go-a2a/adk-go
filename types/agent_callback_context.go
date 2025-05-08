@@ -3,90 +3,90 @@
 
 package types
 
-// Common callback event types
-const (
-	// Before agent execution.
-	CallbackBeforeExecution = "before_execution"
+import (
+	"context"
+	"errors"
 
-	// After agent execution.
-	CallbackAfterExecution = "after_execution"
-
-	// Before tool execution.
-	CallbackBeforeToolExecution = "before_tool_execution"
-
-	// After tool execution.
-	CallbackAfterToolExecution = "after_tool_execution"
-
-	// On error.
-	CallbackOnError = "on_error"
+	"google.golang.org/genai"
 )
 
-// CallbackFunc is the function type for callbacks.
-type CallbackFunc func(*CallbackContext) error
-
-// CallbackContext provides context for callbacks.
+// CallbackContext provides the context of various callbacks within an agent run.
 type CallbackContext struct {
 	*ReadOnlyContext
 
-	// Agent is the agent executing the callback.
-	Agent Agent
+	eventActions *EventActions
 
-	EventAction *EventActions
-
-	State *State
-
-	// Input is the input provided to the agent.
-	Input map[string]any
-
-	// Response is the current response.
-	Response *LLMResponse
-
-	// ToolCall is the tool call being executed, if any.
-	ToolCall *ToolCall
-
-	// Metadata contains additional information.
-	Metadata map[string]any
+	state *State
 }
 
 type CallbackContextOption func(*CallbackContext)
 
-// WithResponse adds a response to the callback context.
-func WithResponse(response *LLMResponse) CallbackContextOption {
+func WithEventActions(eventActions *EventActions) CallbackContextOption {
 	return func(cc *CallbackContext) {
-		cc.Response = response
-	}
-}
-
-// WithToolCall adds a tool call to the callback context.
-func WithToolCall(toolCall *ToolCall) CallbackContextOption {
-	return func(cc *CallbackContext) {
-		cc.ToolCall = toolCall
+		cc.eventActions = eventActions
 	}
 }
 
 // NewCallbackContext creates a new [*CallbackContext] with the given args.
-func NewCallbackContext(ic *InvocationContext, opts ...CallbackContextOption) *CallbackContext {
+func NewCallbackContext(invocationContext *InvocationContext, opts ...CallbackContextOption) *CallbackContext {
 	cc := &CallbackContext{
-		ReadOnlyContext: &ReadOnlyContext{
-			InvocationContext: ic,
-		},
-		EventAction: new(EventActions),
+		ReadOnlyContext: NewReadOnlyContext(invocationContext),
+		eventActions:    new(EventActions),
 	}
 	for _, opt := range opts {
 		opt(cc)
 	}
 
-	cc.State = NewState(ic.Session.State(), cc.EventAction.StateDelta)
+	cc.state = NewState(invocationContext.Session.State(), cc.eventActions.StateDelta)
 
 	return cc
 }
 
-// GetMetadata gets a metadata value.
-func (c *CallbackContext) GetMetadata(key string) any {
-	return c.Metadata[key]
+// State returns the delta-aware state of the current session.
+func (cc *CallbackContext) State() *State {
+	return cc.state
 }
 
-// SetMetadata sets a metadata value.
-func (c *CallbackContext) SetMetadata(key string, value any) {
-	c.Metadata[key] = value
+// UserContent returns the user content that started this invocation. READONLY field.
+func (cc *CallbackContext) UserContent() *genai.Content {
+	return cc.invocationContext.UserContent
+}
+
+// LoadArtifact loads an artifact attached to the current session.
+func (cc *CallbackContext) LoadArtifact(ctx context.Context, filename string, version int) (*genai.Part, error) {
+	artifactSvc := cc.invocationContext.ArtifactService
+	if artifactSvc == nil {
+		return nil, errors.New("artifact service is not initialized")
+	}
+
+	return artifactSvc.LoadArtifact(ctx,
+		cc.invocationContext.AppName(),
+		cc.invocationContext.UserID(),
+		cc.invocationContext.Session.ID(),
+		filename,
+		version,
+	)
+}
+
+// SaveArtifact saves an artifact and records it as delta for the current session.
+func (cc *CallbackContext) SaveArtifact(ctx context.Context, filename string, artifact *genai.Part) (int, error) {
+	artifactSvc := cc.invocationContext.ArtifactService
+	if artifactSvc == nil {
+		return 0, errors.New("artifact service is not initialized")
+	}
+
+	version, err := artifactSvc.SaveArtifact(
+		ctx,
+		cc.invocationContext.AppName(),
+		cc.invocationContext.UserID(),
+		cc.invocationContext.Session.ID(),
+		filename,
+		artifact,
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	cc.eventActions.ArtifactDelta[filename] = version
+	return version, nil
 }

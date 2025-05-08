@@ -11,14 +11,22 @@ import (
 	"google.golang.org/genai"
 )
 
-// LLMRequest represents a request to a language model.
+// LLMRequest represents a LLM request class that allows passing in tools, output schema and system.
 type LLMRequest struct {
-	Model             string                       `json:"model,omitempty"`
-	Contents          []*genai.Content             `json:"contents"`
+	// The model name.
+	Model string `json:"model,omitempty"`
+
+	// The contents to send to the model.
+	Contents []*genai.Content `json:"contents"`
+
+	// Additional config for the generate content request.
+	//
+	// tools in generate_content_config should not be set.
 	Config            *genai.GenerateContentConfig `json:"config,omitempty"`
 	LiveConnectConfig *genai.LiveConnectConfig     `json:"live_connect_config,omitempty"`
-	ToolMap           map[string]Tool              `json:"tool_map,omitempty"`
-	OutputSchema      map[string]any               `json:"output_schema,omitempty"`
+
+	// The tools map.
+	ToolMap map[string]Tool `json:"tool_map,omitempty"`
 }
 
 type LLMRequestOption func(*LLMRequest)
@@ -55,12 +63,10 @@ func WithSafetySettings(settings ...*genai.SafetySetting) LLMRequestOption {
 }
 
 // NewLLMRequest creates a new [LLMRequest].
-func NewLLMRequest(model string, contents []*genai.Content, opts ...LLMRequestOption) *LLMRequest {
+func NewLLMRequest(contents []*genai.Content, opts ...LLMRequestOption) *LLMRequest {
 	r := &LLMRequest{
-		Model:        model,
-		Contents:     contents,
-		ToolMap:      make(map[string]Tool),
-		OutputSchema: make(map[string]any),
+		Contents: contents,
+		ToolMap:  make(map[string]Tool),
 	}
 	for _, opt := range opts {
 		opt(r)
@@ -69,8 +75,8 @@ func NewLLMRequest(model string, contents []*genai.Content, opts ...LLMRequestOp
 	return r
 }
 
-// AppendInstructions adds system instructions to the request.
-func (r *LLMRequest) AppendInstructions(instructions ...string) *LLMRequest {
+// AppendInstructions appends instructions to the system instruction.
+func (r *LLMRequest) AppendInstructions(instructions ...string) {
 	if r.Config == nil {
 		r.Config = &genai.GenerateContentConfig{}
 	}
@@ -83,14 +89,12 @@ func (r *LLMRequest) AppendInstructions(instructions ...string) *LLMRequest {
 				},
 			},
 		}
-		return r
+		return
 	}
 
 	r.Config.SystemInstruction.Parts = append(r.Config.SystemInstruction.Parts, &genai.Part{
 		Text: "\n\n" + strings.Join(instructions, "\n\n"),
 	})
-
-	return r
 }
 
 // AppendTools adds tools to the request.
@@ -119,6 +123,7 @@ func (r *LLMRequest) SetOutputSchema(schema *genai.Schema) *LLMRequest {
 
 	r.Config.ResponseSchema = schema
 	r.Config.ResponseMIMEType = "application/json"
+
 	return r
 }
 

@@ -32,7 +32,7 @@ func NewBase(name string, opts ...Option) (*Base, error) {
 
 	for _, subAgent := range base.subAgents {
 		if subAgent.ParentAgent() != nil {
-			return nil, fmt.Errorf("Agent %s already has a parent agent, current parent: %s, trying to add: %s", subAgent.Name(), subAgent.ParentAgent().Name(), base.name)
+			return nil, fmt.Errorf("agent %s already has a parent agent, current parent: %s, trying to add: %s", subAgent.Name(), subAgent.ParentAgent().Name(), base.name)
 		}
 	}
 
@@ -53,7 +53,7 @@ func (a *Base) Execute(ctx context.Context, input map[string]any, opts ...types.
 func (a *Base) Run(ctx context.Context, parentContext *types.InvocationContext) iter.Seq2[*types.Event, error] {
 	return func(yield func(*types.Event, error) bool) {
 		ic := a.createInvocationContext(parentContext)
-		beforeEvent, err := a.handleBeforeAgentCallback(ctx, ic)
+		beforeEvent, err := a.handleBeforeAgentCallbacks(ctx, ic)
 		if err != nil {
 			yield(nil, err)
 			return
@@ -141,7 +141,7 @@ func (a *Base) createInvocationContext(parentContext *types.InvocationContext) *
 }
 
 // handleBeforeAgentCallback runs the before_agent_callback if it exists.
-func (a *Base) handleBeforeAgentCallback(ctx context.Context, ic *types.InvocationContext) (*types.Event, error) {
+func (a *Base) handleBeforeAgentCallbacks(ctx context.Context, ic *types.InvocationContext) (*types.Event, error) {
 	cc := types.NewCallbackContext(ic)
 	bcContent, err := a.TriggerBeforeCallback(ctx, cc)
 	if err != nil {
@@ -158,7 +158,7 @@ func (a *Base) handleBeforeAgentCallback(ctx context.Context, ic *types.Invocati
 		ev.Author = a.name
 		ev.Branch = ic.Branch
 		ev.Content = bcContent
-		ev.Action = cc.EventAction
+		ev.Action = cc.EventActions
 
 		ic.EndInvocation = true
 		return ev, nil
@@ -169,7 +169,7 @@ func (a *Base) handleBeforeAgentCallback(ctx context.Context, ic *types.Invocati
 		ev.InvocationID = ic.InvocationID
 		ev.Author = a.name
 		ev.Branch = ic.Branch
-		ev.Action = cc.EventAction
+		ev.Action = cc.EventActions
 	}
 
 	return ev, nil
@@ -193,7 +193,7 @@ func (a *Base) handleAfterAgentCallback(ctx context.Context, ic *types.Invocatio
 		ev.Author = a.name
 		ev.Branch = ic.Branch
 		ev.Content = bcContent
-		ev.Action = cc.EventAction
+		ev.Action = cc.EventActions
 	}
 
 	return ev, nil
@@ -201,30 +201,40 @@ func (a *Base) handleAfterAgentCallback(ctx context.Context, ic *types.Invocatio
 
 // TriggerBeforeCallback triggers before callbacks.
 func (a *Base) TriggerBeforeCallback(ctx context.Context, callbackCtx *types.CallbackContext) (*genai.Content, error) {
-	if a.beforeAgentCallback != nil {
+	if len(a.beforeAgentCallbacks) == 0 {
 		return nil, nil
 	}
 
-	content, err := a.beforeAgentCallback(callbackCtx)
-	if err != nil {
-		a.logger.ErrorContext(ctx, "before callback error", slog.Any("error", err))
-		return nil, err
+	for _, callbacks := range a.beforeAgentCallbacks {
+		content, err := callbacks(callbackCtx)
+		if err != nil {
+			a.logger.ErrorContext(ctx, "before callback error", slog.Any("error", err))
+			return nil, err
+		}
+		if content != nil {
+			return content, nil
+		}
 	}
 
-	return content, nil
+	return nil, nil
 }
 
 // TriggerAfterCallback triggers after callbacks.
 func (a *Base) TriggerAfterCallback(ctx context.Context, callbackCtx *types.CallbackContext) (*genai.Content, error) {
-	if a.afterAgentCallback != nil {
+	if len(a.afterAgentCallbacks) == 0 {
 		return nil, nil
 	}
 
-	content, err := a.afterAgentCallback(callbackCtx)
-	if err != nil {
-		a.logger.ErrorContext(ctx, "after callback error", slog.Any("error", err))
-		return nil, err
+	for _, callbacks := range a.beforeAgentCallbacks {
+		content, err := callbacks(callbackCtx)
+		if err != nil {
+			a.logger.ErrorContext(ctx, "before callback error", slog.Any("error", err))
+			return nil, err
+		}
+		if content != nil {
+			return content, nil
+		}
 	}
 
-	return content, nil
+	return nil, nil
 }

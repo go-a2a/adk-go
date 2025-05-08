@@ -4,9 +4,45 @@
 package types
 
 import (
+	"fmt"
+
 	"github.com/google/uuid"
 	"google.golang.org/genai"
 )
+
+// LLMCallsLimitExceededError represents error thrown when the number of LLM calls exceed the limit.
+type LLMCallsLimitExceededError string
+
+// NewLLMCallsLimitExceededError returns the new [LLMCallsLimitExceededError] error.
+func NewLLMCallsLimitExceededError(msg string, a ...any) error {
+	return LLMCallsLimitExceededError(fmt.Sprintf(msg, a...))
+}
+
+// Error returns a string representation of the LLMCallsLimitExceededError.
+func (e LLMCallsLimitExceededError) Error() string {
+	return string(e)
+}
+
+// InvocationCostManager represents a container to keep track of the cost of invocation.
+//
+// While we don't expected the metrics captured here to be a direct
+// representatative of monetary cost incurred in executing the current
+// invocation, but they, in someways have an indirect affect.
+type InvocationCostManager struct {
+	// A counter that keeps track of number of llm calls made.
+	llmCalls int
+}
+
+// IncrementAndEnforceLLMCallsLimit increments llmCalls and enforces the limit.
+func (m *InvocationCostManager) IncrementAndEnforceLLMCallsLimit(runConfig *RunConfig) error {
+	m.llmCalls++
+	if runConfig != nil {
+		if runConfig.MaxLLMCalls > 0 && m.llmCalls > runConfig.MaxLLMCalls {
+			return LLMCallsLimitExceededError(fmt.Sprintf("max number of llm calls limit of %d exceeded", runConfig.MaxLLMCalls))
+		}
+	}
+	return nil
+}
 
 // InvocationContext an invocation context represents the data of a single invocation of an agent.
 //
@@ -23,6 +59,7 @@ import (
 //  2. Ends when agent.run() ends.
 //
 // An LLM agent call is an agent with a BaseLLMFlow.
+//
 // An LLM agent call can contain one or multiple steps.
 //
 // An LLM agent runs steps in a loop until:
@@ -51,7 +88,7 @@ type InvocationContext struct {
 	// InvocationID is the id of this invocation context. Readonly.
 	InvocationID string
 
-	// Branch is the branch of the invocation context.
+	// The branch of the invocation context.
 	//
 	// The format is like agent_1.agent_2.agent_3, where agent_1 is the parent of
 	// agent_2, and agent_2 is the parent of agent_3.
@@ -60,37 +97,35 @@ type InvocationContext struct {
 	// conversation history.
 	Branch string
 
-	// Agent is the current agent of this invocation context. Readonly.
+	// The current agent of this invocation context. Readonly.
 	Agent Agent
 
-	// UserContent is the user content that started this invocation. Readonly.
+	// The user content that started this invocation. Readonly.
 	UserContent *genai.Content
 
-	// Session is the current session of this invocation context. Readonly.
+	// The current session of this invocation context. Readonly.
 	Session Session
 
-	// EndInvocation whether to end this invocation.
+	// Whether to end this invocation.
 	//
 	// Set to True in callbacks or tools to terminate this invocation.
 	EndInvocation bool
 
-	// LiveRequestQueue is the queue to receive live requests.
+	// The queue to receive live requests.
 	LiveRequestQueue *LiveRequestQueue
 
-	// ActiveStreamingTools is the running streaming tools of this invocation.
+	// The running streaming tools of this invocation.
 	ActiveStreamingTools map[string]*ActiveStreamingTool
 
-	// TranscriptionCache caches necessary, data audio or contents, that are needed by transcription.
+	// Caches necessary, data audio or contents, that are needed by transcription.
 	TranscriptionCache []*TranscriptionEntry
 
-	// RunConfig is the Configurations for live agents under this invocation.
+	// Configurations for live agents under this invocation.
 	RunConfig *RunConfig
 
-	// Input is the input provided to the agent.
-	Input map[string]any
-
-	// Metadata contains additional information.
-	Metadata map[string]any
+	// A container to keep track of different kinds of costs incurred as a part
+	// of this invocation.
+	invocationCostManager *InvocationCostManager
 }
 
 // InvocationContextOption is a function that modifies the [InvocationContext].
@@ -99,12 +134,6 @@ type InvocationContextOption func(*InvocationContext)
 func WithArtifactService(svc ArtifactService) InvocationContextOption {
 	return func(ic *InvocationContext) {
 		ic.ArtifactService = svc
-	}
-}
-
-func WithSessionService(svc SessionService) InvocationContextOption {
-	return func(ic *InvocationContext) {
-		ic.SessionService = svc
 	}
 }
 
@@ -145,16 +174,12 @@ func WithTranscriptionCache(entries ...*TranscriptionEntry) InvocationContextOpt
 }
 
 // NewInvocationContext creates a new [InvocationContext].
-func NewInvocationContext(agent Agent, input map[string]any, runConfig *RunConfig, opts ...InvocationContextOption) *InvocationContext {
-	if runConfig == nil {
-		runConfig = DefaultRunConfig()
-	}
-
+func NewInvocationContext(agent Agent, session Session, sessionSvc SessionService, opts ...InvocationContextOption) *InvocationContext {
 	ic := &InvocationContext{
-		Agent:     agent,
-		Input:     input,
-		RunConfig: runConfig,
-		Metadata:  make(map[string]any),
+		Agent:                 agent,
+		invocationCostManager: &InvocationCostManager{},
+		Session:               session,
+		SessionService:        sessionSvc,
 	}
 	for _, opt := range opts {
 		opt(ic)
@@ -163,22 +188,17 @@ func NewInvocationContext(agent Agent, input map[string]any, runConfig *RunConfi
 	return ic
 }
 
-func (c *InvocationContext) AppName() string {
-	return c.Session.AppName()
+// IncrementLLMCallCount tracks number of llm calls made.
+func (ic *InvocationContext) IncrementLLMCallCount() error {
+	return ic.invocationCostManager.IncrementAndEnforceLLMCallsLimit(ic.RunConfig)
 }
 
-func (c *InvocationContext) UserID() string {
-	return c.Session.UserID()
+func (ic *InvocationContext) AppName() string {
+	return ic.Session.AppName()
 }
 
-// SetMetadata sets a metadata value.
-func (c *InvocationContext) SetMetadata(key string, value any) {
-	c.Metadata[key] = value
-}
-
-// GetMetadata gets a metadata value.
-func (c *InvocationContext) GetMetadata(key string) any {
-	return c.Metadata[key]
+func (ic *InvocationContext) UserID() string {
+	return ic.Session.UserID()
 }
 
 // NewInvocationContextID generates a new invocation context ID.

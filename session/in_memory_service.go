@@ -20,7 +20,7 @@ import (
 // InMemoryService is an in-memory implementation of the [SessionService].
 type InMemoryService struct {
 	// sessions is a map from app name to a map from user ID to a map from session ID to session.
-	sessions map[string]map[string]map[string]*session
+	sessions map[string]map[string]map[string]types.Session
 
 	// userState is a map from app name to a map from user ID to a map from key to value.
 	userState map[string]map[string]map[string]any
@@ -32,18 +32,15 @@ type InMemoryService struct {
 	mu     sync.RWMutex
 }
 
-var _ Service = (*InMemoryService)(nil)
+var _ types.SessionService = (*InMemoryService)(nil)
 
 // NewInMemoryService creates a new [InMemoryService].
-func NewInMemoryService(opts ...InMemoryOption) *InMemoryService {
+func NewInMemoryService() *InMemoryService {
 	s := &InMemoryService{
-		sessions:  make(map[string]map[string]map[string]*session),
+		sessions:  make(map[string]map[string]map[string]types.Session),
 		userState: make(map[string]map[string]map[string]any),
 		appState:  make(map[string]map[string]any),
 		logger:    slog.Default(),
-	}
-	for _, opt := range opts {
-		opt(s)
 	}
 
 	return s
@@ -71,10 +68,10 @@ func (s *InMemoryService) CreateSession(ctx context.Context, appName, userID, se
 	ses := NewSession(appName, userID, sessionID, state, time.Now())
 
 	if _, ok := s.sessions[appName]; !ok {
-		s.sessions[appName] = make(map[string]map[string]*session)
+		s.sessions[appName] = make(map[string]map[string]types.Session)
 	}
 	if _, ok := s.sessions[appName][userID]; !ok {
-		s.sessions[appName][userID] = make(map[string]*session)
+		s.sessions[appName][userID] = make(map[string]types.Session)
 	}
 
 	s.sessions[appName][userID][sessionID] = ses
@@ -86,7 +83,7 @@ func (s *InMemoryService) CreateSession(ctx context.Context, appName, userID, se
 }
 
 // GetSession retrieves a session by ID.
-func (s *InMemoryService) GetSession(ctx context.Context, appName, userID, sessionID string, config *GetSessionConfig) (types.Session, error) {
+func (s *InMemoryService) GetSession(ctx context.Context, appName, userID, sessionID string, config *types.GetSessionConfig) (types.Session, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -112,10 +109,10 @@ func (s *InMemoryService) GetSession(ctx context.Context, appName, userID, sessi
 	if config != nil {
 		// Filter events based on config
 		if config.NumRecentEvents > 0 {
-			copiedSession.events = copiedSession.GetRecentEvents(config.NumRecentEvents)
+			copiedSession.AddEvent(copiedSession.GetRecentEvents(config.NumRecentEvents))
 		}
 		if !config.AfterTimestamp.IsZero() {
-			copiedSession.events = copiedSession.GetEventsAfter(config.AfterTimestamp)
+			copiedSession.AddEvent(copiedSession.GetEventsAfter(config.AfterTimestamp))
 		}
 	}
 
@@ -123,7 +120,7 @@ func (s *InMemoryService) GetSession(ctx context.Context, appName, userID, sessi
 }
 
 // ListSessions lists all sessions for a user.
-func (s *InMemoryService) ListSessions(ctx context.Context, appName, userID string) (*ListSessionsResponse, error) {
+func (s *InMemoryService) ListSessions(ctx context.Context, appName, userID string) (*types.ListSessionsResponse, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -132,7 +129,7 @@ func (s *InMemoryService) ListSessions(ctx context.Context, appName, userID stri
 		slog.String("user_id", userID),
 	)
 
-	emptyResponse := &ListSessionsResponse{Sessions: []*session{}}
+	emptyResponse := &types.ListSessionsResponse{Sessions: []types.Session{}}
 
 	if _, ok := s.sessions[appName]; !ok {
 		return emptyResponse, nil
@@ -141,13 +138,13 @@ func (s *InMemoryService) ListSessions(ctx context.Context, appName, userID stri
 		return emptyResponse, nil
 	}
 
-	sessionsWithoutEvents := make([]*session, 0, len(s.sessions[appName][userID]))
+	sessionsWithoutEvents := make([]types.Session, 0, len(s.sessions[appName][userID]))
 	for _, ses := range s.sessions[appName][userID] {
-		copiedSession := NewSession(ses.appName, ses.userID, ses.id, make(map[string]any), ses.lastUpdateTime)
+		copiedSession := NewSession(ses.AppName(), ses.UserID(), ses.ID(), make(map[string]any), ses.lastUpdateTime)
 		sessionsWithoutEvents = append(sessionsWithoutEvents, copiedSession)
 	}
 
-	return &ListSessionsResponse{Sessions: sessionsWithoutEvents}, nil
+	return &types.ListSessionsResponse{Sessions: sessionsWithoutEvents}, nil
 }
 
 // DeleteSession deletes a session.
@@ -230,33 +227,33 @@ func (s *InMemoryService) AppendEvent(ctx context.Context, ses types.Session, ev
 }
 
 // ListEvents lists events for a session.
-func (s *InMemoryService) ListEvents(ctx context.Context, appName, userID, sessionID string) (*ListEventsResponse, error) {
+func (s *InMemoryService) ListEvents(ctx context.Context, appName, userID, sessionID string) (*types.ListEventsResponse, error) {
 	// This method is not implemented in the Python version
 	return nil, fmt.Errorf("ListEvents is not implemented")
 }
 
 // copySession creates a deep copy of a session.
-func (s *InMemoryService) copySession(ses *session) *session {
+func (s *InMemoryService) copySession(ses types.Session) types.Session {
 	// Create a new session with the same metadata
-	copiedSession := NewSession(ses.appName, ses.userID, ses.id, make(map[string]any), ses.lastUpdateTime)
+	copiedSession := NewSession(ses.AppName(), ses.UserID(), ses.ID(), make(map[string]any), ses.lastUpdateTime)
 
 	// Copy events
-	for _, event := range ses.events {
+	for _, event := range ses.Events() {
 		copiedSession.AddEvent(event)
 	}
 
 	// Copy state
-	maps.Copy(copiedSession.state, ses.state)
+	maps.Copy(copiedSession.state, ses.State())
 
 	return copiedSession
 }
 
 // mergeState merges app and user state into the session state.
-func (s *InMemoryService) mergeState(appName, userID string, ses *session) types.Session {
+func (s *InMemoryService) mergeState(appName, userID string, ses types.Session) types.Session {
 	// Merge app state
 	if appState, ok := s.appState[appName]; ok {
 		for key, value := range appState {
-			ses.state[types.AppPrefix+key] = value
+			ses.State()[types.AppPrefix+key] = value
 		}
 	}
 
@@ -264,7 +261,7 @@ func (s *InMemoryService) mergeState(appName, userID string, ses *session) types
 	if userStateByApp, ok := s.userState[appName]; ok {
 		if userState, ok := userStateByApp[userID]; ok {
 			for key, value := range userState {
-				ses.state[types.UserPrefix+key] = value
+				ses.State()[types.UserPrefix+key] = value
 			}
 		}
 	}
