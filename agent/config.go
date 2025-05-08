@@ -4,86 +4,85 @@
 package agent
 
 import (
-	"context"
 	"log/slog"
 
 	"github.com/go-a2a/adk-go/types"
 )
 
-// BaseAgent provides common functionality for all agents.
+// Config represents the configuration for an [types.Agent].
 type Config struct {
-	name        string
-	description string
-	parentAgent types.Agent
-	subAgents   []types.Agent
-	tools       []types.Tool
-	logger      *slog.Logger
-	callbacks   map[string][]types.CallbackFunc
-}
+	// The agent's name.
+	//
+	// Agent name must be a Go identifier and unique within the agent tree.
+	// Agent name cannot be "user", since it's reserved for end-user's input.
+	name string
 
-// NewConfig creates a new agent configuration with the given name.
-func NewConfig(name string) *Config {
-	return &Config{
-		name: name,
-	}
+	// Description about the agent's capability.
+	//
+	// The model uses this to determine whether to delegate control to the agent.
+	// One-line description is enough and preferred.
+	description string
+
+	// The parent agent of this agent.
+	//
+	// Note that an agent can ONLY be added as sub-agent once.
+	//
+	// If you want to add one agent twice as sub-agent, consider to create two agent
+	// instances with identical config, but with different name and add them to the
+	// agent tree.
+	parentAgent types.Agent
+
+	// The sub-agents of this agent.
+	subAgents []types.Agent
+
+	// Callback signature that is invoked before the agent run.
+	beforeAgentCallback types.BeforeAgentCallback
+
+	// Callback signature that is invoked after the agent run.
+	afterAgentCallback types.AfterAgentCallback
+
+	logger *slog.Logger
 }
 
 // Option configures a [Config].
-type Option func(*Config)
+type Option interface {
+	apply(*Config)
+}
+
+type optionFunc func(*Config)
+
+func (o optionFunc) apply(c *Config) { o(c) }
 
 // WithParentAgent sets the parentAgent for the [Config].
 func WithParentAgent(parentAgent types.Agent) Option {
-	return func(a *Config) {
-		a.parentAgent = parentAgent
-	}
+	return optionFunc(func(c *Config) {
+		c.parentAgent = parentAgent
+	})
 }
 
 // WithSubAgents adds sub-agents for the [Config].
 func WithSubAgents(agents ...types.Agent) Option {
-	return func(a *Config) {
-		a.subAgents = append(a.subAgents, agents...)
-	}
-}
-
-// WithTools sets the initial tools for the [Config].
-func WithTools(tools ...types.Tool) Option {
-	return func(a *Config) {
-		a.tools = append(a.tools, tools...)
-	}
+	return optionFunc(func(c *Config) {
+		c.subAgents = append(c.subAgents, agents...)
+	})
 }
 
 // WithLogger sets the logger for the [Config].
 func WithLogger(logger *slog.Logger) Option {
-	return func(a *Config) {
-		a.logger = logger
-	}
+	return optionFunc(func(c *Config) {
+		c.logger = logger
+	})
 }
 
-// RegisterCallback registers a callback for an event.
-func (a *Config) RegisterCallback(event string, callback types.CallbackFunc) {
-	if a.callbacks == nil {
-		a.callbacks = make(map[string][]types.CallbackFunc)
+// NewConfig creates a new agent configuration with the given name.
+func NewConfig(name string, opts ...Option) *Config {
+	c := &Config{
+		name:   name,
+		logger: slog.Default(),
 	}
-	a.callbacks[event] = append(a.callbacks[event], callback)
-}
-
-// TriggerCallbacks triggers all callbacks for an event.
-func (a *Config) TriggerCallbacks(ctx context.Context, event string, callbackCtx *types.CallbackContext) error {
-	if a.callbacks == nil {
-		return nil
+	for _, opt := range opts {
+		opt.apply(c)
 	}
 
-	callbacks, ok := a.callbacks[event]
-	if !ok {
-		return nil
-	}
-
-	for _, callback := range callbacks {
-		if err := callback(callbackCtx); err != nil {
-			a.logger.ErrorContext(ctx, "callback error", slog.Any("event", event), slog.Any("err", err))
-			return err
-		}
-	}
-
-	return nil
+	return c
 }

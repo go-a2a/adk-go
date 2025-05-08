@@ -10,19 +10,18 @@ import (
 
 	"google.golang.org/genai"
 
-	"github.com/go-a2a/adk-go/memory"
 	"github.com/go-a2a/adk-go/types"
 )
 
 var (
 	// memoryService is a global memory service used by the memory tool.
 	// It should be set using SetMemoryService before using the memory tool.
-	memoryService memory.Service
+	memoryService types.MemoryService
 )
 
 // SetMemoryService sets the memory service used by the memory tool.
-func SetMemoryService(service memory.Service) {
-	memoryService = service
+func SetMemoryService(svc types.MemoryService) {
+	memoryService = svc
 }
 
 // LoadMemory is a tool that searches for information in memory.

@@ -5,6 +5,8 @@ package types
 
 // ReadOnlyContext provides read-only access to agent context.
 type ReadOnlyContext struct {
+	InvocationContext *InvocationContext
+
 	// Agent is the agent being invoked.
 	Agent Agent
 

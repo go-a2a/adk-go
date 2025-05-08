@@ -56,3 +56,5 @@ coverage.out
 
 # tools
 internal/tools/bin/
+
+**/.claude/settings.local.json

@@ -14,7 +14,7 @@ type LLMResponse struct {
 	// Content is the content of the response.
 	Content *genai.Content
 
-	Action EventActions
+	Action *EventActions
 
 	ToolCalls []*ToolCall
 

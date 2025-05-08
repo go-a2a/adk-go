@@ -26,8 +26,14 @@ type CallbackFunc func(*CallbackContext) error
 
 // CallbackContext provides context for callbacks.
 type CallbackContext struct {
+	*ReadOnlyContext
+
 	// Agent is the agent executing the callback.
 	Agent Agent
+
+	EventAction *EventActions
+
+	State *State
 
 	// Input is the input provided to the agent.
 	Input map[string]any
@@ -59,15 +65,18 @@ func WithToolCall(toolCall *ToolCall) CallbackContextOption {
 }
 
 // NewCallbackContext creates a new [*CallbackContext] with the given args.
-func NewCallbackContext(agent Agent, input map[string]any, opts ...CallbackContextOption) *CallbackContext {
+func NewCallbackContext(ic *InvocationContext, opts ...CallbackContextOption) *CallbackContext {
 	cc := &CallbackContext{
-		Agent:    agent,
-		Input:    input,
-		Metadata: make(map[string]any),
+		ReadOnlyContext: &ReadOnlyContext{
+			InvocationContext: ic,
+		},
+		EventAction: new(EventActions),
 	}
 	for _, opt := range opts {
 		opt(cc)
 	}
+
+	cc.State = NewState(ic.Session.State(), cc.EventAction.StateDelta)
 
 	return cc
 }
