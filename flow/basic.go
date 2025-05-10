@@ -25,6 +25,11 @@ func (f *BasicLlmRequestProcessor) Run(ctx context.Context, ic *types.Invocation
 			return
 		}
 
-		req.Model = llmAgent
+		var err error
+		req.Model, err = llmAgent.CanonicalModel(ctx)
+		if err != nil {
+			yield(nil, err)
+			return
+		}
 	}
 }

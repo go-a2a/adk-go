@@ -5,6 +5,7 @@ package model
 
 import (
 	"context"
+	"fmt"
 	"iter"
 
 	"google.golang.org/genai"
@@ -90,4 +91,35 @@ type Model interface {
 
 	// StreamGenerateContent streams generated content from the model.
 	StreamGenerateContent(ctx context.Context, request *types.LLMRequest) iter.Seq2[*types.LLMResponse, error]
+}
+
+type NotImplementedError string
+
+func (err NotImplementedError) Error() string {
+	return string(err)
+}
+
+// BaseLLM represents a base LLM implementation.
+type BaseLLM struct {
+	*Config
+
+	// Model represents the specific LLM model name.
+	Model string
+}
+
+var _ Model = (*BaseLLM)(nil)
+
+func (m *BaseLLM) Name() string {
+	return m.Model
+}
+
+func (m *BaseLLM) Connect() (BaseConnection, error) {
+	return nil, NotImplementedError(fmt.Sprintf("async generation is not supported for %s", m.Model))
+}
+
+func (m *BaseLLM) GenerateContent(ctx context.Context, request *types.LLMRequest) (*types.LLMResponse, error) {
+}
+
+func (m *BaseLLM) SupportedModels() []string {
+	return []string{}
 }
