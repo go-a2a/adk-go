@@ -322,4 +322,3 @@ type HybridSearchOptions struct {
 	// Filters are additional filters to apply to the search.
 	Filters map[string]any `json:"filters,omitempty"`
 }
-

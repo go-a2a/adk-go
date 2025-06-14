@@ -86,4 +86,3 @@
 // The Client and all service instances are safe for concurrent use across
 // multiple goroutines.
 package rag
-

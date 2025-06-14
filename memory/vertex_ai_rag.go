@@ -20,7 +20,7 @@ import (
 
 // VertexAIRagService implements Service with Google Cloud Vertex AI RAG.
 type VertexAIRagService struct {
-	ragClient               *ragclient.Client
+	ragClient               *ragclient.Service
 	ragCorpus               string
 	similarityTopK          int
 	vectorDistanceThreshold float64
@@ -56,7 +56,7 @@ func WithVectorDistanceThreshold(threshold float64) VertexAIRagOption {
 
 // NewVertexAIRagService creates a new VertexAIRagService.
 func NewVertexAIRagService(ctx context.Context, projectID, location, ragCorpus string, opts ...VertexAIRagOption) (*VertexAIRagService, error) {
-	ragClient, err := ragclient.NewClient(ctx, projectID, location)
+	ragClient, err := ragclient.NewService(ctx, projectID, location)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create RAG client: %w", err)
 	}

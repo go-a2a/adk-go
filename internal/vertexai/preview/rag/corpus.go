@@ -344,4 +344,3 @@ func (s *CorpusService) parseCorpusName(name string) (string, error) {
 	// that handles the full resource name parsing
 	return name, nil
 }
-

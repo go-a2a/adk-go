@@ -426,8 +426,8 @@ func TestMockSearchOperations(t *testing.T) {
 						Content:  "Data science for beginners: an introduction to the field...",
 						Distance: 0.11,
 						Metadata: map[string]any{
-							"corpus":   "corpus-1",
-							"category": "beginner",
+							"corpus":     "corpus-1",
+							"category":   "beginner",
 							"difficulty": "easy",
 						},
 					},
@@ -550,7 +550,7 @@ func TestMockErrorScenarios(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Mock validation of corpus name format
 			isValid := validateCorpusName(tt.scenario)
-			
+
 			if tt.expectError && isValid {
 				t.Error("Expected validation error but name was considered valid")
 			}
@@ -566,30 +566,30 @@ func validateCorpusName(name string) bool {
 	if name == "" {
 		return false
 	}
-	
+
 	// Basic format check: projects/{project}/locations/{location}/ragCorpora/{corpus}
 	expectedPrefix := "projects/"
 	if len(name) < len(expectedPrefix) {
 		return false
 	}
-	
+
 	if name[:len(expectedPrefix)] != expectedPrefix {
 		return false
 	}
-	
+
 	// Check for ragCorpora resource type
 	if !contains(name, "/ragCorpora/") {
 		return false
 	}
-	
+
 	return true
 }
 
 // contains is a helper function to check if a string contains a substring.
 func contains(s, substr string) bool {
-	return len(s) >= len(substr) && s[len(s)-len(substr):] == substr || 
-		   (len(s) > len(substr) && s[:len(substr)] == substr) ||
-		   (len(s) > len(substr) && findSubstring(s, substr))
+	return len(s) >= len(substr) && s[len(s)-len(substr):] == substr ||
+		(len(s) > len(substr) && s[:len(substr)] == substr) ||
+		(len(s) > len(substr) && findSubstring(s, substr))
 }
 
 // findSubstring is a simple substring search helper.

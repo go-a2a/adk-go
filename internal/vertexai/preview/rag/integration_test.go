@@ -87,7 +87,7 @@ func TestRAGWorkflowIntegration(t *testing.T) {
 
 	// Step 4: Test file operations (this will fail without real files, but tests the API)
 	t.Log("Testing file operations...")
-	
+
 	// Try to list files (should be empty initially)
 	filesResp, err := client.ListFiles(ctx, corpus.Name, 10, "")
 	if err != nil {
@@ -290,7 +290,7 @@ func TestRAGResourceNaming(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
-			
+
 			// Skip actual client creation for unit test
 			if testing.Short() {
 				t.Skip("skipping in short mode")
@@ -298,7 +298,7 @@ func TestRAGResourceNaming(t *testing.T) {
 
 			// For the naming test, we can create a client but don't need valid credentials
 			// since we're only testing the helper methods
-			client, err := rag.NewClient(ctx, tt.projectID, tt.location)
+			client, err := rag.NewService(ctx, tt.projectID, tt.location)
 			if err != nil {
 				// Expected to fail without credentials, but we can still test if we have them
 				t.Skipf("Cannot create client without credentials: %v", err)
@@ -461,7 +461,7 @@ func BenchmarkRAGOperations(b *testing.B) {
 		b.Skip("Benchmark requires GOOGLE_CLOUD_PROJECT_ID and GOOGLE_CLOUD_LOCATION")
 	}
 
-	client, err := rag.NewClient(ctx, projectID, location)
+	client, err := rag.NewService(ctx, projectID, location)
 	if err != nil {
 		b.Fatalf("Failed to create client: %v", err)
 	}

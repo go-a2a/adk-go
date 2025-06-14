@@ -382,4 +382,3 @@ func (s *FileService) parseFileName(name string) (string, error) {
 	// This is a simplified parser - you might want to use a more robust implementation
 	return name, nil
 }
-

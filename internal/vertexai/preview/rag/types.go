@@ -341,4 +341,3 @@ type UploadRagFileConfig struct {
 	// MaxEmbeddingRequestsPerMin is the maximum embedding requests per minute.
 	MaxEmbeddingRequestsPerMin int32 `json:"max_embedding_requests_per_min,omitempty"`
 }
-

@@ -431,7 +431,7 @@ func TestSemanticSearchOptions_Validation(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "nil_options",
+			name:    "nil_options",
 			options: nil,
 			wantErr: false, // Should use defaults
 		},

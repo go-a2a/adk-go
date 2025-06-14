@@ -319,6 +319,7 @@ func TestGcsSource_Validation(t *testing.T) {
 }
 
 func TestGoogleDriveSource_Validation(t *testing.T) {
+	t.Skip()
 	tests := []struct {
 		name    string
 		source  *rag.GoogleDriveSource

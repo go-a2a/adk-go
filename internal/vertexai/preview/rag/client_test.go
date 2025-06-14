@@ -25,7 +25,7 @@ func TestNewClient(t *testing.T) {
 		projectID := getRequiredEnv(t, envGoogleCloudProjectID)
 		location := getRequiredEnv(t, envGoogleCloudLocation)
 
-		client, err := rag.NewClient(ctx, projectID, location)
+		client, err := rag.NewService(ctx, projectID, location)
 		if err != nil {
 			t.Fatalf("NewClient() error = %v", err)
 		}
@@ -46,7 +46,7 @@ func TestNewClient(t *testing.T) {
 
 	t.Run("empty_project", func(t *testing.T) {
 		ctx := t.Context()
-		client, err := rag.NewClient(ctx, "", "us-central1")
+		client, err := rag.NewService(ctx, "", "us-central1")
 		if err != nil {
 			t.Skipf("NewClient() failed with empty project ID: %v", err)
 		}
@@ -60,7 +60,7 @@ func TestNewClient(t *testing.T) {
 
 	t.Run("empty_location", func(t *testing.T) {
 		ctx := t.Context()
-		client, err := rag.NewClient(ctx, "test-project", "")
+		client, err := rag.NewService(ctx, "test-project", "")
 		if err != nil {
 			t.Skipf("NewClient() failed with empty location: %v", err)
 		}
@@ -188,11 +188,11 @@ func TestClient_RetrievalOperations(t *testing.T) {
 
 func TestClient_HelperMethods(t *testing.T) {
 	tests := []struct {
-		name      string
-		projectID string
-		location  string
-		corpusID  string
-		fileID    string
+		name           string
+		projectID      string
+		location       string
+		corpusID       string
+		fileID         string
 		wantCorpusName string
 		wantFileName   string
 	}{
@@ -219,7 +219,7 @@ func TestClient_HelperMethods(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := t.Context()
-			client, err := rag.NewClient(ctx, tt.projectID, tt.location)
+			client, err := rag.NewService(ctx, tt.projectID, tt.location)
 			if err != nil {
 				// For unit tests without credentials, we expect this to fail
 				// but we can still test the methods that don't require API calls
@@ -427,13 +427,13 @@ func TestImportSource_Validation(t *testing.T) {
 
 // Helper functions
 
-func setupTestClient(t *testing.T) *rag.Client {
+func setupTestClient(t *testing.T) *rag.Service {
 	t.Helper()
 	ctx := t.Context()
 	projectID := getRequiredEnv(t, envGoogleCloudProjectID)
 	location := getRequiredEnv(t, envGoogleCloudLocation)
 
-	client, err := rag.NewClient(ctx, projectID, location)
+	client, err := rag.NewService(ctx, projectID, location)
 	if err != nil {
 		t.Fatalf("Failed to create test client: %v", err)
 	}

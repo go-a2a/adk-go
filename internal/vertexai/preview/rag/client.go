@@ -14,8 +14,8 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
-// Client provides a unified interface for all Vertex AI RAG operations.
-type Client struct {
+// Service provides a unified interface for all Vertex AI RAG operations.
+type Service struct {
 	corpusService    *CorpusService
 	fileService      *FileService
 	retrievalService *RetrievalService
@@ -24,19 +24,19 @@ type Client struct {
 	logger           *slog.Logger
 }
 
-// ClientOption is a functional option for configuring the RAG client.
-type ClientOption func(*Client)
+// ServiceOption is a functional option for configuring the RAG service.
+type ServiceOption func(*Service)
 
 // WithLogger sets the logger for the Client.
-func WithLogger(logger *slog.Logger) ClientOption {
-	return func(c *Client) {
+func WithLogger(logger *slog.Logger) ServiceOption {
+	return func(c *Service) {
 		c.logger = logger
 	}
 }
 
-// NewClient creates a new Vertex AI RAG client.
-func NewClient(ctx context.Context, projectID, location string, opts ...ClientOption) (*Client, error) {
-	client := &Client{
+// NewService creates a new Vertex AI RAG client.
+func NewService(ctx context.Context, projectID, location string, opts ...ServiceOption) (*Service, error) {
+	client := &Service{
 		projectID: projectID,
 		location:  location,
 		logger:    slog.Default(),
@@ -83,7 +83,7 @@ func NewClient(ctx context.Context, projectID, location string, opts ...ClientOp
 }
 
 // Close closes the RAG client and releases any resources.
-func (c *Client) Close() error {
+func (c *Service) Close() error {
 	// Note: In a full implementation, you would close the underlying clients
 	// For now, we don't have explicit close methods on the underlying clients
 	c.logger.Info("Vertex AI RAG client closed")
@@ -93,7 +93,7 @@ func (c *Client) Close() error {
 // Corpus Management Methods
 
 // CreateCorpus creates a new RAG corpus.
-func (c *Client) CreateCorpus(ctx context.Context, displayName, description string, backendConfig *VectorDbConfig) (*Corpus, error) {
+func (c *Service) CreateCorpus(ctx context.Context, displayName, description string, backendConfig *VectorDbConfig) (*Corpus, error) {
 	req := &CreateCorpusRequest{
 		Corpus: &Corpus{
 			DisplayName:   displayName,
@@ -105,7 +105,7 @@ func (c *Client) CreateCorpus(ctx context.Context, displayName, description stri
 }
 
 // ListCorpora lists all RAG corpora in the project and location.
-func (c *Client) ListCorpora(ctx context.Context, pageSize int32, pageToken string) (*ListCorporaResponse, error) {
+func (c *Service) ListCorpora(ctx context.Context, pageSize int32, pageToken string) (*ListCorporaResponse, error) {
 	req := &ListCorporaRequest{
 		PageSize:  pageSize,
 		PageToken: pageToken,
@@ -114,7 +114,7 @@ func (c *Client) ListCorpora(ctx context.Context, pageSize int32, pageToken stri
 }
 
 // GetCorpus retrieves a specific RAG corpus.
-func (c *Client) GetCorpus(ctx context.Context, corpusName string) (*Corpus, error) {
+func (c *Service) GetCorpus(ctx context.Context, corpusName string) (*Corpus, error) {
 	req := &GetCorpusRequest{
 		Name: corpusName,
 	}
@@ -122,7 +122,7 @@ func (c *Client) GetCorpus(ctx context.Context, corpusName string) (*Corpus, err
 }
 
 // DeleteCorpus deletes a RAG corpus.
-func (c *Client) DeleteCorpus(ctx context.Context, corpusName string, force bool) error {
+func (c *Service) DeleteCorpus(ctx context.Context, corpusName string, force bool) error {
 	req := &DeleteCorpusRequest{
 		Name:  corpusName,
 		Force: force,
@@ -131,14 +131,14 @@ func (c *Client) DeleteCorpus(ctx context.Context, corpusName string, force bool
 }
 
 // UpdateCorpus updates a RAG corpus.
-func (c *Client) UpdateCorpus(ctx context.Context, corpus *Corpus, updateMask *fieldmaskpb.FieldMask) (*Corpus, error) {
+func (c *Service) UpdateCorpus(ctx context.Context, corpus *Corpus, updateMask *fieldmaskpb.FieldMask) (*Corpus, error) {
 	return c.corpusService.UpdateCorpus(ctx, corpus, updateMask)
 }
 
 // File Management Methods
 
 // ImportFiles imports files into a RAG corpus from various sources.
-func (c *Client) ImportFiles(ctx context.Context, corpusName string, config *ImportFilesConfig) error {
+func (c *Service) ImportFiles(ctx context.Context, corpusName string, config *ImportFilesConfig) error {
 	req := &ImportFilesRequest{
 		Parent:            corpusName,
 		ImportFilesConfig: config,
@@ -147,7 +147,7 @@ func (c *Client) ImportFiles(ctx context.Context, corpusName string, config *Imp
 }
 
 // ImportFilesFromGCS imports files from Google Cloud Storage.
-func (c *Client) ImportFilesFromGCS(ctx context.Context, corpusName string, gcsUris []string, chunkSize, chunkOverlap int32) error {
+func (c *Service) ImportFilesFromGCS(ctx context.Context, corpusName string, gcsUris []string, chunkSize, chunkOverlap int32) error {
 	config := &ImportFilesConfig{
 		GcsSource: &GcsSource{
 			Uris: gcsUris,
@@ -159,7 +159,7 @@ func (c *Client) ImportFilesFromGCS(ctx context.Context, corpusName string, gcsU
 }
 
 // ImportFilesFromGoogleDrive imports files from Google Drive.
-func (c *Client) ImportFilesFromGoogleDrive(ctx context.Context, corpusName string, resourceIds []string, chunkSize, chunkOverlap int32) error {
+func (c *Service) ImportFilesFromGoogleDrive(ctx context.Context, corpusName string, resourceIds []string, chunkSize, chunkOverlap int32) error {
 	config := &ImportFilesConfig{
 		GoogleDriveSource: &GoogleDriveSource{
 			ResourceIds: resourceIds,
@@ -171,7 +171,7 @@ func (c *Client) ImportFilesFromGoogleDrive(ctx context.Context, corpusName stri
 }
 
 // UploadFile uploads a file directly to a RAG corpus.
-func (c *Client) UploadFile(ctx context.Context, corpusName string, file *RagFile, config *UploadRagFileConfig) (*RagFile, error) {
+func (c *Service) UploadFile(ctx context.Context, corpusName string, file *RagFile, config *UploadRagFileConfig) (*RagFile, error) {
 	req := &UploadFileRequest{
 		Parent:              corpusName,
 		RagFile:             file,
@@ -181,7 +181,7 @@ func (c *Client) UploadFile(ctx context.Context, corpusName string, file *RagFil
 }
 
 // ListFiles lists all files in a RAG corpus.
-func (c *Client) ListFiles(ctx context.Context, corpusName string, pageSize int32, pageToken string) (*ListFilesResponse, error) {
+func (c *Service) ListFiles(ctx context.Context, corpusName string, pageSize int32, pageToken string) (*ListFilesResponse, error) {
 	req := &ListFilesRequest{
 		Parent:    corpusName,
 		PageSize:  pageSize,
@@ -191,12 +191,12 @@ func (c *Client) ListFiles(ctx context.Context, corpusName string, pageSize int3
 }
 
 // GetFile retrieves a specific file from a RAG corpus.
-func (c *Client) GetFile(ctx context.Context, fileName string) (*RagFile, error) {
+func (c *Service) GetFile(ctx context.Context, fileName string) (*RagFile, error) {
 	return c.fileService.GetFile(ctx, fileName)
 }
 
 // DeleteFile deletes a file from a RAG corpus.
-func (c *Client) DeleteFile(ctx context.Context, fileName string) error {
+func (c *Service) DeleteFile(ctx context.Context, fileName string) error {
 	req := &DeleteFileRequest{
 		Name: fileName,
 	}
@@ -206,7 +206,7 @@ func (c *Client) DeleteFile(ctx context.Context, fileName string) error {
 // Retrieval and Search Methods
 
 // Query queries a specific corpus for relevant documents.
-func (c *Client) Query(ctx context.Context, corpusName, queryText string, topK int32, distanceThreshold float64) (*RetrievalResponse, error) {
+func (c *Service) Query(ctx context.Context, corpusName, queryText string, topK int32, distanceThreshold float64) (*RetrievalResponse, error) {
 	query := &RetrievalQuery{
 		Text:                    queryText,
 		SimilarityTopK:          topK,
@@ -216,7 +216,7 @@ func (c *Client) Query(ctx context.Context, corpusName, queryText string, topK i
 }
 
 // QueryMultiple queries multiple corpora for relevant documents.
-func (c *Client) QueryMultiple(ctx context.Context, corporaNames []string, queryText string, topK int32, distanceThreshold float64) (*RetrievalResponse, error) {
+func (c *Service) QueryMultiple(ctx context.Context, corporaNames []string, queryText string, topK int32, distanceThreshold float64) (*RetrievalResponse, error) {
 	query := &RetrievalQuery{
 		Text:                    queryText,
 		SimilarityTopK:          topK,
@@ -226,34 +226,34 @@ func (c *Client) QueryMultiple(ctx context.Context, corporaNames []string, query
 }
 
 // RetrieveContexts retrieves relevant contexts from RAG corpora for a given query.
-func (c *Client) RetrieveContexts(ctx context.Context, query *RetrievalQuery, ragResources []string) (*RetrievalResponse, error) {
+func (c *Service) RetrieveContexts(ctx context.Context, query *RetrievalQuery, ragResources []string) (*RetrievalResponse, error) {
 	return c.retrievalService.RetrieveContexts(ctx, query, ragResources)
 }
 
 // Search performs a general search across RAG corpora.
-func (c *Client) Search(ctx context.Context, req *SearchRequest) (*SearchResponse, error) {
+func (c *Service) Search(ctx context.Context, req *SearchRequest) (*SearchResponse, error) {
 	return c.retrievalService.Search(ctx, req)
 }
 
 // SemanticSearch performs semantic search using vector similarity.
-func (c *Client) SemanticSearch(ctx context.Context, query string, corporaNames []string, options *SemanticSearchOptions) (*SearchResponse, error) {
+func (c *Service) SemanticSearch(ctx context.Context, query string, corporaNames []string, options *SemanticSearchOptions) (*SearchResponse, error) {
 	return c.retrievalService.SemanticSearch(ctx, query, corporaNames, options)
 }
 
 // HybridSearch performs hybrid search combining vector and keyword search.
-func (c *Client) HybridSearch(ctx context.Context, query string, corporaNames []string, options *HybridSearchOptions) (*SearchResponse, error) {
+func (c *Service) HybridSearch(ctx context.Context, query string, corporaNames []string, options *HybridSearchOptions) (*SearchResponse, error) {
 	return c.retrievalService.HybridSearch(ctx, query, corporaNames, options)
 }
 
 // AugmentGeneration augments generation with retrieval from RAG corpora.
-func (c *Client) AugmentGeneration(ctx context.Context, req *AugmentGenerationRequest) (*AugmentGenerationResponse, error) {
+func (c *Service) AugmentGeneration(ctx context.Context, req *AugmentGenerationRequest) (*AugmentGenerationResponse, error) {
 	return c.retrievalService.AugmentGeneration(ctx, req)
 }
 
 // Convenience Methods
 
 // CreateDefaultCorpus creates a corpus with default managed database configuration.
-func (c *Client) CreateDefaultCorpus(ctx context.Context, displayName, description string) (*Corpus, error) {
+func (c *Service) CreateDefaultCorpus(ctx context.Context, displayName, description string) (*Corpus, error) {
 	backendConfig := &VectorDbConfig{
 		RagEmbeddingModelConfig: &EmbeddingModelConfig{
 			PublisherModel: "publishers/google/models/text-embedding-005",
@@ -269,46 +269,46 @@ func (c *Client) CreateDefaultCorpus(ctx context.Context, displayName, descripti
 }
 
 // QuickQuery performs a quick query with default parameters.
-func (c *Client) QuickQuery(ctx context.Context, corpusName, queryText string) (*RetrievalResponse, error) {
+func (c *Service) QuickQuery(ctx context.Context, corpusName, queryText string) (*RetrievalResponse, error) {
 	return c.Query(ctx, corpusName, queryText, 10, 0.7)
 }
 
 // QuickSearch performs a quick semantic search with default parameters.
-func (c *Client) QuickSearch(ctx context.Context, query string, corporaNames []string) (*SearchResponse, error) {
+func (c *Service) QuickSearch(ctx context.Context, query string, corporaNames []string) (*SearchResponse, error) {
 	return c.SemanticSearch(ctx, query, corporaNames, nil)
 }
 
 // Helper Methods
 
 // GenerateCorpusName generates a fully qualified corpus name.
-func (c *Client) GenerateCorpusName(corpusID string) string {
+func (c *Service) GenerateCorpusName(corpusID string) string {
 	return fmt.Sprintf("projects/%s/locations/%s/ragCorpora/%s", c.projectID, c.location, corpusID)
 }
 
 // GenerateFileName generates a fully qualified file name.
-func (c *Client) GenerateFileName(corpusID, fileID string) string {
+func (c *Service) GenerateFileName(corpusID, fileID string) string {
 	return fmt.Sprintf("projects/%s/locations/%s/ragCorpora/%s/ragFiles/%s", c.projectID, c.location, corpusID, fileID)
 }
 
 // GetProjectID returns the project ID.
-func (c *Client) GetProjectID() string {
+func (c *Service) GetProjectID() string {
 	return c.projectID
 }
 
 // GetLocation returns the location.
-func (c *Client) GetLocation() string {
+func (c *Service) GetLocation() string {
 	return c.location
 }
 
 // GetLogger returns the logger.
-func (c *Client) GetLogger() *slog.Logger {
+func (c *Service) GetLogger() *slog.Logger {
 	return c.logger
 }
 
 // Batch operations
 
 // BatchDeleteFiles deletes multiple files from a corpus.
-func (c *Client) BatchDeleteFiles(ctx context.Context, fileNames []string) error {
+func (c *Service) BatchDeleteFiles(ctx context.Context, fileNames []string) error {
 	c.logger.InfoContext(ctx, "Batch deleting RAG files",
 		slog.Int("files_count", len(fileNames)),
 	)
@@ -331,7 +331,7 @@ func (c *Client) BatchDeleteFiles(ctx context.Context, fileNames []string) error
 }
 
 // BatchImportFiles imports multiple files from different sources.
-func (c *Client) BatchImportFiles(ctx context.Context, corpusName string, sources []ImportSource) error {
+func (c *Service) BatchImportFiles(ctx context.Context, corpusName string, sources []ImportSource) error {
 	c.logger.InfoContext(ctx, "Batch importing files from multiple sources",
 		slog.String("corpus", corpusName),
 		slog.Int("sources_count", len(sources)),
