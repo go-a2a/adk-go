@@ -1,6 +1,6 @@
 module github.com/go-a2a/adk-go
 
-go 1.25
+go 1.24
 
 require (
 	cloud.google.com/go/aiplatform v1.94.0
