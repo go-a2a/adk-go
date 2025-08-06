@@ -14,7 +14,7 @@ require (
 	github.com/google/dotprompt/go v0.0.0-20250722164332-de6cbf656978
 	github.com/google/go-cmp v0.7.0
 	github.com/google/uuid v1.6.0
-	github.com/modelcontextprotocol/go-sdk v0.2.1-0.20250722195829-a911cd0ffde0 // @main
+	github.com/modelcontextprotocol/go-sdk v0.2.1-0.20250805162836-be0bd77f48d6 // @main
 	github.com/tiendc/go-deepcopy v1.6.1
 	go.opentelemetry.io/contrib/bridges/otelslog v0.12.0
 	go.opentelemetry.io/otel/log v0.13.0
