@@ -9,7 +9,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/modelcontextprotocol/go-sdk/jsonschema"
+	"github.com/google/jsonschema-go/jsonschema"
 	"google.golang.org/genai"
 
 	"github.com/go-a2a/adk-go/types"
