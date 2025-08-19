@@ -31,7 +31,7 @@ func NewSingleFlow() *SingleFlow {
 // SingleRequestProcessor returns the default [types.LLMRequestProcessor] for [SingleFlow].
 func SingleRequestProcessor() []types.LLMRequestProcessor {
 	return []types.LLMRequestProcessor{
-		&BasicLlmRequestProcessor{},
+		&BasicLLMRequestProcessor{},
 		&AuthLLMRequestProcessor{},
 		&InstructionsLlmRequestProcessor{},
 		&IdentityLlmRequestProcessor{},

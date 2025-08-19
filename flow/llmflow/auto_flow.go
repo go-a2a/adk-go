@@ -50,7 +50,7 @@ func NewAutoFlow() *AutoFlow {
 // AutoRequestProcessor returns the default [types.LLMRequestProcessor] for [AutoFlow].
 func AutoRequestProcessor() []types.LLMRequestProcessor {
 	return []types.LLMRequestProcessor{
-		&BasicLlmRequestProcessor{},
+		&BasicLLMRequestProcessor{},
 		&AuthLLMRequestProcessor{},
 		&InstructionsLlmRequestProcessor{},
 		&IdentityLlmRequestProcessor{},

@@ -12,14 +12,14 @@ import (
 	"github.com/go-a2a/adk-go/types"
 )
 
-// BasicLlmRequestProcessor is a simple implementation of LLMFlow that just passes content
+// BasicLLMRequestProcessor is a simple implementation of LLMFlow that just passes content
 // to the LLM and returns the response.
-type BasicLlmRequestProcessor struct{}
+type BasicLLMRequestProcessor struct{}
 
-var _ types.LLMRequestProcessor = (*BasicLlmRequestProcessor)(nil)
+var _ types.LLMRequestProcessor = (*BasicLLMRequestProcessor)(nil)
 
 // Run implements [LLMRequestProcessor].
-func (f *BasicLlmRequestProcessor) Run(ctx context.Context, ictx *types.InvocationContext, request *types.LLMRequest) iter.Seq2[*types.Event, error] {
+func (f *BasicLLMRequestProcessor) Run(ctx context.Context, ictx *types.InvocationContext, request *types.LLMRequest) iter.Seq2[*types.Event, error] {
 	return func(yield func(*types.Event, error) bool) {
 		llmAgent, ok := ictx.Agent.AsLLMAgent()
 		if !ok {
