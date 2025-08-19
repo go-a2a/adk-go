@@ -241,8 +241,8 @@ func WithPlanner(plan types.Planner) LLMAgentOption {
 	}
 }
 
-// WithPlanner sets the planner for the agent.
-func WithEodeExecutor(codeExecutor types.CodeExecutor) LLMAgentOption {
+// WithCodeExecutor sets the codeExecutor for the agent.
+func WithCodeExecutor(codeExecutor types.CodeExecutor) LLMAgentOption {
 	return func(a *LLMAgent) {
 		a.codeExecutor = codeExecutor
 	}
