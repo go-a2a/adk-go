@@ -13,6 +13,7 @@ import (
 	"runtime"
 	"strings"
 
+	backoff "github.com/cenkalti/backoff/v5"
 	"google.golang.org/genai"
 
 	adk "github.com/go-a2a/adk-go"
@@ -21,7 +22,7 @@ import (
 
 const (
 	// GeminiLLMDefaultModel is the default model name for [Gemini].
-	GeminiLLMDefaultModel = "gemini-1.5-pro"
+	GeminiLLMDefaultModel = "gemini-1.5-flash"
 
 	// EnvGoogleAPIKey is the environment variable name for the Google AI API key.
 	EnvGoogleAPIKey = "GOOGLE_API_KEY"
@@ -29,15 +30,30 @@ const (
 
 // Gemini represents a Google Gemini Large Language Model.
 type Gemini struct {
-	*BaseLLM
-
 	genAIClient *genai.Client
+	// modelName represents the specific LLM model name.
+	modelName string
+	// logger is the logger used for logging.
+	logger *slog.Logger
+
+	// allow Gemini to retry failed responses.
+	retry *backoff.ExponentialBackOff
 }
 
 var _ types.Model = (*Gemini)(nil)
 
+// GeminiOption is a function that modifies the [Gemini] model.
+type GeminiOption func(*Gemini)
+
+// WithRetry sets the [*backoff.ExponentialBackOff] for the [Gemini] model.
+func WithRetry(retry *backoff.ExponentialBackOff) GeminiOption {
+	return func(m *Gemini) {
+		m.retry = retry
+	}
+}
+
 // NewGemini creates a new [Gemini] instance.
-func NewGemini(ctx context.Context, apiKey, modelName string, opts ...Option) (*Gemini, error) {
+func NewGemini(ctx context.Context, apiKey, modelName string, opts ...GeminiOption) (*Gemini, error) {
 	// Use default model if none provided
 	if modelName == "" {
 		modelName = GeminiLLMDefaultModel
@@ -52,16 +68,16 @@ func NewGemini(ctx context.Context, apiKey, modelName string, opts ...Option) (*
 		apiKey = envApiKey
 	}
 
+	frameworkLabel := fmt.Sprintf("go-a2a/adk-go/%s", adk.Version)
+	languageLabel := fmt.Sprintf("go/%s", runtime.Version())
+	versionHeaderValue := frameworkLabel + " " + languageLabel
+
 	clintConfig := &genai.ClientConfig{
 		APIKey: apiKey,
 		HTTPOptions: genai.HTTPOptions{
 			Headers: make(http.Header),
 		},
 	}
-
-	frameworkLabel := fmt.Sprintf("go-a2a/adk-go/%s", adk.Version)
-	languageLabel := fmt.Sprintf("go/%s", runtime.Version())
-	versionHeaderValue := frameworkLabel + " " + languageLabel
 	clintConfig.HTTPOptions.Headers.Set(`x-goog-api-client`, versionHeaderValue)
 	clintConfig.HTTPOptions.Headers.Set(`user-agent`, versionHeaderValue)
 
@@ -72,17 +88,21 @@ func NewGemini(ctx context.Context, apiKey, modelName string, opts ...Option) (*
 	}
 
 	gemini := &Gemini{
-		BaseLLM:     NewBaseLLM(modelName),
 		genAIClient: genAIClient,
+		modelName:   modelName,
+		logger:      slog.Default(),
+		retry:       &backoff.ExponentialBackOff{},
 	}
 	for _, opt := range opts {
-		gemini.Config = opt.apply(gemini.Config)
+		opt(gemini)
 	}
 
 	return gemini, nil
 }
 
 // Name returns the name of the [Gemini] model.
+//
+// Name implements [types.Model].
 func (m *Gemini) Name() string {
 	return m.modelName
 }
@@ -90,38 +110,45 @@ func (m *Gemini) Name() string {
 // SupportedModels returns a list of supported models in the [Gemini].
 //
 // See https://ai.google.dev/gemini-api/docs/models.
+//
+// SupportedModels implements [types.Model].
 func (m *Gemini) SupportedModels() []string {
 	return []string{
 		"gemini-2.5-pro",
 		"gemini-2.5-flash",
-		"gemini-2.5-flash-lite-preview-06-17",
-		"gemini-2.5-flash-preview-native-audio-dialog",
+		"gemini-2.5-flash-preview-05-20",
+		"gemini-2.5-flash-lite",
+		"gemini-2.5-flash-lite-06-17",
+		"gemini-live-2.5-flash-preview",
+		"gemini-2.5-flash-preview-05-20",
 		"gemini-2.5-flash-exp-native-audio-thinking-dialog",
 		"gemini-2.5-flash-preview-tts",
 		"gemini-2.5-pro-preview-tts",
 		"gemini-2.0-flash",
+		"gemini-2.0-flash-001",
+		"gemini-2.0-flash-exp",
 		"gemini-2.0-flash-preview-image-generation",
 		"gemini-2.0-flash-lite",
-		"gemini-1.5-flash",
-		"gemini-1.5-flash-8b",
-		"gemini-1.5-pro",
-		"imagen-4.0-generate-preview-06-06",
-		"imagen-4.0-ultra-generate-preview-06-06",
-		"imagen-3.0-generate-002",
-		"veo-2.0-generate-001",
-		"gemini-live-2.5-flash-preview",
+		"gemini-2.0-flash-lite-001",
 		"gemini-2.0-flash-live-001",
 	}
 }
 
 // Connect creates a live connection to the Gemini LLM.
-func (m *Gemini) Connect(ctx context.Context, _ *types.LLMRequest) (types.ModelConnection, error) {
+//
+// Connect implements [types.Model].
+func (m *Gemini) Connect(ctx context.Context, request *types.LLMRequest) (types.ModelConnection, error) {
+	request.LiveConnectConfig.Tools = request.Config.Tools
 	// Create and return a new connection
-	return newGeminiConnection(ctx, m.modelName, m.genAIClient), nil
+	return newGeminiConnection(ctx, m.modelName, m.genAIClient, request)
 }
 
 // GenerateContent generates content from the model.
+//
+// GenerateContent implements [types.Model].
 func (m *Gemini) GenerateContent(ctx context.Context, request *types.LLMRequest) (*types.LLMResponse, error) {
+	// TODO(zchee): support _preprocess_request
+
 	// Ensure the last message is from the user
 	request.Contents = m.appendUserContent(request.Contents)
 
@@ -136,6 +163,8 @@ func (m *Gemini) GenerateContent(ctx context.Context, request *types.LLMRequest)
 }
 
 // StreamGenerateContent streams generated content from the model.
+//
+// StreamGenerateContent implements [types.Model].
 func (m *Gemini) StreamGenerateContent(ctx context.Context, request *types.LLMRequest) iter.Seq2[*types.LLMResponse, error] {
 	return func(yield func(*types.LLMResponse, error) bool) {
 		// Ensure the last message is from the user
@@ -183,6 +212,30 @@ func (m *Gemini) StreamGenerateContent(ctx context.Context, request *types.LLMRe
 		if buf.Len() > 0 && lastResp != nil && finishStop(lastResp) {
 			yield(newAggregateText(buf.String()), nil)
 		}
+	}
+}
+
+// appendUserContent checks if the last message is from the user and if not, appends an empty user message.
+func (m *Gemini) appendUserContent(contents []*genai.Content) []*genai.Content {
+	switch {
+	case len(contents) == 0:
+		return append(contents, &genai.Content{
+			Role: genai.RoleUser,
+			Parts: []*genai.Part{
+				genai.NewPartFromText(`Handle the requests as specified in the System Instruction.`),
+			},
+		})
+
+	case strings.ToLower(contents[len(contents)-1].Role) != genai.RoleUser:
+		return append(contents, &genai.Content{
+			Role: genai.RoleUser,
+			Parts: []*genai.Part{
+				genai.NewPartFromText(`Continue processing previous requests as instructed. Exit or provide a summary if no more outputs are needed.`),
+			},
+		})
+
+	default:
+		return contents
 	}
 }
 

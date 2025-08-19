@@ -32,7 +32,7 @@ type GeminiConnection struct {
 var _ types.ModelConnection = (*GeminiConnection)(nil)
 
 // newGeminiConnection creates a new [GeminiConnection].
-func newGeminiConnection(ctx context.Context, model string, client *genai.Client) *GeminiConnection {
+func newGeminiConnection(ctx context.Context, model string, client *genai.Client, request *types.LLMRequest) (*GeminiConnection, error) {
 	conn := &GeminiConnection{
 		logger:     slog.Default(),
 		model:      model,
@@ -40,13 +40,15 @@ func newGeminiConnection(ctx context.Context, model string, client *genai.Client
 		responseCh: make(chan *types.LLMResponse, 10), // Buffer for responses
 	}
 
-	session, err := client.Live.Connect(ctx, model, &genai.LiveConnectConfig{})
+	session, err := client.Live.Connect(ctx, model, &genai.LiveConnectConfig{
+		SystemInstruction: request.Config.SystemInstruction,
+	})
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	conn.session = session
 
-	return conn
+	return conn, nil
 }
 
 // SendHistory sends the conversation history to the model.

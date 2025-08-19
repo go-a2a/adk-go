@@ -9,6 +9,7 @@ require (
 	cloud.google.com/go/storage v1.56.0
 	github.com/MakeNowJust/heredoc/v2 v2.0.1
 	github.com/anthropics/anthropic-sdk-go v1.9.1
+	github.com/cenkalti/backoff/v5 v5.0.2
 	github.com/docker/docker v28.3.3+incompatible
 	github.com/go-json-experiment/json v0.0.0-20250813233538-9b1f9ea2e11b // @master
 	github.com/google/dotprompt/go v0.0.0-20250722164332-de6cbf656978
