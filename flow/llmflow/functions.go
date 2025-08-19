@@ -10,6 +10,7 @@ import (
 	"iter"
 	"log/slog"
 	"maps"
+	"slices"
 	"strings"
 	"time"
 
@@ -481,4 +482,33 @@ func mergeParallelFunctionResponseEvents(funcRespEvents []*types.Event) (*types.
 	mergedEvent.Timestamp = baseEvent.Timestamp
 
 	return mergedEvent, nil
+}
+
+// FindMatchingFunctionCall finds the function call event that matches the function response id of the last event.
+func FindMatchingFunctionCall(ctx context.Context, events []*types.Event) *types.Event {
+	if len(events) == 0 {
+		return nil
+	}
+
+	lastEvent := events[len(events)-1]
+	if lastEvent.Content != nil {
+		parts := lastEvent.Content.Parts
+		if idx := slices.IndexFunc(parts, func(part *genai.Part) bool { return part.FunctionResponse != nil }); idx >= 0 {
+			functionCallID := parts[idx].FunctionCall.ID
+
+			for _, ev := range slices.Backward(events[1:]) {
+				functionCalls := ev.GetFunctionCalls()
+				if len(functionCalls) == 0 {
+					continue
+				}
+				for _, funcCall := range functionCalls {
+					if funcCall.ID == functionCallID {
+						return ev
+					}
+				}
+			}
+		}
+	}
+
+	return nil
 }
