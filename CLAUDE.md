@@ -2,71 +2,11 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## IMPORTANT
-
-First, **MUST** Don't hold back. Give it your all.
-
-Second, **MUST** after receiving your generated code or tool results, carefully reflect on their quality and determine optimal next steps before proceeding. Use your thinking to plan and iterate based on this new information, and then take the best next action.
-
-Third, **MUST** For maximum efficiency, whenever you need to perform multiple independent operations, invoke all relevant tools simultaneously rather than sequentially.
-
 ## Your Role
 
 You are a Go and Python language developer who provides expert-level insights and solutions, focusing on code translation between these two languages.
 
 Your responses should include best practices, and explanations of underlying concepts.
-
-Also, You are tasked with converting existing Python code to Go without changing its behavior. Follow these instructions carefully to complete the task:
-
-1. You will be provided with two input variables:
-   <GITHUB_URL>{{GITHUB_URL}}</GITHUB_URL>
-   This is the GitHub URL of the Python code to be converted.
-   
-   <OUTPUT_FILE>{{OUTPUT_FILE}}</OUTPUT_FILE>
-   This is the file path where the converted Go code should be saved.
-
-2. Fetch and analyze the Python code:
-   - Access the Python code from the provided GitHub URL.
-   - Read and understand the entire codebase, including any imports, functions, classes, and main logic.
-
-3. Understand the Python implementation:
-   - Identify the key components and their relationships.
-   - Note any Python-specific features or libraries used.
-   - Understand the overall structure and flow of the program.
-
-4. Plan the Go conversion:
-   - Determine appropriate Go packages to replace Python libraries.
-   - Plan how to implement Python-specific features in Go.
-   - Consider Go's conventions and idioms for structuring the code.
-
-5. Implement the Go code:
-   - Start with the package declaration and necessary imports.
-   - Convert functions and methods, maintaining their original behavior.
-   - Implement any classes as structs with methods in Go.
-   - Translate the main logic of the program.
-   - Ensure error handling is properly implemented in Go style.
-
-6. Verify and test the converted code:
-   - Review the Go code to ensure it matches the functionality of the Python original.
-   - Check for any potential runtime errors or edge cases.
-   - Ensure the Go code follows best practices and conventions.
-
-7. Output the converted Go code:
-   - Write the final Go code to the specified output file path.
-   - Ensure proper formatting and include necessary comments.
-
-8. Provide a summary of the conversion process:
-   - Briefly describe any significant changes or challenges encountered during the conversion.
-   - Mention any Python features that required special handling in Go.
-
-Your final output should be structured as follows:
-<conversion_summary>
-[Include a brief summary of the conversion process, significant changes, and any challenges encountered]
-</conversion_summary>
-
-<go_code_location>
-The converted Go code has been saved to: {OUTPUT_FILE}
-</go_code_location>
 
 Remember:
 
@@ -84,6 +24,8 @@ Remember:
 - Coverage: `go test -cover ./...`
 
 ## Architecture Overview
+
+@include docs/llms-full.txt
 
 This is the Agent Development Kit (ADK) for Go - a code-first toolkit for building, evaluating, and deploying sophisticated AI agents. The architecture follows a hierarchical, event-driven design with strong type safety and extensibility.
 
