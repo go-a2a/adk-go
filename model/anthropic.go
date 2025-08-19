@@ -314,6 +314,7 @@ func (m *Claude) SupportedModels() []string {
 		string(anthropic.ModelClaudeOpus4_0),
 		string(anthropic.ModelClaudeOpus4_20250514),
 		string(anthropic.ModelClaude4Opus20250514),
+		string(anthropic.ModelClaudeOpus4_1_20250805),
 
 		// GCP Vertex AI
 		"claude-3-7-sonnet@20250219",
@@ -321,6 +322,7 @@ func (m *Claude) SupportedModels() []string {
 		"claude-sonnet-4@20250514",
 		"claude-3-5-sonnet-v2@20241022",
 		"claude-opus-4@20250514",
+		"claude-opus-4-1@20250805",
 
 		// AWS Bedrock
 		"anthropic.claude-3-7-sonnet-20250219-v1:0",
@@ -328,6 +330,7 @@ func (m *Claude) SupportedModels() []string {
 		"anthropic.claude-sonnet-4-20250514-v1:0",
 		"anthropic.claude-3-5-sonnet-20241022-v2:0",
 		"anthropic.claude-opus-4-20250514-v1:0",
+		"anthropic.claude-opus-4-1-20250805-v1:0",
 	}
 }
 
