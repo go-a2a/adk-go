@@ -47,7 +47,7 @@ type SessionService interface {
 	// CloseSession(ctx context.Context, appName, userID, sessionID string) error
 
 	// // AppendEvent adds an event to a session and updates session state.
-	AppendEvent(ctx context.Context, ses Session, event *Event) (*Event, error)
+	AppendEvent(ctx context.Context, sess Session, event *Event) (*Event, error)
 
 	// ListEvents retrieves events within a session.
 	ListEvents(ctx context.Context, appName, userID, sessionID string, maxEvents int, since *time.Time) ([]Event, error)
