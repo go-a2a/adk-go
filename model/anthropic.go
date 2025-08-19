@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"cmp"
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"iter"
@@ -90,6 +91,10 @@ func (m *Claude) toGenAIFinishReason(stopReason anthropic.StopReason) genai.Fini
 	return genai.FinishReasonUnspecified
 }
 
+func (m *Claude) isImagePart(part *genai.Part) bool {
+	return part.InlineData != nil && strings.HasPrefix(part.InlineData.MIMEType, "image")
+}
+
 // partToMessageBlock converts [*genai.Part] to [anthropic.ContentBlockParamUnion].
 func (m *Claude) partToMessageBlock(part *genai.Part) (anthropic.ContentBlockParamUnion, error) {
 	switch {
@@ -112,13 +117,27 @@ func (m *Claude) partToMessageBlock(part *genai.Part) (anthropic.ContentBlockPar
 			params := anthropic.NewToolResultBlock(funcResp.ID, content.(string), false)
 			return params, nil
 		}
+
+	case m.isImagePart(part):
+		data := base64.StdEncoding.EncodeToString(part.InlineData.Data)
+		param := anthropic.Base64ImageSourceParam{
+			Data:      data,
+			MediaType: anthropic.Base64ImageSourceMediaType(part.InlineData.MIMEType),
+		}
+		return anthropic.NewImageBlock(param), nil
+
+	case part.ExecutableCode != nil:
+		return anthropic.NewTextBlock("Code:```" + string(part.ExecutableCode.Language) + "\n" + part.ExecutableCode.Code + "\n```"), nil
+
+	case part.CodeExecutionResult != nil:
+		return anthropic.NewTextBlock("Execution Result:```code_output\n" + part.CodeExecutionResult.Output + "\n```"), nil
 	}
 
 	return anthropic.ContentBlockParamUnion{}, fmt.Errorf("not supported yet %T part type", part)
 }
 
 // contentToMessageParam converts [*genai.Content] to [anthropic.MessageParam].
-func (m *Claude) contentToMessageParam(content *genai.Content) anthropic.MessageParam {
+func (m *Claude) contentToMessageParam(ctx context.Context, content *genai.Content) anthropic.MessageParam {
 	// Skip system messages (handled separately in Generate/StreamGenerate)
 	if content.Role == RoleSystem {
 		return anthropic.MessageParam{}
@@ -129,6 +148,11 @@ func (m *Claude) contentToMessageParam(content *genai.Content) anthropic.Message
 		Content: make([]anthropic.ContentBlockParamUnion, 0, len(content.Parts)),
 	}
 	for _, part := range content.Parts {
+		if m.isImagePart(part) {
+			m.logger.WarnContext(ctx, "Image data is not supported in Claude for model turns")
+			continue
+		}
+
 		msgBlock, err := m.partToMessageBlock(part)
 		if err != nil {
 			continue
@@ -198,28 +222,6 @@ func (m *Claude) messageToGenerateContentResponse(ctx context.Context, message *
 	}
 }
 
-// updateTypeString updates 'type' field to expected JSON schema format.
-func (m *Claude) updateTypeString(dict map[string]any) {
-	if v, ok := dict["type"]; ok {
-		dict["type"] = strings.ToLower(v.(string))
-	}
-
-	if v, ok := dict["items"]; ok {
-		// 'type' field could exist for items as well, this would be the case if
-		// items represent primitive types.
-		m.updateTypeString(v.(map[string]any))
-
-		if vv, ok := v.(map[string]any)["properties"]; ok {
-			// There could be properties as well on the items, especially if the items
-			// are complex object themselves. We recursively traverse each individual
-			// property as well and fix the "type" value.
-			for _, value := range vv.(map[string]any) {
-				m.updateTypeString(value.(map[string]any))
-			}
-		}
-	}
-}
-
 // funcDeclarationToToolParam converts [*genai.FunctionDeclaration] to [anthropic.ToolUnionParam].
 func (m *Claude) funcDeclarationToToolParam(funcDeclaration *genai.FunctionDeclaration) (toolUnion anthropic.ToolUnionParam, err error) {
 	if funcDeclaration.Name == "" {
@@ -227,11 +229,16 @@ func (m *Claude) funcDeclarationToToolParam(funcDeclaration *genai.FunctionDecla
 	}
 
 	properties := make(map[string]*genai.Schema)
+	var requiredParams []string
 	if params := funcDeclaration.Parameters; params != nil && params.Properties != nil {
 		maps.Insert(properties, maps.All(params.Properties))
+		if len(params.Required) > 0 {
+			requiredParams = append(requiredParams, params.Required...)
+		}
 	}
 	inputSchema := anthropic.ToolInputSchemaParam{
 		Properties: properties,
+		Required:   requiredParams,
 	}
 
 	toolUnion = anthropic.ToolUnionParamOfTool(inputSchema, funcDeclaration.Name)
@@ -242,15 +249,28 @@ func (m *Claude) funcDeclarationToToolParam(funcDeclaration *genai.FunctionDecla
 
 // Claude represents an integration with Claude models served from Vertex AI.
 type Claude struct {
-	*BaseLLM
-
 	anthropicClient anthropic.Client
+	// modelName represents the specific LLM model name.
+	modelName string
+	// logger is the logger used for logging.
+	logger *slog.Logger
+
+	// The maximum number of tokens to generate.
+	maxTokens int64
 }
 
 var _ types.Model = (*Claude)(nil)
 
+type ClaudeOption func(*Claude)
+
+func WithMaxTokens(maxToken int64) ClaudeOption {
+	return func(m *Claude) {
+		m.maxTokens = maxToken
+	}
+}
+
 // NewClaude creates a new Claude LLM instance.
-func NewClaude(ctx context.Context, modelName string, mode ClaudeMode, opts ...Option) (*Claude, error) {
+func NewClaude(ctx context.Context, modelName string, mode ClaudeMode, opts ...ClaudeOption) (*Claude, error) {
 	// Use default model if none provided
 	if modelName == "" {
 		modelName = detectClaudeDefaultModel(mode)
@@ -280,17 +300,21 @@ func NewClaude(ctx context.Context, modelName string, mode ClaudeMode, opts ...O
 	anthropicClient := anthropic.NewClient(ropts...)
 
 	claude := &Claude{
-		BaseLLM:         NewBaseLLM(modelName),
 		anthropicClient: anthropicClient,
+		modelName:       modelName,
+		logger:          slog.Default(),
+		maxTokens:       8192,
 	}
 	for _, opt := range opts {
-		claude.Config = opt.apply(claude.Config)
+		opt(claude)
 	}
 
 	return claude, nil
 }
 
 // Name returns the name of the [Claude] model.
+//
+// Name implements [types.Model].
 func (m *Claude) Name() string {
 	return m.modelName
 }
@@ -298,6 +322,8 @@ func (m *Claude) Name() string {
 // SupportedModels returns a list of supported models in the [Claude].
 //
 // See https://docs.anthropic.com/en/docs/about-claude/models/all-models.
+//
+// SupportedModels implements [types.Model].
 func (m *Claude) SupportedModels() []string {
 	return []string{
 		// Anthropic API
@@ -336,6 +362,8 @@ func (m *Claude) SupportedModels() []string {
 
 // Connect creates a live connection to the Claude LLM.
 //
+// Connect implements [types.Model].
+//
 // TODO(zchee): implements.
 func (m *Claude) Connect(context.Context, *types.LLMRequest) (types.ModelConnection, error) {
 	// Ensure we can get an Anthropic client
@@ -347,18 +375,20 @@ func (m *Claude) Connect(context.Context, *types.LLMRequest) (types.ModelConnect
 }
 
 // GenerateContent generates content from the model.
+//
+// GenerateContent implements [types.Model].
 func (m *Claude) GenerateContent(ctx context.Context, request *types.LLMRequest) (*types.LLMResponse, error) {
 	// Convert messages to Anthropic format
 	messages := make([]anthropic.MessageParam, len(request.Contents))
 	for i, content := range request.Contents {
-		messages[i] = m.contentToMessageParam(content)
+		messages[i] = m.contentToMessageParam(ctx, content)
 	}
 
 	// Prepare parameters
 	params := anthropic.MessageNewParams{
 		Model:     anthropic.Model(m.modelName),
 		Messages:  messages,
-		MaxTokens: 4096,
+		MaxTokens: m.maxTokens,
 	}
 
 	// Apply generation config if provided
@@ -421,19 +451,21 @@ func (m *Claude) GenerateContent(ctx context.Context, request *types.LLMRequest)
 }
 
 // StreamGenerateContent streams generated content from the model.
+//
+// StreamGenerateContent implements [types.Model].
 func (m *Claude) StreamGenerateContent(ctx context.Context, request *types.LLMRequest) iter.Seq2[*types.LLMResponse, error] {
 	return func(yield func(*types.LLMResponse, error) bool) {
 		// Convert to Anthropic format
 		messages := make([]anthropic.MessageParam, len(request.Contents))
 		for i, content := range request.Contents {
-			messages[i] = m.contentToMessageParam(content)
+			messages[i] = m.contentToMessageParam(ctx, content)
 		}
 
 		// Prepare parameters
 		params := anthropic.MessageNewParams{
 			Model:     anthropic.Model(m.modelName),
 			Messages:  messages,
-			MaxTokens: 4096,
+			MaxTokens: m.maxTokens,
 		}
 
 		// Apply generation config if provided
