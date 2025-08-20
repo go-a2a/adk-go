@@ -10,6 +10,17 @@ import (
 	"google.golang.org/genai"
 )
 
+const (
+	// EnvGoogleCloudProject is the environment variable name that specifies the GCP project ID.
+	EnvGoogleCloudProject = "GOOGLE_CLOUD_PROJECT"
+
+	// EnvGoogleCloudProject is the environment variable name that specifies the GCP location.
+	EnvGoogleCloudLocation = "GOOGLE_CLOUD_LOCATION"
+
+	// EnvGoogleCloudRegion is the environment variable name that specifies the GCP region.
+	EnvGoogleCloudRegion = "GOOGLE_CLOUD_REGION"
+)
+
 // Role represents a role of a participant in a conversation.
 type Role = string
 

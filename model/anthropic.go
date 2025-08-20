@@ -295,16 +295,16 @@ func NewClaude(ctx context.Context, modelName string, mode ClaudeMode, opts ...O
 		ropts = append(ropts, anthropic.DefaultClientOptions()...)
 
 	case ClaudeModeVertexAI:
-		region := cmp.Or(os.Getenv("GOOGLE_CLOUD_LOCATION"), os.Getenv("GOOGLE_CLOUD_REGION"))
-		if region == "" {
-			return nil, fmt.Errorf("%q or %q is required", "GOOGLE_CLOUD_LOCATION", "GOOGLE_CLOUD_REGION")
-		}
-		projectID := os.Getenv("GOOGLE_CLOUD_PROJECT")
+		projectID := os.Getenv(EnvGoogleCloudProject)
 		if projectID == "" {
-			return nil, fmt.Errorf("%q is required", "GOOGLE_CLOUD_PROJECT")
+			return nil, fmt.Errorf("%q is required", EnvGoogleCloudProject)
+		}
+		location := cmp.Or(os.Getenv(EnvGoogleCloudLocation), os.Getenv(EnvGoogleCloudRegion))
+		if location == "" {
+			return nil, fmt.Errorf("%q or %q is required", EnvGoogleCloudLocation, EnvGoogleCloudRegion)
 		}
 		scopes := aiplatform.DefaultAuthScopes()
-		ropts = append(ropts, anthropic_vertex.WithGoogleAuth(ctx, region, projectID, scopes...))
+		ropts = append(ropts, anthropic_vertex.WithGoogleAuth(ctx, location, projectID, scopes...))
 
 	case ClaudeModeBedrock:
 		ropts = append(ropts, anthropic_bedrock.WithLoadDefaultConfig(ctx))

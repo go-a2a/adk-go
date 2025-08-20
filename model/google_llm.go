@@ -33,15 +33,6 @@ const (
 
 	// EnvGeminiAPIKey is the environment variable name that specifies the API key for the Gemini API.
 	EnvGeminiAPIKey = "GEMINI_API_KEY"
-
-	// EnvGoogleCloudProject is the environment variable name that specifies the GCP project ID.
-	EnvGoogleCloudProject = "GOOGLE_CLOUD_PROJECT"
-
-	// EnvGoogleCloudProject is the environment variable name that specifies the GCP location.
-	EnvGoogleCloudLocation = "GOOGLE_CLOUD_LOCATION"
-
-	// EnvGoogleCloudRegion is the environment variable name that specifies the GCP region.
-	EnvGoogleCloudRegion = "GOOGLE_CLOUD_REGION"
 )
 
 // Gemini represents a Google Gemini Large Language Model.
