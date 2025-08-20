@@ -4,6 +4,7 @@
 package model
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"iter"
@@ -13,6 +14,8 @@ import (
 	"runtime"
 	"strings"
 
+	aiplatform "cloud.google.com/go/aiplatform/apiv1beta1"
+	"cloud.google.com/go/auth/credentials"
 	backoff "github.com/cenkalti/backoff/v5"
 	"google.golang.org/genai"
 
@@ -22,10 +25,23 @@ import (
 
 const (
 	// GeminiLLMDefaultModel is the default model name for [Gemini].
-	GeminiLLMDefaultModel = "gemini-1.5-flash"
+	GeminiLLMDefaultModel = "gemini-2.5-flash"
 
-	// EnvGoogleAPIKey is the environment variable name for the Google AI API key.
+	// EnvGoogleAPIKey is the environment variable name that specifies the API key for the Gemini API.
+	// If both GOOGLE_API_KEY and GEMINI_API_KEY are set, GOOGLE_API_KEY will be used.
 	EnvGoogleAPIKey = "GOOGLE_API_KEY"
+
+	// EnvGeminiAPIKey is the environment variable name that specifies the API key for the Gemini API.
+	EnvGeminiAPIKey = "GEMINI_API_KEY"
+
+	// EnvGoogleCloudProject is the environment variable name that specifies the GCP project ID.
+	EnvGoogleCloudProject = "GOOGLE_CLOUD_PROJECT"
+
+	// EnvGoogleCloudProject is the environment variable name that specifies the GCP location.
+	EnvGoogleCloudLocation = "GOOGLE_CLOUD_LOCATION"
+
+	// EnvGoogleCloudRegion is the environment variable name that specifies the GCP region.
+	EnvGoogleCloudRegion = "GOOGLE_CLOUD_REGION"
 )
 
 // Gemini represents a Google Gemini Large Language Model.
@@ -36,66 +52,76 @@ type Gemini struct {
 	// logger is the logger used for logging.
 	logger *slog.Logger
 
+	// optional [*http.Client] to use.
+	hc *http.Client
 	// allow Gemini to retry failed responses.
 	retry *backoff.ExponentialBackOff
 }
 
 var _ types.Model = (*Gemini)(nil)
 
-// GeminiOption is a function that modifies the [Gemini] model.
-type GeminiOption func(*Gemini)
-
 // WithRetry sets the [*backoff.ExponentialBackOff] for the [Gemini] model.
-func WithRetry(retry *backoff.ExponentialBackOff) GeminiOption {
+func WithRetry(retry *backoff.ExponentialBackOff) Option[Gemini] {
 	return func(m *Gemini) {
 		m.retry = retry
 	}
 }
 
 // NewGemini creates a new [Gemini] instance.
-func NewGemini(ctx context.Context, apiKey, modelName string, opts ...GeminiOption) (*Gemini, error) {
+func NewGemini(ctx context.Context, modelName string, opts ...Option[Gemini]) (*Gemini, error) {
 	// Use default model if none provided
 	if modelName == "" {
 		modelName = GeminiLLMDefaultModel
 	}
 
-	// Check API key and use [EnvGoogleAPIKey] environment variable if not provided
-	if apiKey == "" {
-		envApiKey := os.Getenv(EnvGoogleAPIKey)
-		if envApiKey == "" {
-			return nil, fmt.Errorf("either apiKey arg or %q environment variable must bu set", EnvGoogleAPIKey)
-		}
-		apiKey = envApiKey
+	gemini := &Gemini{
+		modelName: modelName,
+		logger:    slog.Default(),
+		hc:        &http.Client{},
+		retry:     &backoff.ExponentialBackOff{},
+	}
+	for _, opt := range opts {
+		opt(gemini)
 	}
 
 	frameworkLabel := fmt.Sprintf("go-a2a/adk-go/%s", adk.Version)
 	languageLabel := fmt.Sprintf("go/%s", runtime.Version())
 	versionHeaderValue := frameworkLabel + " " + languageLabel
 
-	clintConfig := &genai.ClientConfig{
-		APIKey: apiKey,
+	clientConfig := &genai.ClientConfig{
+		APIKey:     cmp.Or(os.Getenv(EnvGoogleAPIKey), os.Getenv(EnvGeminiAPIKey)),
+		Project:    os.Getenv(EnvGoogleCloudProject),
+		Location:   cmp.Or(os.Getenv(EnvGoogleCloudLocation), os.Getenv(EnvGoogleCloudRegion)),
+		HTTPClient: gemini.hc,
 		HTTPOptions: genai.HTTPOptions{
-			Headers: make(http.Header),
+			Headers: http.Header{
+				`x-goog-api-client`: {versionHeaderValue},
+				`user-agent`:        {versionHeaderValue},
+			},
 		},
 	}
-	clintConfig.HTTPOptions.Headers.Set(`x-goog-api-client`, versionHeaderValue)
-	clintConfig.HTTPOptions.Headers.Set(`user-agent`, versionHeaderValue)
+
+	switch {
+	case clientConfig.APIKey != "":
+		clientConfig.Backend = genai.BackendGeminiAPI
+
+	case clientConfig.Project != "" && clientConfig.Location != "":
+		clientConfig.Backend = genai.BackendVertexAI
+		creds, err := credentials.DetectDefault(&credentials.DetectOptions{
+			Scopes: aiplatform.DefaultAuthScopes(),
+		})
+		if err != nil {
+			return nil, fmt.Errorf("detect default GCP credentials: %w", err)
+		}
+		clientConfig.Credentials = creds
+	}
 
 	// Create GenAI client
-	genAIClient, err := genai.NewClient(ctx, clintConfig)
+	genAIClient, err := genai.NewClient(ctx, clientConfig)
 	if err != nil {
 		return nil, fmt.Errorf("create genai client: %w", err)
 	}
-
-	gemini := &Gemini{
-		genAIClient: genAIClient,
-		modelName:   modelName,
-		logger:      slog.Default(),
-		retry:       &backoff.ExponentialBackOff{},
-	}
-	for _, opt := range opts {
-		opt(gemini)
-	}
+	gemini.genAIClient = genAIClient
 
 	return gemini, nil
 }
@@ -109,7 +135,7 @@ func (m *Gemini) Name() string {
 
 // SupportedModels returns a list of supported models in the [Gemini].
 //
-// See https://ai.google.dev/gemini-api/docs/models.
+// See https://cloud.google.com/vertex-ai/generative-ai/docs/models and https://ai.google.dev/gemini-api/docs/models.
 //
 // SupportedModels implements [types.Model].
 func (m *Gemini) SupportedModels() []string {
@@ -131,6 +157,7 @@ func (m *Gemini) SupportedModels() []string {
 		"gemini-2.0-flash-lite",
 		"gemini-2.0-flash-lite-001",
 		"gemini-2.0-flash-live-001",
+		"model-optimizer-exp-04-09",
 	}
 }
 
