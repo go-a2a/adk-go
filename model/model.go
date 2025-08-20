@@ -4,6 +4,9 @@
 package model
 
 import (
+	"net/http"
+	"reflect"
+
 	"google.golang.org/genai"
 )
 
@@ -39,3 +42,27 @@ const (
 	// This value Same as the [anthropic.MessageParamRoleAssistant]
 	RoleAssistant Role = "assistant"
 )
+
+// Option is a function that modifies the [Gemini] or [Claude] model.
+type Option[T Gemini | Claude] func(*T)
+
+var (
+	geminiType = reflect.TypeOf(Gemini{})
+	claudeType = reflect.TypeOf(Claude{})
+)
+
+// WithHTTPClient sets the [*http.Client] for the [Gemini] model.
+func WithHTTPClient[T Gemini | Claude](hc *http.Client) Option[T] {
+	switch reflect.TypeFor[T]() {
+	case geminiType:
+		return func(m *T) {
+			any(m).(*Gemini).hc = hc
+		}
+	case claudeType:
+		return func(m *T) {
+			any(m).(*Claude).hc = hc
+		}
+	default:
+		panic("unreachable")
+	}
+}

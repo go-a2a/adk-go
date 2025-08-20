@@ -13,6 +13,7 @@ import (
 	"iter"
 	"log/slog"
 	"maps"
+	"net/http"
 	"os"
 	"slices"
 	"strings"
@@ -255,28 +256,40 @@ type Claude struct {
 	// logger is the logger used for logging.
 	logger *slog.Logger
 
+	// optional [*http.Client] to use.
+	hc *http.Client
 	// The maximum number of tokens to generate.
 	maxTokens int64
 }
 
 var _ types.Model = (*Claude)(nil)
 
-type ClaudeOption func(*Claude)
-
-func WithMaxTokens(maxToken int64) ClaudeOption {
+func WithMaxTokens(maxToken int64) Option[Claude] {
 	return func(m *Claude) {
 		m.maxTokens = maxToken
 	}
 }
 
 // NewClaude creates a new Claude LLM instance.
-func NewClaude(ctx context.Context, modelName string, mode ClaudeMode, opts ...ClaudeOption) (*Claude, error) {
+func NewClaude(ctx context.Context, modelName string, mode ClaudeMode, opts ...Option[Claude]) (*Claude, error) {
 	// Use default model if none provided
 	if modelName == "" {
 		modelName = detectClaudeDefaultModel(mode)
 	}
 
-	var ropts []anthropic_option.RequestOption
+	claude := &Claude{
+		modelName: modelName,
+		logger:    slog.Default(),
+		hc:        &http.Client{},
+		maxTokens: 8192,
+	}
+	for _, opt := range opts {
+		opt(claude)
+	}
+
+	ropts := []anthropic_option.RequestOption{
+		anthropic_option.WithHTTPClient(claude.hc),
+	}
 	switch mode {
 	case ClaudeModeAnthropic:
 		ropts = append(ropts, anthropic.DefaultClientOptions()...)
@@ -297,17 +310,7 @@ func NewClaude(ctx context.Context, modelName string, mode ClaudeMode, opts ...C
 		ropts = append(ropts, anthropic_bedrock.WithLoadDefaultConfig(ctx))
 	}
 
-	anthropicClient := anthropic.NewClient(ropts...)
-
-	claude := &Claude{
-		anthropicClient: anthropicClient,
-		modelName:       modelName,
-		logger:          slog.Default(),
-		maxTokens:       8192,
-	}
-	for _, opt := range opts {
-		opt(claude)
-	}
+	claude.anthropicClient = anthropic.NewClient(ropts...)
 
 	return claude, nil
 }
