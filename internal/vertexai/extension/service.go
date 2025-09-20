@@ -16,9 +16,9 @@ import (
 	"cloud.google.com/go/aiplatform/apiv1beta1/aiplatformpb"
 	"cloud.google.com/go/storage"
 	"github.com/go-json-experiment/json"
+	yaml "go.yaml.in/yaml/v4"
 	"google.golang.org/api/option"
 	"google.golang.org/genai"
-	yaml "gopkg.in/yaml.v3"
 
 	"github.com/go-a2a/adk-go/model"
 	"github.com/go-a2a/adk-go/pkg/logging"
