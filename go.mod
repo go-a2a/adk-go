@@ -6,18 +6,18 @@ require (
 	cloud.google.com/go/aiplatform v1.102.0
 	cloud.google.com/go/auth v0.16.5
 	cloud.google.com/go/speech v1.28.0
-	cloud.google.com/go/storage v1.56.2
+	cloud.google.com/go/storage v1.57.0
 	github.com/MakeNowJust/heredoc/v2 v2.0.1
 	github.com/anthropics/anthropic-sdk-go v1.12.0
 	github.com/cenkalti/backoff/v5 v5.0.3
 	github.com/docker/docker v28.4.0+incompatible
 	github.com/go-json-experiment/json v0.0.0-20250910080747-cc2cfa0554c3 // @master
-	github.com/google/dotprompt/go v0.0.0-20250915193815-dfe0abbaa54f
+	github.com/google/dotprompt/go v0.0.0-20250923103342-a8a91d1dff59
 	github.com/google/go-cmp v0.7.0
-	github.com/google/jsonschema-go v0.2.3
+	github.com/google/jsonschema-go v0.3.0
 	github.com/google/uuid v1.6.0
-	github.com/modelcontextprotocol/go-sdk v0.6.0 // @main
-	github.com/tiendc/go-deepcopy v1.6.1
+	github.com/modelcontextprotocol/go-sdk v0.8.0 // @main
+	github.com/tiendc/go-deepcopy v1.7.1
 	go.opentelemetry.io/contrib/bridges/otelslog v0.13.0
 	go.opentelemetry.io/otel/log v0.14.0
 	go.opentelemetry.io/otel/metric v1.38.0
@@ -25,8 +25,8 @@ require (
 	go.yaml.in/yaml/v4 v4.0.0-rc.2
 	golang.org/x/oauth2 v0.31.0
 	golang.org/x/sync v0.17.0
-	google.golang.org/api v0.249.0
-	google.golang.org/genai v1.25.0
+	google.golang.org/api v0.250.0
+	google.golang.org/genai v1.26.0
 	google.golang.org/grpc v1.75.1
 	google.golang.org/protobuf v1.36.9
 )
@@ -35,7 +35,7 @@ require (
 	cel.dev/expr v0.24.0 // indirect
 	cloud.google.com/go v0.121.6 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.8 // indirect
-	cloud.google.com/go/compute/metadata v0.8.0 // indirect
+	cloud.google.com/go/compute/metadata v0.8.4 // indirect
 	cloud.google.com/go/iam v1.5.2 // indirect
 	cloud.google.com/go/longrunning v0.6.7 // indirect
 	cloud.google.com/go/monitoring v1.24.2 // indirect
@@ -105,14 +105,14 @@ require (
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.36.0 // indirect
 	go.opentelemetry.io/otel/sdk v1.37.0 // indirect
 	go.opentelemetry.io/otel/sdk/metric v1.37.0 // indirect
-	golang.org/x/crypto v0.41.0 // indirect
-	golang.org/x/net v0.43.0 // indirect
-	golang.org/x/sys v0.35.0 // indirect
-	golang.org/x/text v0.28.0 // indirect
-	golang.org/x/time v0.12.0 // indirect
+	golang.org/x/crypto v0.42.0 // indirect
+	golang.org/x/net v0.44.0 // indirect
+	golang.org/x/sys v0.36.0 // indirect
+	golang.org/x/text v0.29.0 // indirect
+	golang.org/x/time v0.13.0 // indirect
 	google.golang.org/genproto v0.0.0-20250603155806-513f23925822 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250818200422-3122310a409c // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250818200422-3122310a409c // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250908214217-97024824d090 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gotest.tools/v3 v3.5.2 // indirect
 )
