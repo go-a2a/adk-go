@@ -19,7 +19,7 @@ func init() {
 		[]string{
 			`claude-.*`, // General pattern for Claude models
 		},
-		func(ctx context.Context, apiKey, modelName string) (types.Model, error) {
+		func(ctx context.Context, modelName string) (types.Model, error) {
 			return NewClaude(ctx, modelName, ClaudeModeAnthropic)
 		},
 	)
@@ -31,14 +31,14 @@ func init() {
 			`projects\/.*\/locations\/.*\/endpoints\/.*`,
 			`projects\/.*\/locations\/.*\/publishers\/google\/models\/gemini-.*`,
 		},
-		func(ctx context.Context, apiKey, modelName string) (types.Model, error) {
-			return NewGemini(ctx, apiKey, modelName)
+		func(ctx context.Context, modelName string) (types.Model, error) {
+			return NewGemini(ctx, modelName)
 		},
 	)
 }
 
 // ModelCreatorFunc is a function type that creates a model instance.
-type ModelCreatorFunc func(ctx context.Context, apiKey, modelName string) (types.Model, error)
+type ModelCreatorFunc func(ctx context.Context, modelName string) (types.Model, error)
 
 // modelEntry represents a registry entry with a regex pattern and model creator function.
 type modelEntry struct {
@@ -151,8 +151,7 @@ func (r *LLMRegistry) NewLLM(ctx context.Context, modelName string) (types.Model
 		return nil, err
 	}
 
-	// TODO(zchee): fill arg
-	return creator(ctx, "", modelName)
+	return creator(ctx, modelName)
 }
 
 // RegisterLLM is a convenience function to register a model pattern.

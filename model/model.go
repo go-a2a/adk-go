@@ -58,8 +58,8 @@ const (
 type Option[T Gemini | Claude] func(*T)
 
 var (
-	geminiType = reflect.TypeOf(Gemini{})
-	claudeType = reflect.TypeOf(Claude{})
+	geminiType = reflect.TypeFor[Gemini]()
+	claudeType = reflect.TypeFor[Claude]()
 )
 
 // WithHTTPClient sets the [*http.Client] for the [Gemini] model.
