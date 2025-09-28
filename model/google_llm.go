@@ -126,21 +126,29 @@ func (m *Gemini) Name() string {
 
 // SupportedModels returns a list of supported models in the [Gemini].
 //
-// See https://cloud.google.com/vertex-ai/generative-ai/docs/models and https://ai.google.dev/gemini-api/docs/models.
+// See
+// - https://cloud.google.com/vertex-ai/generative-ai/docs/models
+// - https://ai.google.dev/gemini-api/docs/models
 //
 // SupportedModels implements [types.Model].
 func (m *Gemini) SupportedModels() []string {
 	return []string{
 		"gemini-2.5-pro",
+
 		"gemini-2.5-flash",
 		"gemini-2.5-flash-preview-05-20",
+		"gemini-2.5-flash-preview-09-2025",
+
 		"gemini-2.5-flash-lite",
 		"gemini-2.5-flash-lite-06-17",
+		"gemini-2.5-flash-lite-preview-09-2025",
+
 		"gemini-live-2.5-flash-preview",
-		"gemini-2.5-flash-preview-05-20",
+
 		"gemini-2.5-flash-exp-native-audio-thinking-dialog",
 		"gemini-2.5-flash-preview-tts",
 		"gemini-2.5-pro-preview-tts",
+
 		"gemini-2.0-flash",
 		"gemini-2.0-flash-001",
 		"gemini-2.0-flash-exp",
@@ -148,6 +156,7 @@ func (m *Gemini) SupportedModels() []string {
 		"gemini-2.0-flash-lite",
 		"gemini-2.0-flash-lite-001",
 		"gemini-2.0-flash-live-001",
+
 		"model-optimizer-exp-04-09",
 	}
 }
