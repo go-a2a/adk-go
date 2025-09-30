@@ -58,7 +58,7 @@ func (f *DefaultModelFactory) CreateModel(ctx context.Context, modelName string)
 
 	switch modelType {
 	case ModelTypeGemini:
-		return NewGemini(ctx, f.apiKey, modelName)
+		return NewGemini(ctx, modelName)
 	case ModelTypeClaude:
 		return NewClaude(ctx, modelName, ClaudeModeAnthropic)
 	case ModelTypeClaudeVertexAI:
