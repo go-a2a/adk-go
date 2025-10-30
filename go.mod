@@ -3,20 +3,20 @@ module github.com/go-a2a/adk-go
 go 1.25
 
 require (
-	cloud.google.com/go/aiplatform v1.104.0
+	cloud.google.com/go/aiplatform v1.108.0
 	cloud.google.com/go/auth v0.17.0
 	cloud.google.com/go/speech v1.28.1
-	cloud.google.com/go/storage v1.57.0
+	cloud.google.com/go/storage v1.57.1
 	github.com/MakeNowJust/heredoc/v2 v2.0.1
-	github.com/anthropics/anthropic-sdk-go v1.13.0
+	github.com/anthropics/anthropic-sdk-go v1.16.0
 	github.com/cenkalti/backoff/v5 v5.0.3
 	github.com/docker/docker v28.5.1+incompatible
-	github.com/go-json-experiment/json v0.0.0-20250910080747-cc2cfa0554c3
-	github.com/google/dotprompt/go v0.0.0-20250923103342-a8a91d1dff59
+	github.com/go-json-experiment/json v0.0.0-20251027170946-4849db3c2f7e
+	github.com/google/dotprompt/go v0.0.0-20251029001020-4b02bdcd4e7a
 	github.com/google/go-cmp v0.7.0
 	github.com/google/jsonschema-go v0.3.0
 	github.com/google/uuid v1.6.0
-	github.com/modelcontextprotocol/go-sdk v1.0.0
+	github.com/modelcontextprotocol/go-sdk v1.1.0
 	github.com/tiendc/go-deepcopy v1.7.1
 	go.opentelemetry.io/contrib/bridges/otelslog v0.13.0
 	go.opentelemetry.io/otel/log v0.14.0
@@ -25,8 +25,8 @@ require (
 	go.yaml.in/yaml/v4 v4.0.0-rc.2
 	golang.org/x/oauth2 v0.32.0
 	golang.org/x/sync v0.17.0
-	google.golang.org/api v0.252.0
-	google.golang.org/genai v1.30.0
+	google.golang.org/api v0.254.0
+	google.golang.org/genai v1.33.0
 	google.golang.org/grpc v1.76.0
 	google.golang.org/protobuf v1.36.10
 )
@@ -105,14 +105,14 @@ require (
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.36.0 // indirect
 	go.opentelemetry.io/otel/sdk v1.37.0 // indirect
 	go.opentelemetry.io/otel/sdk/metric v1.37.0 // indirect
-	golang.org/x/crypto v0.42.0 // indirect
-	golang.org/x/net v0.44.0 // indirect
-	golang.org/x/sys v0.36.0 // indirect
-	golang.org/x/text v0.29.0 // indirect
-	golang.org/x/time v0.13.0 // indirect
+	golang.org/x/crypto v0.43.0 // indirect
+	golang.org/x/net v0.46.0 // indirect
+	golang.org/x/sys v0.37.0 // indirect
+	golang.org/x/text v0.30.0 // indirect
+	golang.org/x/time v0.14.0 // indirect
 	google.golang.org/genproto v0.0.0-20250603155806-513f23925822 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250818200422-3122310a409c // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20251002232023-7c0ddcbb5797 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20251022142026-3a174f9686a8 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gotest.tools/v3 v3.5.2 // indirect
 )
