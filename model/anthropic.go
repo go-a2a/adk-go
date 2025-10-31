@@ -50,11 +50,11 @@ const (
 func detectClaudeDefaultModel(mode ClaudeMode) string {
 	switch mode {
 	case ClaudeModeAnthropic:
-		return string(anthropic.ModelClaude3_5Sonnet20241022)
+		return string(anthropic.ModelClaudeSonnet4_5)
 	case ClaudeModeVertexAI:
-		return "claude-3-5-sonnet-v2@20241022"
+		return "claude-sonnet-4-5@20250929"
 	case ClaudeModeBedrock:
-		return "anthropic.claude-3-5-sonnet-20241022-v2:0"
+		return "anthropic.claude-sonnet-4-5-20250929-v1:0"
 	default:
 		return ""
 	}
@@ -330,35 +330,30 @@ func (m *Claude) Name() string {
 func (m *Claude) SupportedModels() []string {
 	return []string{
 		// Anthropic API
-		string(anthropic.ModelClaude3_7SonnetLatest),
 		string(anthropic.ModelClaude3_7Sonnet20250219),
 		string(anthropic.ModelClaude3_5HaikuLatest),
 		string(anthropic.ModelClaude3_5Haiku20241022),
+		string(anthropic.ModelClaudeHaiku4_5),
+		string(anthropic.ModelClaudeHaiku4_5_20251001),
+		string(anthropic.ModelClaudeSonnet4_20250514),
 		string(anthropic.ModelClaudeSonnet4_20250514),
 		string(anthropic.ModelClaudeSonnet4_0),
 		string(anthropic.ModelClaude4Sonnet20250514),
-		string(anthropic.ModelClaude3_5SonnetLatest),
-		string(anthropic.ModelClaude3_5Sonnet20241022),
-		string(anthropic.ModelClaude_3_5_Sonnet_20240620),
+		string(anthropic.ModelClaudeSonnet4_5),
+		string(anthropic.ModelClaudeSonnet4_5_20250929),
 		string(anthropic.ModelClaudeOpus4_0),
 		string(anthropic.ModelClaudeOpus4_20250514),
 		string(anthropic.ModelClaude4Opus20250514),
 		string(anthropic.ModelClaudeOpus4_1_20250805),
 
 		// GCP Vertex AI
-		"claude-3-7-sonnet@20250219",
-		"claude-3-5-haiku@20241022",
-		"claude-sonnet-4@20250514",
-		"claude-3-5-sonnet-v2@20241022",
-		"claude-opus-4@20250514",
+		"claude-sonnet-4-5@20250929",
+		"claude-haiku-4-5@20251001",
 		"claude-opus-4-1@20250805",
 
 		// AWS Bedrock
-		"anthropic.claude-3-7-sonnet-20250219-v1:0",
-		"anthropic.claude-3-5-haiku-20241022-v1:0",
-		"anthropic.claude-sonnet-4-20250514-v1:0",
-		"anthropic.claude-3-5-sonnet-20241022-v2:0",
-		"anthropic.claude-opus-4-20250514-v1:0",
+		"anthropic.claude-sonnet-4-5-20250929-v1:0",
+		"anthropic.claude-haiku-4-5-20251001-v1:0",
 		"anthropic.claude-opus-4-1-20250805-v1:0",
 	}
 }
